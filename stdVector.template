@@ -43,8 +43,6 @@ contains
    procedure, private :: AssignArray
    generic            :: assignment(=) => AssignArray ! TODO: fix generic interface
 
-   procedure          :: Print
-
    ! ==> Capacity:
 
    procedure          :: Resize
@@ -138,26 +136,6 @@ subroutine AssignArray(self, array)
 
 end subroutine
 
-
-
-subroutine Print(self, unit_in)
-   use, intrinsic :: iso_fortran_env, only: output_unit
-   class(STD_TEMPLATE_CONTAINERNAME), intent(in)           :: self
-   integer                          , intent(in), optional :: unit_in
-
-   integer :: unit
-
-   if (present(unit_in)) then
-      unit = unit_in
-   else
-      unit = output_unit
-   endif
-
-   write(unit,*) 'size = ', self%size
-   write(unit,*) 'capacity = ', size(self%data)
-   write(unit,*) 'data = ', self%data(1:self%size)
-
-end subroutine
 
 
 ! =============> Capacity:
