@@ -67,7 +67,7 @@ contains
 
    procedure          :: Clear
 
-   ! ==> Private methods:
+   ! ==> Internal methods:
 
    procedure, private :: ChangeCapacity
    procedure, private :: IncreaseCapacity
@@ -388,7 +388,7 @@ end subroutine
 
 
 
-! =============> Private methods:
+! =============> Internal methods:
 
 
 
