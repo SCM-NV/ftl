@@ -23,9 +23,14 @@
 ! inserting or removing elements at positions other than the end, they perform worse than the others, and have less consistent
 ! iterators and references than lists and forward_lists.
 
+#define STD_CONTAINER_PROVIDES_RANDOM_ACCESS_ITERATOR
+
+
 module stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Module
 
    implicit none
+
+! ====== Type of the stdVector container itself ==================================================================================
 
    type stdVector/**/STD_TEMPLATE_TYPE_NAME
 
@@ -35,14 +40,16 @@ module stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Module
    contains
 
       procedure, private :: NewDefault
+      procedure, private :: NewCopyOther
       procedure, private :: NewFill
       procedure, private :: NewFromArray
-      generic            :: New => NewDefault, NewFill, NewFromArray
+      generic            :: New => NewDefault, NewCopyOther, NewFill, NewFromArray
 
       procedure          :: Delete
 
       procedure, private :: AssignArray
-      generic            :: assignment(=) => AssignArray ! TODO: fix generic interface
+      procedure, private :: AssignOther
+      generic            :: assignment(=) => AssignArray, AssignOther ! TODO: fix generic interface
 
       procedure          :: Print
 
@@ -78,8 +85,26 @@ module stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Module
    end type
 
 
+! ====== Type of an iterator over a stdVector container ==========================================================================
+
+   type stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator
+
+      type(stdVector/**/STD_TEMPLATE_TYPE_NAME), pointer, private :: cont => null()
+      integer, private :: index
+
+   contains
+
+      !procedure, private :: NewDefault
+      !procedure, private :: New
+
+   end type
+
+
 contains
 
+
+
+! ====== Implementation of stdVector methods =====================================================================================
 
 
    ! Constructs a vector, initializing its contents depending on the constructor version used:
@@ -87,9 +112,21 @@ contains
    subroutine NewDefault(self)
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(out) :: self
 
-      ! Constructs an empty container, with no elements.
+      ! Constructs an empty vector, with no elements.
 
       allocate(self%data(0))
+
+   end subroutine
+   !
+   subroutine NewCopyOther(self, other)
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(out) :: self
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(in)  :: other
+
+      ! Constructs a vector as a copy of another vector.
+
+      allocate(self%data(other%size))
+      self%data = other%data(1:other%size)
+      self%size = other%size
 
    end subroutine
    !
@@ -129,13 +166,23 @@ contains
 
 
 
+   ! Assigns new contents to the container, replacing its current contents, and modifying its size accordingly.
+   !
    subroutine AssignArray(self, array)
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(out) :: self
       STD_TEMPLATE_TYPE                         , intent(in)  :: array(:)
 
-      ! Assigns new contents to the container, replacing its current contents, and modifying its size accordingly.
-
+      ! TODO: more efficient implementation
       call self%NewFromArray(array)
+
+   end subroutine
+   !
+   subroutine AssignOther(self, other)
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(out) :: self
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(in)  :: other
+
+      ! TODO: more efficient implementation
+      call self%NewCopyOther(other)
 
    end subroutine
 
@@ -451,5 +498,10 @@ contains
       call self%changeCapacity(max(2 * self%Capacity(), 1))
 
    end subroutine
+
+
+
+! ====== Implementation of stdVectorIterator methods =============================================================================
+
 
 end module
