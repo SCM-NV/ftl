@@ -23,431 +23,433 @@
 ! inserting or removing elements at positions other than the end, they perform worse than the others, and have less consistent
 ! iterators and references than lists and forward_lists.
 
-implicit none
+module stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Module
 
+   implicit none
 
-type STD_TEMPLATE_CONTAINERNAME
+   type stdVector/**/STD_TEMPLATE_TYPE_NAME
 
-   integer :: size = 0
-   STD_TEMPLATE_TYPE, allocatable :: data(:)
+      integer :: size = 0
+      STD_TEMPLATE_TYPE, allocatable :: data(:)
+
+   contains
+
+      procedure, private :: NewDefault
+      procedure, private :: NewFill
+      procedure, private :: NewFromArray
+      generic            :: New => NewDefault, NewFill, NewFromArray
+
+      procedure          :: Delete
+
+      procedure, private :: AssignArray
+      generic            :: assignment(=) => AssignArray ! TODO: fix generic interface
+
+      procedure          :: Print
+
+      ! ==> Capacity:
+
+      procedure          :: Resize
+      procedure          :: Capacity
+      procedure          :: Empty
+      procedure          :: Reserve
+      procedure          :: ShrinkToFit
+
+      ! ==> Modifiers:
+
+      procedure          :: PushBack
+      procedure          :: PopBack
+
+      procedure, private :: InsertSingle
+      procedure, private :: InsertFill
+      procedure, private :: InsertArray
+      generic            :: Insert => InsertSingle, InsertFill, InsertArray
+
+      procedure, private :: EraseSingle
+      procedure, private :: EraseRange
+      generic            :: Erase => EraseSingle, EraseRange
+
+      procedure          :: Clear
+
+      ! ==> Internal methods:
+
+      procedure, private :: ChangeCapacity
+      procedure, private :: IncreaseCapacity
+
+   end type
+
 
 contains
 
-   procedure, private :: NewDefault
-   procedure, private :: NewFill
-   procedure, private :: NewFromArray
-   generic            :: New => NewDefault, NewFill, NewFromArray
-
-   procedure          :: Delete
-
-   procedure, private :: AssignArray
-   generic            :: assignment(=) => AssignArray ! TODO: fix generic interface
-
-   procedure          :: Print
-
-   ! ==> Capacity:
-
-   procedure          :: Resize
-   procedure          :: Capacity
-   procedure          :: Empty
-   procedure          :: Reserve
-   procedure          :: ShrinkToFit
-
-   ! ==> Modifiers:
-
-   procedure          :: PushBack
-   procedure          :: PopBack
-
-   procedure, private :: InsertSingle
-   procedure, private :: InsertFill
-   procedure, private :: InsertArray
-   generic            :: Insert => InsertSingle, InsertFill, InsertArray
-
-   procedure, private :: EraseSingle
-   procedure, private :: EraseRange
-   generic            :: Erase => EraseSingle, EraseRange
-
-   procedure          :: Clear
-
-   ! ==> Internal methods:
-
-   procedure, private :: ChangeCapacity
-   procedure, private :: IncreaseCapacity
-
-end type
 
 
-contains
+   ! Constructs a vector, initializing its contents depending on the constructor version used:
+   !
+   subroutine NewDefault(self)
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(out) :: self
+
+      ! Constructs an empty container, with no elements.
+
+      allocate(self%data(0))
+
+   end subroutine
+   !
+   subroutine NewFill(self, n, val)
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(out)          :: self
+      integer                                   , intent(in)           :: n
+      STD_TEMPLATE_TYPE                         , intent(in), optional :: val
+
+      ! Constructs a container with n elements. Each element is a copy of val (if present).
+
+      allocate(self%data(n))
+      if (present(val)) self%data = val
+      self%size = n
+
+   end subroutine
+   !
+   subroutine NewFromArray(self, array)
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(out) :: self
+      STD_TEMPLATE_TYPE                         , intent(in)  :: array(:)
+
+      ! Constructs a container with a copy of each of the elements in arr, in the same order.
+
+      allocate(self%data(size(array)))
+      self%data = array
+      self%size = size(array)
+
+   end subroutine
 
 
 
-! Constructs a vector, initializing its contents depending on the constructor version used:
-!
-subroutine NewDefault(self)
-   class(STD_TEMPLATE_CONTAINERNAME), intent(out) :: self
+   subroutine Delete(self)
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(out) :: self
 
-   ! Constructs an empty container, with no elements.
+      ! Nothing to do here: intent(out) will deallocate self%data and set self%size = 0
 
-   allocate(self%data(0))
-
-end subroutine
-!
-subroutine NewFill(self, n, val)
-   class(STD_TEMPLATE_CONTAINERNAME), intent(out)          :: self
-   integer                          , intent(in)           :: n
-   STD_TEMPLATE_TYPE                , intent(in), optional :: val
-
-   ! Constructs a container with n elements. Each element is a copy of val (if present).
-
-   allocate(self%data(n))
-   if (present(val)) self%data = val
-   self%size = n
-
-end subroutine
-!
-subroutine NewFromArray(self, array)
-   class(STD_TEMPLATE_CONTAINERNAME), intent(out) :: self
-   STD_TEMPLATE_TYPE,                 intent(in)  :: array(:)
-
-   ! Constructs a container with a copy of each of the elements in arr, in the same order.
-
-   allocate(self%data(size(array)))
-   self%data = array
-   self%size = size(array)
-
-end subroutine
+   end subroutine
 
 
 
-subroutine Delete(self)
-   class(STD_TEMPLATE_CONTAINERNAME), intent(out) :: self
+   subroutine AssignArray(self, array)
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(out) :: self
+      STD_TEMPLATE_TYPE                         , intent(in)  :: array(:)
 
-   ! Nothing to do here: intent(out) will deallocate self%data and set self%size = 0
+      ! Assigns new contents to the container, replacing its current contents, and modifying its size accordingly.
 
-end subroutine
+      call self%NewFromArray(array)
 
-
-
-subroutine AssignArray(self, array)
-   class(STD_TEMPLATE_CONTAINERNAME), intent(out) :: self
-   STD_TEMPLATE_TYPE,                 intent(in)  :: array(:)
-
-   ! Assigns new contents to the container, replacing its current contents, and modifying its size accordingly.
-
-   call self%NewFromArray(array)
-
-end subroutine
+   end subroutine
 
 
 
-subroutine Print(self, unit_in)
-   use, intrinsic :: iso_fortran_env, only: output_unit
-   class(STD_TEMPLATE_CONTAINERNAME), intent(in)           :: self
-   integer                          , intent(in), optional :: unit_in
+   subroutine Print(self, unit_in)
+      use, intrinsic :: iso_fortran_env, only: output_unit
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(in)           :: self
+      integer                                   , intent(in), optional :: unit_in
 
-   integer :: unit
+      integer :: unit
 
-   if (present(unit_in)) then
-      unit = unit_in
-   else
-      unit = output_unit
-   endif
+      if (present(unit_in)) then
+         unit = unit_in
+      else
+         unit = output_unit
+      endif
 
-   write(unit,*) 'size = ', self%size
-   write(unit,*) 'capacity = ', size(self%data)
+      write(unit,*) 'size = ', self%size
+      write(unit,*) 'capacity = ', size(self%data)
 #ifdef STD_TEMPLATE_TYPE_IS_PRINTABLE
-   write(unit,*) 'data = ', self%data(1:self%size)
+      write(unit,*) 'data = ', self%data(1:self%size)
 #else
-   write(unit,*) 'data = [???] (unprintable type)'
+      write(unit,*) 'data = [???] (unprintable type)'
 #endif
 
-end subroutine
+   end subroutine
 
 
 
-! =============> Capacity:
+   ! =============> Capacity:
 
 
 
-! Resizes the container so that it contains n elements.
-!
-! If n is smaller than the current container size, the content is reduced to its first n elements, removing those beyond
-! (and destroying them).
-!
-! If n is greater than the current container size, the content is expanded by inserting at the end as many elements as
-! needed to reach a size of n. If val is specified, the new elements are initialized as copies of val, otherwise, they are
-! value-initialized.
-!
-! If n is also greater than the current container capacity, an automatic reallocation of the allocated storage space takes
-! place.
-!
-! Notice that this function changes the actual content of the container by inserting or erasing elements from it.
-!
-subroutine resize(self, n, val)
-   class(STD_TEMPLATE_CONTAINERNAME), intent(inout)        :: self
-   integer                          , intent(in)           :: n
-   STD_TEMPLATE_TYPE                , intent(in), optional :: val
+   ! Resizes the container so that it contains n elements.
+   !
+   ! If n is smaller than the current container size, the content is reduced to its first n elements, removing those beyond
+   ! (and destroying them).
+   !
+   ! If n is greater than the current container size, the content is expanded by inserting at the end as many elements as
+   ! needed to reach a size of n. If val is specified, the new elements are initialized as copies of val, otherwise, they are
+   ! value-initialized.
+   !
+   ! If n is also greater than the current container capacity, an automatic reallocation of the allocated storage space takes
+   ! place.
+   !
+   ! Notice that this function changes the actual content of the container by inserting or erasing elements from it.
+   !
+   subroutine resize(self, n, val)
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout)        :: self
+      integer                                   , intent(in)           :: n
+      STD_TEMPLATE_TYPE                         , intent(in), optional :: val
 
-   if (n > self%Capacity()) call self%ChangeCapacity(n)
-   if (present(val) .and. n > self%size) self%data(self%size+1:n) = val
-   ! TODO: call destructor on removed elements when shrinking?
-   self%size = n
+      if (n > self%Capacity()) call self%ChangeCapacity(n)
+      if (present(val) .and. n > self%size) self%data(self%size+1:n) = val
+      ! TODO: call destructor on removed elements when shrinking?
+      self%size = n
 
-end subroutine
+   end subroutine
 
 
 
-! Returns the size of the storage space currently allocated for the vector, expressed in terms of elements.
-!
-! This capacity is not necessarily equal to the vector size. It can be equal or greater, with the extra space allowing to
-! accommodate for growth without the need to reallocate on each insertion.
-!
-! Notice that this capacity does not suppose a limit on the size of the vector. When this capacity is exhausted and more is
-! needed, it is automatically expanded by the container (reallocating it storage space).
-!
-! The capacity of a vector can be explicitly altered by calling member stdVector%reserve.
-!
-pure integer function Capacity(self)
-   class(STD_TEMPLATE_CONTAINERNAME), intent(in) :: self
+   ! Returns the size of the storage space currently allocated for the vector, expressed in terms of elements.
+   !
+   ! This capacity is not necessarily equal to the vector size. It can be equal or greater, with the extra space allowing to
+   ! accommodate for growth without the need to reallocate on each insertion.
+   !
+   ! Notice that this capacity does not suppose a limit on the size of the vector. When this capacity is exhausted and more is
+   ! needed, it is automatically expanded by the container (reallocating it storage space).
+   !
+   ! The capacity of a vector can be explicitly altered by calling member stdVector%reserve.
+   !
+   pure integer function Capacity(self)
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(in) :: self
 
-   if (allocated(self%data)) then
-      Capacity = size(self%data)
-   else
-      Capacity = 0
-   endif
+      if (allocated(self%data)) then
+         Capacity = size(self%data)
+      else
+         Capacity = 0
+      endif
 
-end function
+   end function
 
 
 
-! Returns whether the vector is empty (i.e. whether its size is 0).
-!
-! This function does not modify the container in any way. To clear the content of a vector, see stdVector%clear.
-!
-pure logical function Empty(self)
-   class(STD_TEMPLATE_CONTAINERNAME), intent(in) :: self
+   ! Returns whether the vector is empty (i.e. whether its size is 0).
+   !
+   ! This function does not modify the container in any way. To clear the content of a vector, see stdVector%clear.
+   !
+   pure logical function Empty(self)
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(in) :: self
 
-   Empty = (self%size == 0)
+      Empty = (self%size == 0)
 
-end function
+   end function
 
 
 
-! Requests that the vector capacity be at least enough to contain n elements.
-!
-! If n is greater than the current vector capacity, the function causes the container to reallocate its storage increasing
-! its capacity to n (or greater).
-!
-! In all other cases, the function call does not cause a reallocation and the vector capacity is not affected.
-!
-! This function has no effect on the vector size and cannot alter its elements.
-!
-subroutine Reserve(self, n)
-   class(STD_TEMPLATE_CONTAINERNAME), intent(inout) :: self
-   integer                          , intent(in)    :: n
+   ! Requests that the vector capacity be at least enough to contain n elements.
+   !
+   ! If n is greater than the current vector capacity, the function causes the container to reallocate its storage increasing
+   ! its capacity to n (or greater).
+   !
+   ! In all other cases, the function call does not cause a reallocation and the vector capacity is not affected.
+   !
+   ! This function has no effect on the vector size and cannot alter its elements.
+   !
+   subroutine Reserve(self, n)
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
+      integer                                   , intent(in)    :: n
 
-   if (n > self%Capacity()) call self%ChangeCapacity(n)
+      if (n > self%Capacity()) call self%ChangeCapacity(n)
 
-end subroutine
+   end subroutine
 
 
 
-! Requests the container to reduce its capacity to fit its size.
-!
-! The request is non-binding, and the container implementation is free to optimize otherwise and leave the vector with a
-! capacity greater than its size.
-!
-! This may cause a reallocation, but has no effect on the vector size and cannot alter its elements.
-!
-subroutine ShrinkToFit(self)
-   class(STD_TEMPLATE_CONTAINERNAME), intent(inout) :: self
+   ! Requests the container to reduce its capacity to fit its size.
+   !
+   ! The request is non-binding, and the container implementation is free to optimize otherwise and leave the vector with a
+   ! capacity greater than its size.
+   !
+   ! This may cause a reallocation, but has no effect on the vector size and cannot alter its elements.
+   !
+   subroutine ShrinkToFit(self)
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
 
-   call self%ChangeCapacity(self%size)
+      call self%ChangeCapacity(self%size)
 
-end subroutine
+   end subroutine
 
 
 
-! =============> Modifiers:
+   ! =============> Modifiers:
 
 
 
-! Adds a new element at the end of the vector, after its current last element. The content of val is copied to
-! the new element.
-!
-! This effectively increases the container size by one, which causes an automatic reallocation of the allocated storage
-! space if -and only if- the new vector size surpasses the current vector capacity.
-!
-subroutine PushBack(self, val)
-   class(STD_TEMPLATE_CONTAINERNAME), intent(inout) :: self
-   STD_TEMPLATE_TYPE                , intent(in)    :: val
+   ! Adds a new element at the end of the vector, after its current last element. The content of val is copied to
+   ! the new element.
+   !
+   ! This effectively increases the container size by one, which causes an automatic reallocation of the allocated storage
+   ! space if -and only if- the new vector size surpasses the current vector capacity.
+   !
+   subroutine PushBack(self, val)
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
+      STD_TEMPLATE_TYPE                         , intent(in)    :: val
 
-   self%size = self%size + 1
-   if (self%size > self%Capacity()) call self%IncreaseCapacity()
-   self%data(self%size) = val
+      self%size = self%size + 1
+      if (self%size > self%Capacity()) call self%IncreaseCapacity()
+      self%data(self%size) = val
 
-end subroutine
+   end subroutine
 
 
 
-! Removes the last element in the vector, effectively reducing the container size by one.
-!
-! This destroys the removed element.
-!
-STD_TEMPLATE_TYPE function PopBack(self)
-   class(STD_TEMPLATE_CONTAINERNAME), intent(inout) :: self
+   ! Removes the last element in the vector, effectively reducing the container size by one.
+   !
+   ! This destroys the removed element.
+   !
+   STD_TEMPLATE_TYPE function PopBack(self)
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
 
-   self%size = self%size - 1
-   PopBack = self%data(self%size+1)
+      self%size = self%size - 1
+      PopBack = self%data(self%size+1)
 
-end function
+   end function
 
 
 
-! The vector is extended by inserting new elements before the element at the specified position, effectively increasing
-! the container size by the number of elements inserted.  This causes an automatic reallocation of the allocated storage
-! space if -and only if- the new vector size surpasses the current vector capacity.
-!
-! Because vectors use an array as their underlying storage, inserting elements in positions other than the vector end
-! causes the container to relocate all the elements that were after position to their new positions. This is generally an
-! inefficient operation compared to the one performed for the same operation by other kinds of sequence containers (such
-! as list or forward_list).
-!
-! The parameters determine how many elements are inserted and to which values they are initialized:
-!
-subroutine InsertSingle(self, position, val)
-   class(STD_TEMPLATE_CONTAINERNAME), intent(inout) :: self
-   integer                          , intent(in)    :: position
-   STD_TEMPLATE_TYPE                , intent(in)    :: val
+   ! The vector is extended by inserting new elements before the element at the specified position, effectively increasing
+   ! the container size by the number of elements inserted.  This causes an automatic reallocation of the allocated storage
+   ! space if -and only if- the new vector size surpasses the current vector capacity.
+   !
+   ! Because vectors use an array as their underlying storage, inserting elements in positions other than the vector end
+   ! causes the container to relocate all the elements that were after position to their new positions. This is generally an
+   ! inefficient operation compared to the one performed for the same operation by other kinds of sequence containers (such
+   ! as list or forward_list).
+   !
+   ! The parameters determine how many elements are inserted and to which values they are initialized:
+   !
+   subroutine InsertSingle(self, position, val)
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
+      integer                                   , intent(in)    :: position
+      STD_TEMPLATE_TYPE                         , intent(in)    :: val
 
-   call self%InsertArray(position, [val])
+      call self%InsertArray(position, [val])
 
-end subroutine
-!
-subroutine InsertFill(self, position, n, val)
-   class(STD_TEMPLATE_CONTAINERNAME), intent(inout) :: self
-   integer                          , intent(in)    :: position
-   integer                          , intent(in)    :: n
-   STD_TEMPLATE_TYPE                , intent(in)    :: val
+   end subroutine
+   !
+   subroutine InsertFill(self, position, n, val)
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
+      integer                                   , intent(in)    :: position
+      integer                                   , intent(in)    :: n
+      STD_TEMPLATE_TYPE                         , intent(in)    :: val
 
-   integer :: i
+      integer :: i
 
-   if (n == 0) return
-   call self%InsertArray(position, [(val, i=1,n)])
+      if (n == 0) return
+      call self%InsertArray(position, [(val, i=1,n)])
 
-end subroutine
-!
-subroutine InsertArray(self, position, array)
-   class(STD_TEMPLATE_CONTAINERNAME), intent(inout) :: self
-   integer                          , intent(in)    :: position
-   STD_TEMPLATE_TYPE                , intent(in)    :: array(:)
+   end subroutine
+   !
+   subroutine InsertArray(self, position, array)
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
+      integer                                   , intent(in)    :: position
+      STD_TEMPLATE_TYPE                         , intent(in)    :: array(:)
 
-   integer :: i
+      integer :: i
 
-   if (size(array) == 0) return
+      if (size(array) == 0) return
 
-   if (self%size + size(array) > 2 * self%Capacity()) then
-      call self%ChangeCapacity(self%size + size(array))
-   elseif (self%size + size(array) > self%Capacity()) then
-      call self%IncreaseCapacity()
-   endif
+      if (self%size + size(array) > 2 * self%Capacity()) then
+         call self%ChangeCapacity(self%size + size(array))
+      elseif (self%size + size(array) > self%Capacity()) then
+         call self%IncreaseCapacity()
+      endif
 
-   do i = self%size, position, -1
-      self%data(i+size(array)) = self%data(i)
-   enddo
+      do i = self%size, position, -1
+         self%data(i+size(array)) = self%data(i)
+      enddo
 
-   self%data(position:position+size(array)-1) = array
+      self%data(position:position+size(array)-1) = array
 
-   self%size = self%size + size(array)
+      self%size = self%size + size(array)
 
-end subroutine
+   end subroutine
 
 
 
-! Removes from the vector either a single element (position) or a range of elements [first,last).
-!
-! This effectively reduces the container size by the number of elements removed, which are destroyed.
-!
-! Because vectors use an array as their underlying storage, erasing elements in positions other than the vector end causes
-! the container to relocate all the elements after the segment erased to their new positions. This is generally an
-! inefficient operation compared to the one performed for the same operation by other kinds of sequence containers (such
-! as list or forward_list).
-!
-subroutine EraseSingle(self, position)
-   class(STD_TEMPLATE_CONTAINERNAME), intent(inout) :: self
-   integer                          , intent(in)    :: position
+   ! Removes from the vector either a single element (position) or a range of elements [first,last).
+   !
+   ! This effectively reduces the container size by the number of elements removed, which are destroyed.
+   !
+   ! Because vectors use an array as their underlying storage, erasing elements in positions other than the vector end causes
+   ! the container to relocate all the elements after the segment erased to their new positions. This is generally an
+   ! inefficient operation compared to the one performed for the same operation by other kinds of sequence containers (such
+   ! as list or forward_list).
+   !
+   subroutine EraseSingle(self, position)
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
+      integer                                   , intent(in)    :: position
 
-   call self%EraseRange(position, position+1)
+      call self%EraseRange(position, position+1)
 
-end subroutine
-!
-subroutine EraseRange(self, first, last)
-   class(STD_TEMPLATE_CONTAINERNAME), intent(inout) :: self
-   integer                          , intent(in)    :: first
-   integer                          , intent(in)    :: last
+   end subroutine
+   !
+   subroutine EraseRange(self, first, last)
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
+      integer                                   , intent(in)    :: first
+      integer                                   , intent(in)    :: last
 
-   integer :: i
+      integer :: i
 
-   if (last <= first) return
+      if (last <= first) return
 
-   do i = first, last-1
-      ! TODO: call destructor on removed elements?
-      self%data(i) = self%data(i+last-first)
-   enddo
+      do i = first, last-1
+         ! TODO: call destructor on removed elements?
+         self%data(i) = self%data(i+last-first)
+      enddo
 
-   self%size = self%size - (last-first)
+      self%size = self%size - (last-first)
 
-end subroutine
+   end subroutine
 
 
 
-! Removes all elements from the vector (which are destroyed), leaving the container with a size of 0.
-!
-! A reallocation is not guaranteed to happen, and the vector capacity is not guaranteed to change due to calling this
-! function.
-!
-subroutine Clear(self)
-   class(STD_TEMPLATE_CONTAINERNAME), intent(inout) :: self
+   ! Removes all elements from the vector (which are destroyed), leaving the container with a size of 0.
+   !
+   ! A reallocation is not guaranteed to happen, and the vector capacity is not guaranteed to change due to calling this
+   ! function.
+   !
+   subroutine Clear(self)
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
 
-   call self%EraseRange(1, self%size+1)
+      call self%EraseRange(1, self%size+1)
 
-end subroutine
+   end subroutine
 
 
 
-! =============> Internal methods:
+   ! =============> Internal methods:
 
 
 
-subroutine ChangeCapacity(self, n)
-   class(STD_TEMPLATE_CONTAINERNAME), intent(inout) :: self
-   integer                          , intent(in)    :: n
+   subroutine ChangeCapacity(self, n)
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
+      integer                                   , intent(in)    :: n
 
-   integer :: numretain
-   STD_TEMPLATE_TYPE, allocatable :: tmp(:)
+      integer :: numretain
+      STD_TEMPLATE_TYPE, allocatable :: tmp(:)
 
-   if (n == self%Capacity()) return
+      if (n == self%Capacity()) return
 
-   numretain = min(self%size, n)
-   if (numretain > 0) then
-      allocate(tmp(numretain))
-      tmp = self%data(1:numretain)
-   endif
-   deallocate(self%data)
-   allocate(self%data(n))
-   if (numretain > 0) then
-      self%data(1:numretain) = tmp
-      deallocate(tmp)
-   endif
+      numretain = min(self%size, n)
+      if (numretain > 0) then
+         allocate(tmp(numretain))
+         tmp = self%data(1:numretain)
+      endif
+      deallocate(self%data)
+      allocate(self%data(n))
+      if (numretain > 0) then
+         self%data(1:numretain) = tmp
+         deallocate(tmp)
+      endif
 
-end subroutine
+   end subroutine
 
 
 
-subroutine IncreaseCapacity(self)
-   class(STD_TEMPLATE_CONTAINERNAME), intent(inout) :: self
+   subroutine IncreaseCapacity(self)
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
 
-   call self%changeCapacity(max(2 * self%Capacity(), 1))
+      call self%changeCapacity(max(2 * self%Capacity(), 1))
 
-end subroutine
+   end subroutine
 
+end module
