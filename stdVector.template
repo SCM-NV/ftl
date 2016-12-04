@@ -43,9 +43,7 @@ contains
    procedure, private :: AssignArray
    generic            :: assignment(=) => AssignArray ! TODO: fix generic interface
 
-#ifdef STD_TEMPLATE_TYPE_IS_PRINTABLE
    procedure          :: Print
-#endif
 
    ! ==> Capacity:
 
