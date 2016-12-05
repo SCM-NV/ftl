@@ -47,9 +47,11 @@ module stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Module
 
       procedure          :: Delete
 
-      procedure, private :: AssignArray
-      procedure, private :: AssignOther
-      generic            :: assignment(=) => AssignArray, AssignOther ! TODO: fix generic interface
+      ! TODO: Figure out what is going wrong and remove the workaround to get more reasonable procedure names ...
+      procedure, private :: AssignArray_workaround_stdVector/**/STD_TEMPLATE_TYPE_NAME
+      procedure, private :: AssignOther_workaround_stdVector/**/STD_TEMPLATE_TYPE_NAME
+      generic            :: assignment(=) => AssignArray_workaround_stdVector/**/STD_TEMPLATE_TYPE_NAME, &
+                                             AssignOther_workaround_stdVector/**/STD_TEMPLATE_TYPE_NAME
 
       procedure          :: Print
 
@@ -168,7 +170,7 @@ contains
 
    ! Assigns new contents to the container, replacing its current contents, and modifying its size accordingly.
    !
-   subroutine AssignArray(self, array)
+   subroutine AssignArray_workaround_stdVector/**/STD_TEMPLATE_TYPE_NAME(self, array)
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(out) :: self
       STD_TEMPLATE_TYPE                         , intent(in)  :: array(:)
 
@@ -177,7 +179,7 @@ contains
 
    end subroutine
    !
-   subroutine AssignOther(self, other)
+   subroutine AssignOther_workaround_stdVector/**/STD_TEMPLATE_TYPE_NAME(self, other)
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(out) :: self
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(in)  :: other
 
