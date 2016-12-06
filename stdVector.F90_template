@@ -39,8 +39,8 @@ module stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Module
    type stdVector/**/STD_TEMPLATE_TYPE_NAME
 
       integer                        :: size = 0
-      STD_TEMPLATE_TYPE, allocatable :: data(:)
-      STD_TEMPLATE_TYPE, pointer     :: ptr(:) => null()
+      STD_TEMPLATE_TYPE, allocatable :: storage(:)
+      STD_TEMPLATE_TYPE, pointer     :: data(:) => null()
 
    contains
 
@@ -101,7 +101,7 @@ module stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Module
 
    type stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator
 
-      STD_TEMPLATE_TYPE, pointer, private :: data(:) => null()
+      STD_TEMPLATE_TYPE, pointer, private :: storage(:) => null()
       integer                   , private :: index = 0
       STD_TEMPLATE_TYPE, pointer          :: value => null()
 
@@ -167,10 +167,10 @@ contains
 
       ! Constructs a vector as a copy of another vector.
 
-      allocate(self%data(other%size))
-      self%data = other%data(1:other%size)
+      allocate(self%storage(other%size))
+      self%storage = other%storage(1:other%size)
       self%size = other%size
-      self%ptr => self%data(1:self%size)
+      self%data => self%storage(1:self%size)
 
    end subroutine
    !
@@ -181,10 +181,10 @@ contains
 
       ! Constructs a container with n elements. Each element is a copy of val (if present).
 
-      allocate(self%data(n))
-      if (present(val)) self%data = val
+      allocate(self%storage(n))
+      if (present(val)) self%storage = val
       self%size = n
-      self%ptr => self%data(1:self%size)
+      self%data => self%storage(1:self%size)
 
    end subroutine
    !
@@ -194,10 +194,10 @@ contains
 
       ! Constructs a container with a copy of each of the elements in arr, in the same order.
 
-      allocate(self%data(size(array)))
-      self%data = array
+      allocate(self%storage(size(array)))
+      self%storage = array
       self%size = size(array)
-      self%ptr => self%data(1:self%size)
+      self%data => self%storage(1:self%size)
 
    end subroutine
 
@@ -206,7 +206,7 @@ contains
    subroutine Delete(self)
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(out) :: self
 
-      ! Nothing to do here: intent(out) will deallocate self%data and set self%size = 0
+      ! Nothing to do here: intent(out) will deallocate self%storage and set self%size = 0
 
    end subroutine
 
@@ -248,9 +248,9 @@ contains
       endif
 
       write(unit,*) 'size = ', self%size
-      write(unit,*) 'capacity = ', size(self%data)
+      write(unit,*) 'capacity = ', size(self%storage)
 #ifdef STD_TEMPLATE_TYPE_IS_PRINTABLE
-      write(unit,*) 'data = ', self%ptr
+      write(unit,*) 'data = ', self%data
 #else
       write(unit,*) 'data = [???] (unprintable type)'
 #endif
@@ -273,9 +273,9 @@ contains
    type(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator) function Begin(self)
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(in), target :: self
 
-      Begin%data  => self%data
+      Begin%storage => self%storage
       Begin%index = 1
-      Begin%value => self%data(1)
+      Begin%value => self%storage(1)
 
    end function
 
@@ -295,9 +295,9 @@ contains
    type(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator) function End(self)
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(in), target :: self
 
-      End%data  => self%data
+      End%storage => self%storage
       End%index = self%size + 1
-      End%value => self%data(self%size + 1)
+      End%value => self%storage(self%size + 1)
 
 
    end function
@@ -328,10 +328,10 @@ contains
       STD_TEMPLATE_TYPE                         , intent(in), optional  :: val
 
       if (n > self%Capacity()) call self%ChangeCapacity(n)
-      if (present(val) .and. n > self%size) self%data(self%size+1:n) = val
+      if (present(val) .and. n > self%size) self%storage(self%size+1:n) = val
       ! TODO: call destructor on removed elements when shrinking?
       self%size = n
-      self%ptr => self%data(1:self%size)
+      self%data => self%storage(1:self%size)
 
    end subroutine
 
@@ -350,8 +350,8 @@ contains
    pure integer function Capacity(self)
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(in) :: self
 
-      if (allocated(self%data)) then
-         Capacity = size(self%data)
+      if (allocated(self%storage)) then
+         Capacity = size(self%storage)
       else
          Capacity = 0
       endif
@@ -424,8 +424,8 @@ contains
 
       self%size = self%size + 1
       if (self%size > self%Capacity()) call self%IncreaseCapacity()
-      self%data(self%size) = val
-      self%ptr => self%data(1:self%size)
+      self%storage(self%size) = val
+      self%data => self%storage(1:self%size)
 
    end subroutine
 
@@ -439,8 +439,8 @@ contains
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout), target :: self
 
       self%size = self%size - 1
-      self%ptr => self%data(1:self%size)
-      PopBack = self%data(self%size+1)
+      self%data => self%storage(1:self%size)
+      PopBack = self%storage(self%size+1)
 
    end function
 
@@ -495,13 +495,13 @@ contains
       endif
 
       do i = self%size, position, -1
-         self%data(i+size(array)) = self%data(i)
+         self%storage(i+size(array)) = self%storage(i)
       enddo
 
-      self%data(position:position+size(array)-1) = array
+      self%storage(position:position+size(array)-1) = array
 
       self%size = self%size + size(array)
-      self%ptr => self%data(1:self%size)
+      self%data => self%storage(1:self%size)
 
    end subroutine
 
@@ -535,11 +535,11 @@ contains
 
       do i = first, last-1
          ! TODO: call destructor on removed elements?
-         self%data(i) = self%data(i+last-first)
+         self%storage(i) = self%storage(i+last-first)
       enddo
 
       self%size = self%size - (last-first)
-      self%ptr => self%data(1:self%size)
+      self%data => self%storage(1:self%size)
 
    end subroutine
 
@@ -567,17 +567,17 @@ contains
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
       integer                                   , intent(in)    :: n
 
-      STD_TEMPLATE_TYPE, allocatable :: newdata(:)
+      STD_TEMPLATE_TYPE, allocatable :: newstorage(:)
       integer :: numretain
 
       if (n == self%Capacity()) return
 
-      allocate(newdata(n))
+      allocate(newstorage(n))
 
       numretain = min(self%size, n)
-      newdata(1:numretain) = self%data(1:numretain)
+      newstorage(1:numretain) = self%storage(1:numretain)
 
-      call move_alloc(newdata, self%data)
+      call move_alloc(newstorage, self%storage)
 
    end subroutine
 
@@ -607,10 +607,9 @@ contains
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(out) :: self
       type (stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)  :: other
 
-      ! TODO: use auto-generated assignment operator?
-      self%data  => other%data
+      self%storage => other%storage
       self%index =  other%index
-      self%value => self%data(self%index)
+      self%value => self%storage(self%index)
 
    end subroutine
 
@@ -648,7 +647,7 @@ contains
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(inout) :: self
 
       self%index =  self%index + 1
-      self%value => self%data(self%index)
+      self%value => self%storage(self%index)
 
    end subroutine
    !
@@ -656,7 +655,7 @@ contains
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(inout) :: self
 
       self%index =  self%index - 1
-      self%value => self%data(self%index)
+      self%value => self%storage(self%index)
 
    end subroutine
 
@@ -669,7 +668,7 @@ contains
 
       call AdvanceN%New(self)
       AdvanceN%index =  AdvanceN%index + n
-      AdvanceN%value => AdvanceN%data(AdvanceN%index)
+      AdvanceN%value => AdvanceN%storage(AdvanceN%index)
 
    end function
    !
@@ -680,7 +679,7 @@ contains
 
       call ReverseN%New(self)
       ReverseN%index =  ReverseN%index - n
-      ReverseN%value => ReverseN%data(ReverseN%index)
+      ReverseN%value => ReverseN%storage(ReverseN%index)
 
    end function
 
@@ -690,7 +689,7 @@ contains
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: self
       type (stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: other
 
-      if (associated(self%data,other%data)) then
+      if (associated(self%storage,other%storage)) then
          DiffOther = self%index - other%index
       else
          DiffOther = huge(0)
@@ -708,7 +707,7 @@ contains
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: self
       type (stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: other
 
-      EqualOther = associated(self%data,other%data) .and. (self%index == other%index)
+      EqualOther = associated(self%storage,other%storage) .and. (self%index == other%index)
 
    end function
    !
@@ -716,7 +715,7 @@ contains
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: self
       type (stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: other
 
-      UnequalOther = .not.associated(self%data,other%data) .or. (self%index /= other%index)
+      UnequalOther = .not.associated(self%storage,other%storage) .or. (self%index /= other%index)
 
    end function
    !
@@ -724,7 +723,7 @@ contains
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: self
       type (stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: other
 
-      SmallerOther = associated(self%data,other%data) .and. (self%index < other%index)
+      SmallerOther = associated(self%storage,other%storage) .and. (self%index < other%index)
 
    end function
    !
@@ -732,7 +731,7 @@ contains
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: self
       type (stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: other
 
-      SmallerEqualOther = associated(self%data,other%data) .and. (self%index <= other%index)
+      SmallerEqualOther = associated(self%storage,other%storage) .and. (self%index <= other%index)
 
    end function
    !
@@ -740,7 +739,7 @@ contains
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: self
       type (stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: other
 
-      GreaterOther = associated(self%data,other%data) .and. (self%index > other%index)
+      GreaterOther = associated(self%storage,other%storage) .and. (self%index > other%index)
 
    end function
    !
@@ -748,7 +747,7 @@ contains
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: self
       type (stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: other
 
-      GreaterEqualOther = associated(self%data,other%data) .and. (self%index >= other%index)
+      GreaterEqualOther = associated(self%storage,other%storage) .and. (self%index >= other%index)
 
    end function
 

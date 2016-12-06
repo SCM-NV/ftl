@@ -7,15 +7,28 @@ program stdVectorTest
 
    type(stdVectorInt) :: a
    type(stdVectorIntIterator) :: i
+   integer :: blub
 
    call a%New()
    a = [5,5,76,3]
-   call a%Insert(2, [1,1,1])
+   i = a%Begin() + 2
+   call a%Insert(2, [100,101,102])
+   call a%PushBack(4)
+   call a%PushBack(8)
+   call a%PushBack(-4)
+   call a%PushBack(4)
+   call a%PushBack(-6)
+   call a%PushBack(7)
+   call a%PushBack(1)
+   call a%PushBack(1)
+   call a%PushBack(6)
+   call a%PushBack(-1)
+   blub = a%PopBack()
    call a%Print()
-   write (*,*) 'sizes = ', a%size, size(a%data), size(a%ptr)
+   write (*,*) 'sizes = ', a%size, size(a%storage), size(a%data)
 
-   i = a%Begin() + 4
-   write (*,*) i%value
-
+   call i%Print()
+   i = a%Begin() + 2
+   call i%Print()
 
 end program
