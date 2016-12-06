@@ -567,22 +567,17 @@ contains
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
       integer                                   , intent(in)    :: n
 
+      STD_TEMPLATE_TYPE, allocatable :: newdata(:)
       integer :: numretain
-      STD_TEMPLATE_TYPE, allocatable :: tmp(:)
 
       if (n == self%Capacity()) return
 
+      allocate(newdata(n))
+
       numretain = min(self%size, n)
-      if (numretain > 0) then
-         allocate(tmp(numretain))
-         tmp = self%data(1:numretain)
-      endif
-      deallocate(self%data)
-      allocate(self%data(n))
-      if (numretain > 0) then
-         self%data(1:numretain) = tmp
-         deallocate(tmp)
-      endif
+      newdata(1:numretain) = self%data(1:numretain)
+
+      call move_alloc(newdata, self%data)
 
    end subroutine
 
