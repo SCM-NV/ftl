@@ -210,7 +210,7 @@ contains
    subroutine Delete(self)
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(out) :: self
 
-      ! Nothing to do here: intent(out) will deallocate self%storage and set self%size = 0
+      ! Nothing to do here: intent(out) will deallocate self%storage and reset self%size and self%data
 
    end subroutine
 
