@@ -5,8 +5,8 @@ program stdVectorTest
 
    implicit none
 
-   type(stdVectorInt) :: a, b
-   type(stdVectorIntIterator) :: i,j
+   type(stdVectorInt) :: a
+   type(stdVectorIntIterator) :: i
 
    call a%New()
    a = [5,5,76,3]
