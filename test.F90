@@ -5,8 +5,8 @@ program stdVectorTest
 
    implicit none
 
-   type(stdVectorInt) :: a
-   type(stdVectorIntIterator) :: i
+   type(stdVectorInt) :: a,b
+   type(stdVectorIntIterator) :: i,j
    integer :: blub
 
    call a%New()
@@ -29,6 +29,9 @@ program stdVectorTest
 
    call i%Print()
    i = a%Begin() + 2
-   call i%Print()
+   j = i
+   call j%Print()
+
+   b = a
 
 end program
