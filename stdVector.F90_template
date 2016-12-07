@@ -38,6 +38,8 @@ module stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Module
       integer                        :: size = 0
       STD_TEMPLATE_TYPE, allocatable :: storage(:)
       STD_TEMPLATE_TYPE, pointer     :: data(:) => null()
+      STD_TEMPLATE_TYPE, pointer     :: front => null()
+      STD_TEMPLATE_TYPE, pointer     :: back => null()
 
    contains
 
@@ -77,6 +79,7 @@ module stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Module
 
       procedure, private :: ChangeCapacity
       procedure, private :: IncreaseCapacity
+      procedure, private :: FixValuePtrs
 
    end type
 
@@ -166,20 +169,20 @@ contains
    end subroutine
    !
    subroutine NewCopyOther(self, other)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(out), target :: self
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(in)          :: other
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(out) :: self
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(in)  :: other
 
       ! Constructs a vector as a copy of another vector.
 
       allocate(self%storage(other%size))
       self%storage = other%storage(1:other%size)
       self%size = other%size
-      self%data => self%storage(1:self%size)
+      call self%FixValuePtrs()
 
    end subroutine
    !
    subroutine NewFill(self, n, val)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(out), target  :: self
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(out)          :: self
       integer                                   , intent(in)           :: n
       STD_TEMPLATE_TYPE                         , intent(in), optional :: val
 
@@ -188,20 +191,20 @@ contains
       allocate(self%storage(n))
       if (present(val)) self%storage = val
       self%size = n
-      self%data => self%storage(1:self%size)
+      call self%FixValuePtrs()
 
    end subroutine
    !
    subroutine NewFromArray(self, array)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(out), target :: self
-      STD_TEMPLATE_TYPE                         , intent(in)          :: array(:)
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(out) :: self
+      STD_TEMPLATE_TYPE                         , intent(in)  :: array(:)
 
       ! Constructs a container with a copy of each of the elements in arr, in the same order.
 
       allocate(self%storage(size(array)))
       self%storage = array
       self%size = size(array)
-      self%data => self%storage(1:self%size)
+      call self%FixValuePtrs()
 
    end subroutine
 
@@ -255,8 +258,12 @@ contains
       write(unit,*) 'capacity = ', size(self%storage)
 #ifdef STD_TEMPLATE_TYPE_IS_PRINTABLE
       write(unit,*) 'data = ', self%data
+      write(unit,*) 'front = ', self%front
+      write(unit,*) 'back = ', self%back
 #else
       write(unit,*) 'data = [???] (unprintable type)'
+      write(unit,*) 'front = [???] (unprintable type)'
+      write(unit,*) 'back = [???] (unprintable type)'
 #endif
 
    end subroutine
@@ -303,7 +310,6 @@ contains
       End%index = self%size + 1
       End%value => self%storage(self%size + 1)
 
-
    end function
 
 
@@ -327,15 +333,17 @@ contains
    ! Notice that this function changes the actual content of the container by inserting or erasing elements from it.
    !
    subroutine Resize(self, n, val)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout), target :: self
-      integer                                   , intent(in)            :: n
-      STD_TEMPLATE_TYPE                         , intent(in), optional  :: val
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout)        :: self
+      integer                                   , intent(in)           :: n
+      STD_TEMPLATE_TYPE                         , intent(in), optional :: val
+
+      if (n == self%size) return
 
       if (n > self%Capacity()) call self%ChangeCapacity(n)
       if (present(val) .and. n > self%size) self%storage(self%size+1:n) = val
       ! TODO: call destructor on removed elements when shrinking?
       self%size = n
-      self%data => self%storage(1:self%size)
+      call self%FixValuePtrs()
 
    end subroutine
 
@@ -423,13 +431,13 @@ contains
    ! space if -and only if- the new vector size surpasses the current vector capacity.
    !
    subroutine PushBack(self, val)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout), target :: self
-      STD_TEMPLATE_TYPE                         , intent(in)            :: val
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
+      STD_TEMPLATE_TYPE                         , intent(in)    :: val
 
       self%size = self%size + 1
       if (self%size > self%Capacity()) call self%IncreaseCapacity()
       self%storage(self%size) = val
-      self%data => self%storage(1:self%size)
+      call self%FixValuePtrs()
 
    end subroutine
 
@@ -440,11 +448,11 @@ contains
    ! This destroys the removed element.
    !
    STD_TEMPLATE_TYPE function PopBack(self)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout), target :: self
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
 
+      PopBack = self%storage(self%size)
       self%size = self%size - 1
-      self%data => self%storage(1:self%size)
-      PopBack = self%storage(self%size+1)
+      call self%FixValuePtrs()
 
    end function
 
@@ -484,9 +492,9 @@ contains
    end subroutine
    !
    subroutine InsertArray(self, position, array)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout), target :: self
-      integer                                   , intent(in)            :: position
-      STD_TEMPLATE_TYPE                         , intent(in)            :: array(:)
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
+      integer                                   , intent(in)    :: position
+      STD_TEMPLATE_TYPE                         , intent(in)    :: array(:)
 
       integer :: i
 
@@ -505,7 +513,7 @@ contains
       self%storage(position:position+size(array)-1) = array
 
       self%size = self%size + size(array)
-      self%data => self%storage(1:self%size)
+      call self%FixValuePtrs()
 
    end subroutine
 
@@ -529,9 +537,9 @@ contains
    end subroutine
    !
    subroutine EraseRange(self, first, last)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout), target :: self
-      integer                                   , intent(in)            :: first
-      integer                                   , intent(in)            :: last
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
+      integer                                   , intent(in)    :: first
+      integer                                   , intent(in)    :: last
 
       integer :: i
 
@@ -543,7 +551,7 @@ contains
       enddo
 
       self%size = self%size - (last-first)
-      self%data => self%storage(1:self%size)
+      call self%FixValuePtrs()
 
    end subroutine
 
@@ -564,6 +572,17 @@ contains
 
 
    ! =============> Internal methods:
+
+
+
+   subroutine FixValuePtrs(self)
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout), target :: self
+
+      self%data => self%storage(1:self%size)
+      self%front => self%storage(1)
+      self%back => self%storage(self%size)
+
+   end subroutine
 
 
 
