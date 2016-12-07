@@ -25,7 +25,7 @@ program stdVectorTest
    call a%PushBack(-1)
    blub = a%PopBack()
    call a%Print()
-   write (*,*) 'sizes = ', a%size, size(a%storage), size(a%data)
+   write (*,*) 'sizes = ', a%size(), size(a%data), size(a)
 
    call i%Print()
    i = a%Begin() + 2

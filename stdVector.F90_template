@@ -35,53 +35,63 @@ module stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Module
 
    type, public :: stdVector/**/STD_TEMPLATE_TYPE_NAME
 
-      integer                        :: size = 0
-      STD_TEMPLATE_TYPE, allocatable :: storage(:)
-      STD_TEMPLATE_TYPE, pointer     :: data(:) => null()
-      STD_TEMPLATE_TYPE, pointer     :: front => null()
-      STD_TEMPLATE_TYPE, pointer     :: back => null()
+   private
+
+      integer                                :: psize = 0
+      STD_TEMPLATE_TYPE, allocatable         :: storage(:)
+      STD_TEMPLATE_TYPE, pointer    , public :: data(:) => null()
+      STD_TEMPLATE_TYPE, pointer    , public :: front => null()
+      STD_TEMPLATE_TYPE, pointer    , public :: back => null()
 
    contains
 
-      procedure, private :: NewDefault
-      procedure, private :: NewCopyOther
-      procedure, private :: NewFill
-      procedure, private :: NewFromArray
-      generic            :: New => NewDefault, NewCopyOther, NewFill, NewFromArray
+      procedure          :: NewDefault
+      procedure          :: NewCopyOther
+      procedure          :: NewFill
+      procedure          :: NewFromArray
+      generic  , public  :: New => NewDefault, NewCopyOther, NewFill, NewFromArray
 
-      procedure          :: Delete
+      procedure, public  :: Delete
 
-      procedure, private :: PrintVector
-      generic            :: Print => PrintVector
+      procedure          :: PrintVector
+      generic  , public  :: Print => PrintVector
 
-      procedure          :: Begin
-      procedure          :: End
+      procedure, public  :: Begin
+      procedure, public  :: End
 
-      procedure          :: Resize
-      procedure          :: Capacity
-      procedure          :: Empty
-      procedure          :: Reserve
-      procedure          :: ShrinkToFit
+      procedure          :: SizeVector
+      generic  , public  :: Size => SizeVector
+
+      procedure, public  :: Resize
+      procedure, public  :: Capacity
+      procedure, public  :: Empty
+      procedure, public  :: Reserve
+      procedure, public  :: ShrinkToFit
 
       procedure          :: PushBack
       procedure          :: PopBack
 
-      procedure, private :: InsertSingle
-      procedure, private :: InsertFill
-      procedure, private :: InsertArray
-      generic            :: Insert => InsertSingle, InsertFill, InsertArray
+      procedure          :: InsertSingle
+      procedure          :: InsertFill
+      procedure          :: InsertArray
+      generic  , public  :: Insert => InsertSingle, InsertFill, InsertArray
 
-      procedure, private :: EraseSingle
-      procedure, private :: EraseRange
-      generic            :: Erase => EraseSingle, EraseRange
+      procedure          :: EraseSingle
+      procedure          :: EraseRange
+      generic  , public  :: Erase => EraseSingle, EraseRange
 
-      procedure          :: Clear
+      procedure, public  :: Clear
 
-      procedure, private :: ChangeCapacity
-      procedure, private :: IncreaseCapacity
-      procedure, private :: FixValuePtrs
+      procedure          :: ChangeCapacity
+      procedure          :: IncreaseCapacity
+      procedure          :: FixValuePtrs
 
    end type
+
+   public :: Size
+   interface Size
+      module procedure SizeVector
+   end interface
 
    public :: assignment(=)
    interface assignment(=)
@@ -93,21 +103,23 @@ module stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Module
 
    type, public :: stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator
 
-      STD_TEMPLATE_TYPE, pointer, private :: storage(:) => null()
-      integer                   , private :: index = 0
-      STD_TEMPLATE_TYPE, pointer          :: value => null()
+   private
+
+      STD_TEMPLATE_TYPE, pointer         :: storage(:) => null()
+      integer                            :: index = 0
+      STD_TEMPLATE_TYPE, pointer, public :: value => null()
 
    contains
 
-      procedure, private :: NewItDefault
-      procedure, private :: NewItCopyOther
-      generic            :: New => NewItDefault, NewItCopyOther
+      procedure         :: NewItDefault
+      procedure         :: NewItCopyOther
+      generic  , public :: New => NewItDefault, NewItCopyOther
 
-      procedure, private :: PrintIt
-      generic            :: Print => PrintIt
+      procedure         :: PrintIt
+      generic  , public :: Print => PrintIt
 
-      procedure          :: Inc
-      procedure          :: Dec
+      procedure, public :: Inc
+      procedure, public :: Dec
 
    end type
 
@@ -174,9 +186,9 @@ contains
 
       ! Constructs a vector as a copy of another vector.
 
-      allocate(self%storage(other%size))
-      self%storage = other%storage(1:other%size)
-      self%size = other%size
+      allocate(self%storage(other%psize))
+      self%storage = other%storage(1:other%psize)
+      self%psize = other%psize
       call self%FixValuePtrs()
 
    end subroutine
@@ -190,7 +202,7 @@ contains
 
       allocate(self%storage(n))
       if (present(val)) self%storage = val
-      self%size = n
+      self%psize = n
       call self%FixValuePtrs()
 
    end subroutine
@@ -203,7 +215,7 @@ contains
 
       allocate(self%storage(size(array)))
       self%storage = array
-      self%size = size(array)
+      self%psize = size(array)
       call self%FixValuePtrs()
 
    end subroutine
@@ -213,7 +225,7 @@ contains
    subroutine Delete(self)
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(out) :: self
 
-      ! Nothing to do here: intent(out) will deallocate self%storage and reset self%size and self%data
+      ! Nothing to do here: intent(out) will deallocate self%storage and reset self%psize and self%data
 
    end subroutine
 
@@ -254,7 +266,7 @@ contains
          unit = output_unit
       endif
 
-      write(unit,*) 'size = ', self%size
+      write(unit,*) 'size = ', self%psize
       write(unit,*) 'capacity = ', size(self%storage)
 #ifdef STD_TEMPLATE_TYPE_IS_PRINTABLE
       write(unit,*) 'data = ', self%data
@@ -307,8 +319,8 @@ contains
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(in), target :: self
 
       End%storage => self%storage
-      End%index = self%size + 1
-      End%value => self%storage(self%size + 1)
+      End%index = self%psize + 1
+      End%value => self%storage(self%psize + 1)
 
    end function
 
@@ -316,6 +328,18 @@ contains
 
    ! =============> Capacity:
 
+
+
+   ! Returns the number of elements in the vector.
+   !
+   ! This is the number of actual objects held in the vector, which is not necessarily equal to its storage capacity.
+   !
+   pure integer function SizeVector(self) result(Size)
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(in) :: self
+
+      Size = self%psize
+
+   end function
 
 
    ! Resizes the container so that it contains n elements.
@@ -337,12 +361,12 @@ contains
       integer                                   , intent(in)           :: n
       STD_TEMPLATE_TYPE                         , intent(in), optional :: val
 
-      if (n == self%size) return
+      if (n == self%psize) return
 
       if (n > self%Capacity()) call self%ChangeCapacity(n)
-      if (present(val) .and. n > self%size) self%storage(self%size+1:n) = val
+      if (present(val) .and. n > self%psize) self%storage(self%psize+1:n) = val
       ! TODO: call destructor on removed elements when shrinking?
-      self%size = n
+      self%psize = n
       call self%FixValuePtrs()
 
    end subroutine
@@ -379,7 +403,7 @@ contains
    pure logical function Empty(self)
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(in) :: self
 
-      Empty = (self%size == 0)
+      Empty = (self%psize == 0)
 
    end function
 
@@ -414,7 +438,7 @@ contains
    subroutine ShrinkToFit(self)
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
 
-      call self%ChangeCapacity(self%size)
+      call self%ChangeCapacity(self%psize)
 
    end subroutine
 
@@ -434,9 +458,9 @@ contains
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
       STD_TEMPLATE_TYPE                         , intent(in)    :: val
 
-      self%size = self%size + 1
-      if (self%size > self%Capacity()) call self%IncreaseCapacity()
-      self%storage(self%size) = val
+      self%psize = self%psize + 1
+      if (self%psize > self%Capacity()) call self%IncreaseCapacity()
+      self%storage(self%psize) = val
       call self%FixValuePtrs()
 
    end subroutine
@@ -450,8 +474,8 @@ contains
    STD_TEMPLATE_TYPE function PopBack(self)
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
 
-      PopBack = self%storage(self%size)
-      self%size = self%size - 1
+      PopBack = self%storage(self%psize)
+      self%psize = self%psize - 1
       call self%FixValuePtrs()
 
    end function
@@ -500,19 +524,19 @@ contains
 
       if (size(array) == 0) return
 
-      if (self%size + size(array) > 2 * self%Capacity()) then
-         call self%ChangeCapacity(self%size + size(array))
-      elseif (self%size + size(array) > self%Capacity()) then
+      if (self%psize + size(array) > 2 * self%Capacity()) then
+         call self%ChangeCapacity(self%psize + size(array))
+      elseif (self%psize + size(array) > self%Capacity()) then
          call self%IncreaseCapacity()
       endif
 
-      do i = self%size, position, -1
+      do i = self%psize, position, -1
          self%storage(i+size(array)) = self%storage(i)
       enddo
 
       self%storage(position:position+size(array)-1) = array
 
-      self%size = self%size + size(array)
+      self%psize = self%psize + size(array)
       call self%FixValuePtrs()
 
    end subroutine
@@ -550,7 +574,7 @@ contains
          self%storage(i) = self%storage(i+last-first)
       enddo
 
-      self%size = self%size - (last-first)
+      self%psize = self%psize - (last-first)
       call self%FixValuePtrs()
 
    end subroutine
@@ -565,7 +589,7 @@ contains
    subroutine Clear(self)
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
 
-      call self%EraseRange(1, self%size+1)
+      call self%EraseRange(1, self%psize+1)
 
    end subroutine
 
@@ -578,9 +602,9 @@ contains
    subroutine FixValuePtrs(self)
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout), target :: self
 
-      self%data => self%storage(1:self%size)
+      self%data => self%storage(1:self%psize)
       self%front => self%storage(1)
-      self%back => self%storage(self%size)
+      self%back => self%storage(self%psize)
 
    end subroutine
 
@@ -597,7 +621,7 @@ contains
 
       allocate(newstorage(n))
 
-      numretain = min(self%size, n)
+      numretain = min(self%psize, n)
       newstorage(1:numretain) = self%storage(1:numretain)
 
       call move_alloc(newstorage, self%storage)
