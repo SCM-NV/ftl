@@ -1,3 +1,2 @@
-*.mod
 *.swp
-test
+build/
