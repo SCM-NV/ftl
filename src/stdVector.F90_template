@@ -28,6 +28,10 @@
 
 module stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Module
 
+#ifdef STD_TEMPLATE_TYPE_MODULE
+   use STD_TEMPLATE_TYPE_MODULE
+#endif
+
    implicit none
    private
 
