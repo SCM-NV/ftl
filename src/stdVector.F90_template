@@ -49,46 +49,46 @@ module stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Module
 
    contains
 
-      procedure          :: NewDefault
-      procedure          :: NewCopyOther
-      procedure          :: NewFill
-      procedure          :: NewFromArray
-      generic  , public  :: New => NewDefault, NewCopyOther, NewFill, NewFromArray
+      procedure         :: NewDefault
+      procedure         :: NewCopyOther
+      procedure         :: NewFill
+      procedure         :: NewFromArray
+      generic  , public :: New => NewDefault, NewCopyOther, NewFill, NewFromArray
 
-      procedure, public  :: Delete
+      procedure, public :: Delete
 
-      procedure          :: PrintVector
-      generic  , public  :: Print => PrintVector
+      procedure         :: PrintVector
+      generic  , public :: Print => PrintVector
 
-      procedure, public  :: Begin
-      procedure, public  :: End
+      procedure, public :: Begin
+      procedure, public :: End
 
-      procedure          :: SizeVector
-      generic  , public  :: Size => SizeVector
+      procedure         :: SizeVector
+      generic  , public :: Size => SizeVector
 
-      procedure, public  :: Resize
-      procedure, public  :: Capacity
-      procedure, public  :: Empty
-      procedure, public  :: Reserve
-      procedure, public  :: ShrinkToFit
+      procedure, public :: Resize
+      procedure, public :: Capacity
+      procedure, public :: Empty
+      procedure, public :: Reserve
+      procedure, public :: ShrinkToFit
 
-      procedure          :: PushBack
-      procedure          :: PopBack
+      procedure         :: PushBack
+      procedure         :: PopBack
 
-      procedure          :: InsertSingle
-      procedure          :: InsertFill
-      procedure          :: InsertArray
-      generic  , public  :: Insert => InsertSingle, InsertFill, InsertArray
+      procedure         :: InsertSingle
+      procedure         :: InsertFill
+      procedure         :: InsertArray
+      generic  , public :: Insert => InsertSingle, InsertFill, InsertArray
 
-      procedure          :: EraseSingle
-      procedure          :: EraseRange
-      generic  , public  :: Erase => EraseSingle, EraseRange
+      procedure         :: EraseSingle
+      procedure         :: EraseRange
+      generic  , public :: Erase => EraseSingle, EraseRange
 
-      procedure, public  :: Clear
+      procedure, public :: Clear
 
-      procedure          :: ChangeCapacity
-      procedure          :: IncreaseCapacity
-      procedure          :: FixValuePtrs
+      procedure         :: ChangeCapacity
+      procedure         :: IncreaseCapacity
+      procedure         :: FixValuePtrs
 
    end type
 
@@ -181,6 +181,9 @@ contains
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(out) :: self
 
       ! Constructs an empty vector, with no elements.
+
+      allocate(self%storage(0))
+      call self%FixValuePtrs()
 
    end subroutine
    !

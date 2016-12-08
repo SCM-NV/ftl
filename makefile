@@ -4,8 +4,8 @@ MAKEFLAGS += --no-builtin-rules
 
 BUILDDIR = build
 COMPILER = gfortran
-FLAGS    = -std=f2003 -Wall -Wextra -Wpedantic -Wno-target-lifetime -g -J$(BUILDDIR)
-INCLUDES = -Isrc
+FLAGS    = -std=f2003 -ffree-line-length-none -Wall -Wextra -Wpedantic -Wno-target-lifetime -g -J$(BUILDDIR)
+INCLUDES = -Isrc -Itests
 
 tests: $(BUILDDIR)/tests
 	./$(BUILDDIR)/$@
@@ -13,13 +13,16 @@ tests: $(BUILDDIR)/tests
 $(BUILDDIR):
 	mkdir $(BUILDDIR)
 
-$(BUILDDIR)/tests: tests/tests.F90 $(BUILDDIR)/stdVectorInt.o $(BUILDDIR)/stdVectorReal.o | $(BUILDDIR)
-	$(COMPILER) $(FLAGS) $(INCLUDES) $^ -o $@
+$(BUILDDIR)/tests: tests/tests.F90 $(BUILDDIR)/stdTestTools.o $(BUILDDIR)/stdVectorTests.o | $(BUILDDIR)
+	$(COMPILER) $(FLAGS) $(INCLUDES) $< $(BUILDDIR)/*.o -o $@
 
-$(BUILDDIR)/stdVectorInt.o: tests/instantiations/stdVectorInt.F90 src/stdVector.F90_template | $(BUILDDIR)
+$(BUILDDIR)/stdTestTools.o: tests/stdTestTools.F90 tests/stdTestTools.inc | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
 
-$(BUILDDIR)/stdVectorReal.o: tests/instantiations/stdVectorReal.F90 src/stdVector.F90_template | $(BUILDDIR)
+$(BUILDDIR)/stdVectorTests.o: tests/stdVectorTests.F90 $(BUILDDIR)/stdVectorInt.o | $(BUILDDIR)
+	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
+
+$(BUILDDIR)/stdVectorInt.o: tests/instantiations/stdVectorInt.F90 src/stdVector.F90_template | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
 
 clean:
