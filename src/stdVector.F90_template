@@ -109,9 +109,9 @@ module stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Module
 
    private
 
-      type(stdVector/**/STD_TEMPLATE_TYPE_NAME), pointer         :: vector => null()
-      integer                                                    :: index = 0
-      STD_TEMPLATE_TYPE                        , pointer, public :: value => null()
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), pointer         :: vector => null()
+      integer                                                     :: index = 0
+      STD_TEMPLATE_TYPE                         , pointer, public :: value => null()
 
    contains
 
@@ -241,7 +241,7 @@ contains
    ! Assigns new contents to the container, replacing its current contents, and modifying its size accordingly.
    !
    subroutine AssignArray(self, array)
-      type(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(out) :: self
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(out) :: self
       STD_TEMPLATE_TYPE                         , intent(in)  :: array(:)
 
       ! TODO: more efficient implementation
@@ -250,8 +250,8 @@ contains
    end subroutine
    !
    subroutine AssignOther(self, other)
-      type(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(out) :: self
-      type(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(in)  :: other
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(out) :: self
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(in)  :: other
 
       ! TODO: more efficient implementation
       call self%NewCopyOther(other)
@@ -661,7 +661,7 @@ contains
    !
    subroutine NewItCopyOther(self, other)
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(out) :: self
-      type (stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)  :: other
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)  :: other
 
       self%vector => other%vector
       self%index =  other%index
@@ -741,7 +741,7 @@ contains
 
    pure integer function DiffOther(self, other)
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: self
-      type (stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: other
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: other
 
       if (associated(self%vector,other%vector)) then
          DiffOther = self%index - other%index
@@ -759,7 +759,7 @@ contains
 
    pure logical function EqualOther(self, other)
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: self
-      type (stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: other
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: other
 
       EqualOther = associated(self%vector,other%vector) .and. (self%index == other%index)
 
@@ -767,7 +767,7 @@ contains
    !
    pure logical function UnequalOther(self, other)
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: self
-      type (stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: other
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: other
 
       UnequalOther = .not.associated(self%vector,other%vector) .or. (self%index /= other%index)
 
@@ -775,7 +775,7 @@ contains
    !
    pure logical function SmallerOther(self, other)
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: self
-      type (stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: other
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: other
 
       SmallerOther = associated(self%vector,other%vector) .and. (self%index < other%index)
 
@@ -783,7 +783,7 @@ contains
    !
    pure logical function SmallerEqualOther(self, other)
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: self
-      type (stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: other
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: other
 
       SmallerEqualOther = associated(self%vector,other%vector) .and. (self%index <= other%index)
 
@@ -791,7 +791,7 @@ contains
    !
    pure logical function GreaterOther(self, other)
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: self
-      type (stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: other
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: other
 
       GreaterOther = associated(self%vector,other%vector) .and. (self%index > other%index)
 
@@ -799,7 +799,7 @@ contains
    !
    pure logical function GreaterEqualOther(self, other)
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: self
-      type (stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: other
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: other
 
       GreaterEqualOther = associated(self%vector,other%vector) .and. (self%index >= other%index)
 
