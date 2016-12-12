@@ -1,5 +1,4 @@
 #define STD_TEMPLATE_TYPE type(SingleOrbitalTransitionType)
 #define STD_TEMPLATE_TYPE_NAME SingleOrbitalTransition
 #define STD_TEMPLATE_TYPE_MODULE SingleOrbitalTransitionModule
-#define STD_TEMPLATE_TYPE_IS_PRINTABLE
 #include "stdVector.F90_template"

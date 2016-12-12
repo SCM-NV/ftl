@@ -1,0 +1,392 @@
+! Lists are sequence containers that allow constant time insert and erase operations anywhere within the sequence, and
+! iteration in both directions.
+!
+! List containers are implemented as doubly-linked lists; Doubly linked lists can store each of the elements they contain
+! in different and unrelated storage locations. The ordering is kept internally by the association to each element of a
+! link to the element preceding it and a link to the element following it.
+!
+! They are very similar to forward_list: The main difference being that forward_list objects are single-linked lists, and
+! thus they can only be iterated forwards, in exchange for being somewhat smaller and more efficient.
+!
+! Compared to other base standard sequence containers (array, vector and deque), lists perform generally better in
+! Cinserting, extracting and moving elements in any position within the container for which an iterator has already been
+! Cobtained, and therefore also in algorithms that make intensive use of these, like sorting algorithms.
+!
+! The main drawback of lists and forward_lists compared to these other sequence containers is that they lack direct access
+! to the elements by their position; For example, to access the sixth element in a list, one has to iterate from a known
+! position (like the beginning or the end) to that position, which takes linear time in the distance between these. They
+! also consume some extra memory to keep the linking information associated to each element (which may be an important
+! factor for large lists of small-sized elements).
+
+#define STD_CONTAINER_PROVIDES_BIDIRECTIONAL_ITERATOR
+
+
+module stdList/**/STD_TEMPLATE_TYPE_NAME/**/Module
+
+#ifdef STD_TEMPLATE_TYPE_MODULE
+   use STD_TEMPLATE_TYPE_MODULE
+#endif
+
+   implicit none
+   private
+
+
+! ====== Type of the stdList container itself ====================================================================================
+
+   type :: ListNode
+      type(ListNode)   , pointer :: prev => null()
+      type(ListNode)   , pointer :: next => null()
+      STD_TEMPLATE_TYPE          :: data
+   end type
+
+   type, public :: stdList/**/STD_TEMPLATE_TYPE_NAME
+
+   private
+
+      integer                            :: psize = 0
+      type(ListNode)   , pointer         :: first => null()
+      type(ListNode)   , pointer         :: last => null()
+      STD_TEMPLATE_TYPE, pointer, public :: front => null()
+      STD_TEMPLATE_TYPE, pointer, public :: back => null()
+
+   contains
+
+      procedure         :: NewDefault
+      procedure         :: NewCopyOther
+      procedure         :: NewFill
+      procedure         :: NewFromArray
+      generic  , public :: New => NewDefault, NewCopyOther, NewFill, NewFromArray
+
+      procedure, public :: Delete
+
+      procedure, public :: Begin
+      procedure, public :: End
+
+      procedure         :: SizeList
+      generic  , public :: Size => SizeList
+
+      procedure, public :: Empty
+
+      procedure         :: PushBack
+      procedure         :: PopBack
+
+   end type
+
+   public :: Size
+   interface Size
+      module procedure SizeList
+   end interface
+
+
+! ====== Type of an iterator over a stdList container ============================================================================
+
+   type, public :: stdList/**/STD_TEMPLATE_TYPE_NAME/**/Iterator
+
+   private
+
+      class(stdList/**/STD_TEMPLATE_TYPE_NAME), pointer         :: list => null()
+      type(ListNode)                          , pointer         :: node => null()
+      STD_TEMPLATE_TYPE                       , pointer, public :: value => null()
+
+   contains
+
+      procedure         :: NewItDefault
+      procedure         :: NewItCopyOther
+      generic  , public :: New => NewItDefault, NewItCopyOther
+
+      procedure, public :: Inc
+      procedure, public :: Dec
+
+   end type
+
+   public :: operator(==)
+   interface operator(==)
+      module procedure EqualOther
+   end interface
+
+   public :: operator(/=)
+   interface operator(/=)
+      module procedure UnequalOther
+   end interface
+
+
+contains
+
+
+
+! ====== Implementation of stdList methods =======================================================================================
+
+
+   ! Constructs a list container object, initializing its contents depending on the constructor version used:
+   !
+   subroutine NewDefault(self)
+      class(stdList/**/STD_TEMPLATE_TYPE_NAME), intent(out) :: self
+
+      ! Constructs an empty list, with no elements.
+
+   end subroutine
+   !
+   subroutine NewCopyOther(self, other)
+      class(stdList/**/STD_TEMPLATE_TYPE_NAME), intent(out) :: self
+      class(stdList/**/STD_TEMPLATE_TYPE_NAME), intent(in)  :: other
+
+      type(stdList/**/STD_TEMPLATE_TYPE_NAME/**/Iterator) :: it
+
+      ! Constructs a list as a copy of another list.
+
+      it = other%Begin()
+      do while (it /= other%End())
+         call self%PushBack(it%value)
+         call it%Inc()
+      enddo
+
+   end subroutine
+   !
+   subroutine NewFill(self, n, val)
+      class(stdList/**/STD_TEMPLATE_TYPE_NAME), intent(out)          :: self
+      integer                                 , intent(in)           :: n
+      STD_TEMPLATE_TYPE                       , intent(in), optional :: val
+
+      ! Constructs a container with n elements. Each element is a copy of val (if present).
+
+      integer :: i
+
+      do i = 1, n
+         call self%PushBack(val)
+      enddo
+
+   end subroutine
+   !
+   subroutine NewFromArray(self, array)
+      class(stdList/**/STD_TEMPLATE_TYPE_NAME), intent(out) :: self
+      STD_TEMPLATE_TYPE                       , intent(in)  :: array(:)
+
+      ! Constructs a container with a copy of each of the elements in array, in the same order.
+
+      integer :: i
+
+      do i = 1, size(array)
+         call self%PushBack(array(i))
+      enddo
+
+   end subroutine
+
+
+
+   subroutine Delete(self)
+      class(stdList/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
+
+      if (self%psize /= 0) then
+         do while (self%psize > 1)
+            self%last => self%last%prev
+            deallocate(self%last%next)
+         enddo
+         deallocate(self%last)
+      endif
+
+      self%psize = 0
+      nullify(self%first)
+      nullify(self%last)
+      nullify(self%front)
+      nullify(self%back)
+
+   end subroutine
+
+
+
+   ! =============> Iterators:
+
+
+   ! Returns an iterator pointing to the first element in the list container.
+   !
+   ! Notice that, unlike member list%front, which returns a reference to the first element, this function returns a bidirectional
+   ! iterator pointing to it.
+   !
+   ! If the container is empty, the returned iterator value shall not be dereferenced.
+   !
+   type(stdList/**/STD_TEMPLATE_TYPE_NAME/**/Iterator) function Begin(self)
+      class(stdList/**/STD_TEMPLATE_TYPE_NAME), intent(in), target :: self
+
+      Begin%list => self
+      if (.not.self%Empty()) then
+         Begin%node => self%first
+         Begin%value => self%first%data
+      endif
+
+   end function
+
+
+   ! Returns an iterator referring to the past-the-end element in the list container.
+   !
+   ! The past-the-end element is the theoretical element that would follow the last element in the list container. It does
+   ! not point to any element, and thus shall not be dereferenced.
+   !
+   ! Because the ranges used by functions of the standard library do not include the element pointed by their closing
+   ! iterator, this function is often used in combination with list%begin to specify a range including all the elements in
+   ! the container.
+   !
+   ! If the container is empty, this function returns the same as list%begin.
+   !
+   type(stdList/**/STD_TEMPLATE_TYPE_NAME/**/Iterator) function End(self)
+      class(stdList/**/STD_TEMPLATE_TYPE_NAME), intent(in), target :: self
+
+      End%list => self
+      if (.not.self%Empty()) then
+         End%node => self%last
+         End%value => self%last%data
+      endif
+
+   end function
+
+
+
+   ! =============> Capacity:
+
+
+
+   ! Returns the number of elements in the list.
+   !
+   pure integer function SizeList(self) result(Size)
+      class(stdList/**/STD_TEMPLATE_TYPE_NAME), intent(in) :: self
+
+      Size = self%psize
+
+   end function
+
+
+   ! Returns whether the list is empty (i.e. whether its size is 0).
+   !
+   ! This function does not modify the container in any way. To clear the content of a list, see stdList%clear.
+   !
+   pure logical function Empty(self)
+      class(stdList/**/STD_TEMPLATE_TYPE_NAME), intent(in) :: self
+
+      Empty = (self%psize == 0)
+
+   end function
+
+
+
+   ! =============> Modifiers:
+
+
+
+   ! Adds a new element at the end of the list, after its current last element. The content of val is copied to
+   ! the new element.
+   !
+   ! This effectively increases the container size by one.
+   !
+   subroutine PushBack(self, val)
+      class(stdList/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
+      STD_TEMPLATE_TYPE                       , intent(in)    :: val
+
+      self%psize = self%psize + 1
+
+      if (self%psize == 1) then
+         allocate(self%first)
+         self%first%data = val
+         self%last => self%first
+         self%front => self%first%data
+         self%back => self%first%data
+      else
+         allocate(self%last%next)
+         self%last%next%prev => self%last
+         self%last => self%last%next
+         self%last%data = val
+         self%back => self%last%data
+      endif
+
+   end subroutine
+
+
+
+   ! Removes the last element in the list, effectively reducing the container size by one.
+   !
+   ! This destroys the removed element.
+   !
+   STD_TEMPLATE_TYPE function PopBack(self)
+      class(stdList/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
+
+      PopBack = self%last%data
+
+      if (self%psize == 1) then
+         call self%Delete()
+      else
+         self%psize = self%psize - 1
+         self%last => self%last%prev
+         deallocate(self%last%next)
+         nullify(self%last%next)
+         self%back => self%last%data
+      endif
+
+   end function
+
+
+
+! ====== Implementation of stdListIterator methods ===============================================================================
+
+
+
+   subroutine NewItDefault(self)
+      class(stdList/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(out) :: self
+
+      ! Nothing to do here: intent(out) already resets everything
+
+   end subroutine
+   !
+   subroutine NewItCopyOther(self, other)
+      class(stdList/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(out) :: self
+      class(stdList/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)  :: other
+
+      self%list => other%list
+      self%node => other%node
+      self%value => self%node%data
+
+   end subroutine
+
+
+
+   ! =============> Arithmetic operations:
+
+
+
+   subroutine Inc(self)
+      class(stdList/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(inout) :: self
+
+      self%node => self%node%next
+      self%value => self%node%data
+
+   end subroutine
+   !
+   subroutine Dec(self)
+      class(stdList/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(inout) :: self
+
+      self%node => self%node%prev
+      self%value => self%node%data
+
+   end subroutine
+
+
+
+   ! =============> Logical operations:
+
+
+
+   pure logical function EqualOther(self, other)
+      class(stdList/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: self
+      class(stdList/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: other
+
+      EqualOther = associated(self%list,other%list) .and. ((self%list%Size() == 0) .or. associated(self%node,other%node))
+
+   end function
+   !
+   pure logical function UnequalOther(self, other)
+      class(stdList/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: self
+      class(stdList/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: other
+
+      UnequalOther = .not.EqualOther(self, other)
+
+   end function
+
+
+end module

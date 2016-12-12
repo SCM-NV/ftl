@@ -57,9 +57,6 @@ module stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Module
 
       procedure, public :: Delete
 
-      procedure         :: PrintVector
-      generic  , public :: Print => PrintVector
-
       procedure, public :: Begin
       procedure, public :: End
 
@@ -118,9 +115,6 @@ module stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Module
       procedure         :: NewItDefault
       procedure         :: NewItCopyOther
       generic  , public :: New => NewItDefault, NewItCopyOther
-
-      procedure         :: PrintIt
-      generic  , public :: Print => PrintIt
 
       procedure, public :: Inc
       procedure, public :: Dec
@@ -218,7 +212,7 @@ contains
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(out) :: self
       STD_TEMPLATE_TYPE                         , intent(in)  :: array(:)
 
-      ! Constructs a container with a copy of each of the elements in arr, in the same order.
+      ! Constructs a container with a copy of each of the elements in array, in the same order.
 
       allocate(self%storage(size(array)))
       self%storage = array
@@ -255,35 +249,6 @@ contains
 
       ! TODO: more efficient implementation
       call self%NewCopyOther(other)
-
-   end subroutine
-
-
-
-   subroutine PrintVector(self, unit_in)
-      use, intrinsic :: iso_fortran_env, only: output_unit
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(in)           :: self
-      integer                                   , intent(in), optional :: unit_in
-
-      integer :: unit
-
-      if (present(unit_in)) then
-         unit = unit_in
-      else
-         unit = output_unit
-      endif
-
-      write(unit,*) 'size = ', self%psize
-      write(unit,*) 'capacity = ', size(self%storage)
-#ifdef STD_TEMPLATE_TYPE_IS_PRINTABLE
-      write(unit,*) 'data = ', self%data
-      write(unit,*) 'front = ', self%front
-      write(unit,*) 'back = ', self%back
-#else
-      write(unit,*) 'data = [???] (unprintable type)'
-      write(unit,*) 'front = [???] (unprintable type)'
-      write(unit,*) 'back = [???] (unprintable type)'
-#endif
 
    end subroutine
 
@@ -664,32 +629,8 @@ contains
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)  :: other
 
       self%vector => other%vector
-      self%index =  other%index
+      self%index = other%index
       self%value => self%vector%storage(self%index)
-
-   end subroutine
-
-
-
-   subroutine PrintIt(self, unit_in)
-      use, intrinsic :: iso_fortran_env, only: output_unit
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)           :: self
-      integer                                               , intent(in), optional :: unit_in
-
-      integer :: unit
-
-      if (present(unit_in)) then
-         unit = unit_in
-      else
-         unit = output_unit
-      endif
-
-      write(unit,*) 'index = ', self%index
-#ifdef STD_TEMPLATE_TYPE_IS_PRINTABLE
-      write(unit,*) 'value = ', self%value
-#else
-      write(unit,*) 'value = [???] (unprintable type)'
-#endif
 
    end subroutine
 
