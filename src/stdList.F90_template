@@ -34,18 +34,21 @@ module stdList/**/STD_TEMPLATE_TYPE_NAME/**/Module
 ! ====== Type of the stdList container itself ====================================================================================
 
    type :: ListNode
-      type(ListNode)   , pointer :: prev => null()
-      type(ListNode)   , pointer :: next => null()
-      STD_TEMPLATE_TYPE          :: data
+      class(ListNode), pointer :: prev => null()
+      class(ListNode), pointer :: next => null()
    end type
+
+   type, extends(ListNode) :: DataNode
+      STD_TEMPLATE_TYPE :: data
+   end type
+
 
    type, public :: stdList/**/STD_TEMPLATE_TYPE_NAME
 
    private
 
       integer                            :: psize = 0
-      type(ListNode)   , pointer         :: first => null()
-      type(ListNode)   , pointer         :: last => null()
+      type(ListNode)                     :: sentinel
       STD_TEMPLATE_TYPE, pointer, public :: front => null()
       STD_TEMPLATE_TYPE, pointer, public :: back => null()
 
@@ -84,8 +87,7 @@ module stdList/**/STD_TEMPLATE_TYPE_NAME/**/Module
 
    private
 
-      class(stdList/**/STD_TEMPLATE_TYPE_NAME), pointer         :: list => null()
-      type(ListNode)                          , pointer         :: node => null()
+      class(ListNode)                         , pointer         :: node => null()
       STD_TEMPLATE_TYPE                       , pointer, public :: value => null()
 
    contains
@@ -120,9 +122,12 @@ contains
    ! Constructs a list container object, initializing its contents depending on the constructor version used:
    !
    subroutine NewDefault(self)
-      class(stdList/**/STD_TEMPLATE_TYPE_NAME), intent(out) :: self
+      class(stdList/**/STD_TEMPLATE_TYPE_NAME), intent(out), target :: self
 
       ! Constructs an empty list, with no elements.
+
+      self%sentinel%next => self%sentinel
+      self%sentinel%prev => self%sentinel
 
    end subroutine
    !
@@ -133,6 +138,8 @@ contains
       type(stdList/**/STD_TEMPLATE_TYPE_NAME/**/Iterator) :: it
 
       ! Constructs a list as a copy of another list.
+
+      call self%New()
 
       it = other%Begin()
       do while (it /= other%End())
@@ -151,6 +158,8 @@ contains
 
       integer :: i
 
+      call self%New()
+
       do i = 1, n
          call self%PushBack(val)
       enddo
@@ -165,6 +174,8 @@ contains
 
       integer :: i
 
+      call self%New()
+
       do i = 1, size(array)
          call self%PushBack(array(i))
       enddo
@@ -174,19 +185,20 @@ contains
 
 
    subroutine Delete(self)
-      class(stdList/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
+      class(stdList/**/STD_TEMPLATE_TYPE_NAME), intent(inout), target :: self
 
-      if (self%psize /= 0) then
-         do while (self%psize > 1)
-            self%last => self%last%prev
-            deallocate(self%last%next)
-         enddo
-         deallocate(self%last)
-      endif
+      class(ListNode), pointer :: walker, deletor
+
+      walker => self%sentinel%next
+      do while (.not.associated(walker,self%sentinel))
+         deletor => walker
+         walker => walker%next
+         deallocate(deletor)
+      enddo
 
       self%psize = 0
-      nullify(self%first)
-      nullify(self%last)
+      nullify(self%sentinel%prev)
+      nullify(self%sentinel%next)
       nullify(self%front)
       nullify(self%back)
 
@@ -195,6 +207,7 @@ contains
 
 
    ! =============> Iterators:
+
 
 
    ! Returns an iterator pointing to the first element in the list container.
@@ -207,13 +220,14 @@ contains
    type(stdList/**/STD_TEMPLATE_TYPE_NAME/**/Iterator) function Begin(self)
       class(stdList/**/STD_TEMPLATE_TYPE_NAME), intent(in), target :: self
 
-      Begin%list => self
-      if (.not.self%Empty()) then
-         Begin%node => self%first
-         Begin%value => self%first%data
-      endif
+      Begin%node => self%sentinel%next
+      select type (node => Begin%node)
+      type is (DataNode)
+         Begin%value => node%data
+      end select
 
    end function
+
 
 
    ! Returns an iterator referring to the past-the-end element in the list container.
@@ -230,11 +244,7 @@ contains
    type(stdList/**/STD_TEMPLATE_TYPE_NAME/**/Iterator) function End(self)
       class(stdList/**/STD_TEMPLATE_TYPE_NAME), intent(in), target :: self
 
-      End%list => self
-      if (.not.self%Empty()) then
-         End%node => self%last
-         End%value => self%last%data
-      endif
+      End%node => self%sentinel
 
    end function
 
@@ -282,20 +292,6 @@ contains
 
       self%psize = self%psize + 1
 
-      if (self%psize == 1) then
-         allocate(self%first)
-         self%first%data = val
-         self%last => self%first
-         self%front => self%first%data
-         self%back => self%first%data
-      else
-         allocate(self%last%next)
-         self%last%next%prev => self%last
-         self%last => self%last%next
-         self%last%data = val
-         self%back => self%last%data
-      endif
-
    end subroutine
 
 
@@ -307,17 +303,8 @@ contains
    STD_TEMPLATE_TYPE function PopBack(self)
       class(stdList/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
 
-      PopBack = self%last%data
-
-      if (self%psize == 1) then
-         call self%Delete()
-      else
-         self%psize = self%psize - 1
-         self%last => self%last%prev
-         deallocate(self%last%next)
-         nullify(self%last%next)
-         self%back => self%last%data
-      endif
+      PopBack = self%back
+      self%psize = self%psize - 1
 
    end function
 
@@ -338,9 +325,11 @@ contains
       class(stdList/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(out) :: self
       class(stdList/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)  :: other
 
-      self%list => other%list
       self%node => other%node
-      self%value => self%node%data
+      select type (node => self%node)
+      type is (DataNode)
+         self%value => node%data
+      end select
 
    end subroutine
 
@@ -354,7 +343,10 @@ contains
       class(stdList/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(inout) :: self
 
       self%node => self%node%next
-      self%value => self%node%data
+      select type (node => self%node)
+      type is (DataNode)
+         self%value => node%data
+      end select
 
    end subroutine
    !
@@ -362,7 +354,10 @@ contains
       class(stdList/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(inout) :: self
 
       self%node => self%node%prev
-      self%value => self%node%data
+      select type (node => self%node)
+      type is (DataNode)
+         self%value => node%data
+      end select
 
    end subroutine
 
@@ -376,7 +371,7 @@ contains
       class(stdList/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: self
       class(stdList/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: other
 
-      EqualOther = associated(self%list,other%list) .and. ((self%list%Size() == 0) .or. associated(self%node,other%node))
+      EqualOther = associated(self%node,other%node)
 
    end function
    !
@@ -384,7 +379,7 @@ contains
       class(stdList/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: self
       class(stdList/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: other
 
-      UnequalOther = .not.EqualOther(self, other)
+      UnequalOther = .not.associated(self%node,other%node)
 
    end function
 
