@@ -38,8 +38,7 @@ module stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Module
 ! ====== Type of the stdVector container itself ==================================================================================
 
    type, public :: stdVector/**/STD_TEMPLATE_TYPE_NAME
-
-   private
+      private
 
       integer                                :: psize = 0
       STD_TEMPLATE_TYPE, allocatable         :: storage(:)
@@ -48,6 +47,7 @@ module stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Module
       STD_TEMPLATE_TYPE, pointer    , public :: back => null()
 
    contains
+      private
 
       procedure         :: NewDefault
       procedure         :: NewCopyOther
@@ -69,8 +69,8 @@ module stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Module
       procedure, public :: Reserve
       procedure, public :: ShrinkToFit
 
-      procedure         :: PushBack
-      procedure         :: PopBack
+      procedure, public :: PushBack
+      procedure, public :: PopBack
 
       procedure         :: InsertSingle
       procedure         :: InsertFill
@@ -103,14 +103,14 @@ module stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Module
 ! ====== Type of an iterator over a stdVector container ==========================================================================
 
    type, public :: stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator
-
-   private
+      private
 
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME), pointer         :: vector => null()
       integer                                                     :: index = 0
       STD_TEMPLATE_TYPE                         , pointer, public :: value => null()
 
    contains
+      private
 
       procedure         :: NewItDefault
       procedure         :: NewItCopyOther
@@ -577,8 +577,13 @@ contains
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout), target :: self
 
       self%data => self%storage(1:self%psize)
-      self%front => self%storage(1)
-      self%back => self%storage(self%psize)
+      if (self%psize == 0) then
+         ! not strictly necessary, because it will always crash if someone accesses front/back on an empty vector ...
+         nullify(self%front, self%back)
+      else
+         self%front => self%storage(1)
+         self%back => self%storage(self%psize)
+      endif
 
    end subroutine
 

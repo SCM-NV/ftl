@@ -44,8 +44,7 @@ module stdList/**/STD_TEMPLATE_TYPE_NAME/**/Module
 
 
    type, public :: stdList/**/STD_TEMPLATE_TYPE_NAME
-
-   private
+      private
 
       integer                            :: psize = 0
       type(ListNode)                     :: sentinel
@@ -53,6 +52,7 @@ module stdList/**/STD_TEMPLATE_TYPE_NAME/**/Module
       STD_TEMPLATE_TYPE, pointer, public :: back => null()
 
    contains
+      private
 
       procedure         :: NewDefault
       procedure         :: NewCopyOther
@@ -70,8 +70,10 @@ module stdList/**/STD_TEMPLATE_TYPE_NAME/**/Module
 
       procedure, public :: Empty
 
-      procedure         :: PushBack
-      procedure         :: PopBack
+      procedure, public :: PushFront
+      procedure, public :: PopFront
+      procedure, public :: PushBack
+      procedure, public :: PopBack
 
    end type
 
@@ -84,13 +86,13 @@ module stdList/**/STD_TEMPLATE_TYPE_NAME/**/Module
 ! ====== Type of an iterator over a stdList container ============================================================================
 
    type, public :: stdList/**/STD_TEMPLATE_TYPE_NAME/**/Iterator
-
-   private
+      private
 
       class(ListNode)                         , pointer         :: node => null()
       STD_TEMPLATE_TYPE                       , pointer, public :: value => null()
 
    contains
+      private
 
       procedure         :: NewItDefault
       procedure         :: NewItCopyOther
@@ -208,26 +210,7 @@ contains
 
    ! =============> Iterators:
 
-
-
-   ! Returns an iterator pointing to the first element in the list container.
-   !
-   ! Notice that, unlike member list%front, which returns a reference to the first element, this function returns a bidirectional
-   ! iterator pointing to it.
-   !
-   ! If the container is empty, the returned iterator value shall not be dereferenced.
-   !
-   type(stdList/**/STD_TEMPLATE_TYPE_NAME/**/Iterator) function Begin(self)
-      class(stdList/**/STD_TEMPLATE_TYPE_NAME), intent(in), target :: self
-
-      Begin%node => self%sentinel%next
-      select type (node => Begin%node)
-      type is (DataNode)
-         Begin%value => node%data
-      end select
-
-   end function
-
+   ! Note: End method has to come first, otherwise this triggers https://gcc.gnu.org/bugzilla/show_bug.cgi?id=60952
 
 
    ! Returns an iterator referring to the past-the-end element in the list container.
@@ -245,6 +228,26 @@ contains
       class(stdList/**/STD_TEMPLATE_TYPE_NAME), intent(in), target :: self
 
       End%node => self%sentinel
+
+   end function
+
+
+
+   ! Returns an iterator pointing to the first element in the list container.
+   !
+   ! Notice that, unlike member list%front, which returns a reference to the first element, this function returns a bidirectional
+   ! iterator pointing to it.
+   !
+   ! If the container is empty, the returned iterator value shall not be dereferenced.
+   !
+   type(stdList/**/STD_TEMPLATE_TYPE_NAME/**/Iterator) function Begin(self)
+      class(stdList/**/STD_TEMPLATE_TYPE_NAME), intent(in), target :: self
+
+      Begin%node => self%sentinel%next
+      select type (node => Begin%node)
+      type is (DataNode)
+         Begin%value => node%data
+      end select
 
    end function
 
@@ -280,6 +283,67 @@ contains
    ! =============> Modifiers:
 
 
+   ! TODO: remove all this code duplication ;-) ...
+
+
+   ! Inserts a new element at the beginning of the list, right before its current first element. The content of val is copied
+   ! (or moved) to the inserted element.
+   !
+   ! This effectively increases the container size by one.
+   !
+   subroutine PushFront(self, val)
+      class(stdList/**/STD_TEMPLATE_TYPE_NAME), intent(inout), target :: self
+      STD_TEMPLATE_TYPE                       , intent(in)            :: val
+
+      class(ListNode), pointer :: oldfirst, newfirst
+
+      self%psize = self%psize + 1
+
+      oldfirst => self%sentinel%next
+      allocate(DataNode :: self%sentinel%next)
+      newfirst => self%sentinel%next
+      oldfirst%prev => newfirst
+      newfirst%next => oldfirst
+      newfirst%prev => self%sentinel
+      select type (newfirst)
+      type is (DataNode) ! always true
+         newfirst%data = val
+         self%front => newfirst%data
+         if (self%psize == 1) self%back => newfirst%data
+      end select
+
+   end subroutine
+
+
+
+   ! Removes the first element in the list container, effectively reducing its size by one.
+   !
+   ! This destroys the removed element.
+   !
+   STD_TEMPLATE_TYPE function PopFront(self)
+      class(stdList/**/STD_TEMPLATE_TYPE_NAME), intent(inout), target :: self
+
+      class(ListNode), pointer :: newfirst
+
+      PopFront = self%front
+      self%psize = self%psize - 1
+
+      newfirst => self%sentinel%next%next
+      deallocate(self%sentinel%next)
+      self%sentinel%next => newfirst
+      newfirst%prev => self%sentinel
+      select type (newfirst)
+      type is (DataNode) ! true unless newfirst is the sentinel (meaning the list is empty). we handle this below ...
+         self%front => newfirst%data
+      end select
+
+      if (self%psize == 0) then
+         nullify(self%front, self%back)
+      endif
+
+   end function
+
+
 
    ! Adds a new element at the end of the list, after its current last element. The content of val is copied to
    ! the new element.
@@ -287,10 +351,25 @@ contains
    ! This effectively increases the container size by one.
    !
    subroutine PushBack(self, val)
-      class(stdList/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
-      STD_TEMPLATE_TYPE                       , intent(in)    :: val
+      class(stdList/**/STD_TEMPLATE_TYPE_NAME), intent(inout), target :: self
+      STD_TEMPLATE_TYPE                       , intent(in)            :: val
+
+      class(ListNode), pointer :: oldlast, newlast
 
       self%psize = self%psize + 1
+
+      oldlast => self%sentinel%prev
+      allocate(DataNode :: self%sentinel%prev)
+      newlast => self%sentinel%prev
+      oldlast%next => newlast
+      newlast%prev => oldlast
+      newlast%next => self%sentinel
+      select type (newlast)
+      type is (DataNode) ! always true
+         newlast%data = val
+         self%back => newlast%data
+         if (self%psize == 1) self%front => newlast%data
+      end select
 
    end subroutine
 
@@ -301,10 +380,25 @@ contains
    ! This destroys the removed element.
    !
    STD_TEMPLATE_TYPE function PopBack(self)
-      class(stdList/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
+      class(stdList/**/STD_TEMPLATE_TYPE_NAME), intent(inout), target :: self
+
+      class(ListNode), pointer :: newlast
 
       PopBack = self%back
       self%psize = self%psize - 1
+
+      newlast => self%sentinel%prev%prev
+      deallocate(self%sentinel%prev)
+      self%sentinel%prev => newlast
+      newlast%next => self%sentinel
+      select type (newlast)
+      type is (DataNode) ! true unless newlast is the sentinel (meaning the list is empty). we handle this below ...
+         self%back => newlast%data
+      end select
+
+      if (self%psize == 0) then
+         nullify(self%front, self%back)
+      endif
 
    end function
 

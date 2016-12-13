@@ -20,7 +20,11 @@ contains
 
       call testNewDefault
       call testNewCopyOther
+      call testNewFill
       call testNewFromArray
+
+      call testPushPopBack
+      call testPushPopFront
 
    end subroutine
 
@@ -56,6 +60,20 @@ contains
    end subroutine
 
 
+   subroutine testNewFill
+      type(stdListInt) :: l
+
+      call l%New(5, 72)
+
+      ASSERT(.not.l%Empty())
+      ASSERT(l%Size() == 5)
+      ASSERT(Size(l) == 5)
+      ASSERT(l%front == 72)
+      ASSERT(l%back == 72)
+
+   end subroutine
+
+
    subroutine testNewFromArray
       type(stdListInt) :: l
 
@@ -66,6 +84,86 @@ contains
       ASSERT(Size(l) == 7)
       ASSERT(l%front == 5)
       ASSERT(l%back == 88)
+
+   end subroutine
+
+
+   subroutine testPushPopBack
+      type(stdListInt) :: l
+      integer          :: i
+
+      call l%New()
+
+      ASSERT(l%Empty())
+      ASSERT(l%Size() == 0)
+
+      call l%PushBack(5)
+
+      ASSERT(.not.l%Empty())
+      ASSERT(l%Size() == 1)
+      ASSERT(l%front == 5)
+      ASSERT(l%back == 5)
+
+      call l%PushBack(6)
+
+      ASSERT(.not.l%Empty())
+      ASSERT(l%Size() == 2)
+      ASSERT(l%front == 5)
+      ASSERT(l%back == 6)
+
+      i = l%PopBack()
+
+      ASSERT(i == 6)
+      ASSERT(.not.l%Empty())
+      ASSERT(l%Size() == 1)
+      ASSERT(l%front == 5)
+      ASSERT(l%back == 5)
+
+      i = l%PopBack()
+
+      ASSERT(i == 5)
+      ASSERT(l%Empty())
+      ASSERT(l%Size() == 0)
+
+   end subroutine
+
+
+   subroutine testPushPopFront
+      type(stdListInt) :: l
+      integer          :: i
+
+      call l%New()
+
+      ASSERT(l%Empty())
+      ASSERT(l%Size() == 0)
+
+      call l%PushFront(5)
+
+      ASSERT(.not.l%Empty())
+      ASSERT(l%Size() == 1)
+      ASSERT(l%front == 5)
+      ASSERT(l%back == 5)
+
+      call l%PushFront(6)
+
+      ASSERT(.not.l%Empty())
+      ASSERT(l%Size() == 2)
+      ASSERT(l%front == 6)
+      ASSERT(l%back == 5)
+
+      i = l%PopFront()
+
+      ASSERT(i == 6)
+      ASSERT(.not.l%Empty())
+      ASSERT(l%Size() == 1)
+      ASSERT(l%front == 5)
+      ASSERT(l%back == 5)
+
+      i = l%PopFront()
+
+      ASSERT(i == 5)
+      ASSERT(l%Empty())
+      ASSERT(l%Size() == 0)
 
    end subroutine
 
