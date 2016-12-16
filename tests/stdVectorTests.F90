@@ -63,7 +63,7 @@ contains
    subroutine testNewDefault
       type(stdVectorInt) :: v
 
-      call v%New()
+      v = stdVectorInt()
 
       ASSERT(v%Empty())
       ASSERT(v%Size() == 0)
@@ -78,8 +78,8 @@ contains
    subroutine testNewCopyOther
       type(stdVectorInt) :: v,o
 
-      call o%New([5,13,41,97,17,10,88])
-      call v%New(o)
+      o = stdVectorInt([5,13,41,97,17,10,88])
+      v = stdVectorInt(o)
 
       ASSERT(.not.v%Empty())
       ASSERT(v%Size() == 7)
@@ -99,13 +99,13 @@ contains
    subroutine testNewFill
       type(stdVectorInt) :: u,v
 
-      call u%New(33)
+      u = stdVectorInt(33)
 
       ASSERT(u%Size() == 33)
       ASSERT(Size(u) == 33)
       ASSERT(size(u%data) == 33)
 
-      call v%New(5,41)
+      v = stdVectorInt(5,41)
 
       ASSERT(.not.v%Empty())
       ASSERT(v%Size() == 5)
@@ -122,7 +122,7 @@ contains
    subroutine testNewFromArray
       type(stdVectorInt) :: v
 
-      call v%New([5,13,41,97,17,10,88])
+      v = stdVectorInt([5,13,41,97,17,10,88])
 
       ASSERT(.not.v%Empty())
       ASSERT(v%Size() == 7)
@@ -139,7 +139,7 @@ contains
    subroutine testDelete
       type(stdVectorInt) :: v
 
-      call v%New([5,13,41,97,17,10,88])
+      v = stdVectorInt([5,13,41,97,17,10,88])
       call v%Delete()
 
       ASSERT(.not.associated(v%data))
@@ -153,7 +153,7 @@ contains
       type(stdVectorInt) :: v
       type(stdVectorIntIterator) :: it
 
-      call v%New([4,6,38,216,48468,3,2,67,9])
+      v = stdVectorInt([4,6,38,216,48468,3,2,67,9])
       it = v%Begin()
 
       ASSERT(associated(it%value,v%data(1)))
@@ -168,7 +168,7 @@ contains
       type(stdVectorInt) :: v
       type(stdVectorIntIterator) :: it
 
-      call v%New([4,6,38,216,48468,3,2,67,27])
+      v = stdVectorInt([4,6,38,216,48468,3,2,67,27])
       it = v%End()
       call it%Dec()
 
@@ -184,7 +184,7 @@ contains
       type(stdVectorInt) :: v
       integer            :: i
 
-      call v%New()
+      v = stdVectorInt()
 
       ASSERT(v%Size() == 0)
       ASSERT(v%Capacity() >= 0)
@@ -201,7 +201,7 @@ contains
    subroutine testResize
       type(stdVectorInt) :: v
 
-      call v%New([246,57,2,6,7,38,245,2,6274,446])
+      v = stdVectorInt([246,57,2,6,7,38,245,2,6274,446])
       call v%Resize(20,1)
 
       ASSERT(v%Size() == 20)
@@ -220,7 +220,7 @@ contains
    subroutine testEmpty
       type(stdVectorInt) :: v
 
-      call v%New()
+      v = stdVectorInt()
       ASSERT(v%Empty())
       call v%Insert(1,[7,8,9])
       ASSERT(.not.v%Empty())
@@ -233,7 +233,7 @@ contains
    subroutine testReserve
       type(stdVectorInt) :: v
 
-      call v%New([4,5,6,7])
+      v = stdVectorInt([4,5,6,7])
       call v%Reserve(50)
       ASSERT(v%Capacity() >= 50)
       call v%Reserve(30)
@@ -245,7 +245,7 @@ contains
    subroutine testShrinkToFit
       type(stdVectorInt) :: v
 
-      call v%New([4,5,6,7])
+      v = stdVectorInt([4,5,6,7])
       call v%Reserve(50)
       ASSERT(v%Capacity() >= 50)
       call v%PushBack(9)
@@ -259,7 +259,7 @@ contains
       type(stdVectorInt) :: v
       integer            :: i
 
-      call v%New()
+      v = stdVectorInt()
       do i = 1, 32
          call v%PushBack(i)
          ASSERT(v%back == i)
@@ -271,7 +271,7 @@ contains
    subroutine testPopBack
       type(stdVectorInt) :: v
 
-      call v%New([4,62,78,836,3])
+      v = stdVectorInt([4,62,78,836,3])
       ASSERT(v%PopBack() == 3)
       ASSERT(v%PopBack() == 836)
       ASSERT(v%PopBack() == 78)
@@ -285,7 +285,7 @@ contains
    subroutine testInsertSingle
       type(stdVectorInt) :: v
 
-      call v%New([4,6,8,3,737])
+      v = stdVectorInt([4,6,8,3,737])
 
       call v%Insert(2,1)
       ASSERT(v%Size() == 6)
@@ -295,7 +295,6 @@ contains
       ASSERT(v%Size() == 7)
       ASSERT(v%front == 320)
       ASSERT(all(v%data == [320,4,1,6,8,3,737]))
-
 
       call v%Insert(8,29)
       ASSERT(v%Size() == 8)
@@ -308,7 +307,7 @@ contains
    subroutine testInsertFill
       type(stdVectorInt) :: v
 
-      call v%New([4,6,8,3,737])
+      v = stdVectorInt([4,6,8,3,737])
 
       call v%Insert(2,3,1)
       ASSERT(v%Size() == 8)
@@ -318,7 +317,6 @@ contains
       ASSERT(v%Size() == 10)
       ASSERT(v%front == 320)
       ASSERT(all(v%data == [320,320,4,1,1,1,6,8,3,737]))
-
 
       call v%Insert(11,5,29)
       ASSERT(v%Size() == 15)
@@ -331,7 +329,7 @@ contains
    subroutine testInsertArray
       type(stdVectorInt) :: v
 
-      call v%New([4,6,8,3,737])
+      v = stdVectorInt([4,6,8,3,737])
 
       call v%Insert(2,[8,9,1])
       ASSERT(v%Size() == 8)
@@ -341,7 +339,6 @@ contains
       ASSERT(v%Size() == 10)
       ASSERT(v%front == 320)
       ASSERT(all(v%data == [320,321,4,8,9,1,6,8,3,737]))
-
 
       call v%Insert(11,[29,30,31,32,33])
       ASSERT(v%Size() == 15)
@@ -354,7 +351,7 @@ contains
    subroutine testEraseSingle
       type(stdVectorInt) :: v
 
-      call v%New([3,6,12,-4,733])
+      v = stdVectorInt([3,6,12,-4,733])
 
       call v%Erase(2)
       ASSERT(v%Size() == 4)
@@ -376,7 +373,7 @@ contains
    subroutine testEraseRange
       type(stdVectorInt) :: v
 
-      call v%New([1,-5,2,5126,-356,33,823,3,1,2])
+      v = stdVectorInt([1,-5,2,5126,-356,33,823,3,1,2])
 
       call v%Erase(2,5)
       ASSERT(v%Size() == 7)
@@ -398,7 +395,7 @@ contains
    subroutine testClear
       type(stdVectorInt) :: v
 
-      call v%New([1,-5,2,5126,-356,33,823,3,1,2])
+      v = stdVectorInt([1,-5,2,5126,-356,33,823,3,1,2])
       call v%Clear()
 
       ASSERT(v%Empty())
@@ -420,7 +417,7 @@ contains
       type(stdVectorInt) :: v
       type(stdVectorIntIterator) :: it1, it2
 
-      call v%New([353,6,5,2,2274,33])
+      v = stdVectorInt([353,6,5,2,2274,33])
       it1 = v%Begin()
       call it2%New(it1)
 
@@ -434,7 +431,7 @@ contains
       type(stdVectorInt) :: v
       type(stdVectorIntIterator) :: it
 
-      call v%New([353,6,5,2,2274,33])
+      v = stdVectorInt([353,6,5,2,2274,33])
       it = v%Begin()
 
       ASSERT(associated(it%value,v%data(1)))
@@ -452,7 +449,7 @@ contains
       type(stdVectorInt) :: v
       type(stdVectorIntIterator) :: it
 
-      call v%New([353,6,5,2,2274,33])
+      v = stdVectorInt([353,6,5,2,2274,33])
       it = v%End()
       call it%Dec()
 
@@ -471,7 +468,7 @@ contains
       type(stdVectorInt) :: v
       type(stdVectorIntIterator) :: it1, it2
 
-      call v%New([353,6,5,2,2274,33])
+      v = stdVectorInt([353,6,5,2,2274,33])
       it1 = v%Begin()
       it2 = it1 + 4
 
@@ -491,7 +488,7 @@ contains
       type(stdVectorInt) :: v
       type(stdVectorIntIterator) :: it1, it2
 
-      call v%New([4,7,3,6,8])
+      v = stdVectorInt([4,7,3,6,8])
       it1 = v%Begin() + 2
       ASSERT(it1%value == 3)
       it2 = v%Begin()

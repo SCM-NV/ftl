@@ -49,12 +49,6 @@ module stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Module
    contains
       private
 
-      procedure         :: NewDefault
-      procedure         :: NewCopyOther
-      procedure         :: NewFill
-      procedure         :: NewFromArray
-      generic  , public :: New => NewDefault, NewCopyOther, NewFill, NewFromArray
-
       procedure, public :: Delete
 
       procedure, public :: Begin
@@ -88,6 +82,10 @@ module stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Module
       procedure         :: FixValuePtrs
 
    end type
+
+   interface stdVector/**/STD_TEMPLATE_TYPE_NAME
+      module procedure NewDefault, NewCopyOther, NewFill, NewFromArray
+   end interface
 
    public :: Size
    interface Size
@@ -171,19 +169,19 @@ contains
 
    ! Constructs a vector, initializing its contents depending on the constructor version used:
    !
-   subroutine NewDefault(self)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(out) :: self
+   function NewDefault() result(self)
+      type(stdVector/**/STD_TEMPLATE_TYPE_NAME) :: self
 
       ! Constructs an empty vector, with no elements.
 
       allocate(self%storage(0))
       call self%FixValuePtrs()
 
-   end subroutine
+   end function
    !
-   subroutine NewCopyOther(self, other)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(out) :: self
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(in)  :: other
+   function NewCopyOther(other) result(self)
+      type(stdVector/**/STD_TEMPLATE_TYPE_NAME)              :: self
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(in) :: other
 
       ! Constructs a vector as a copy of another vector.
 
@@ -192,10 +190,10 @@ contains
       self%psize = other%psize
       call self%FixValuePtrs()
 
-   end subroutine
+   end function
    !
-   subroutine NewFill(self, n, val)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(out)          :: self
+   function NewFill(n, val) result(self)
+      type(stdVector/**/STD_TEMPLATE_TYPE_NAME)                        :: self
       integer                                   , intent(in)           :: n
       STD_TEMPLATE_TYPE                         , intent(in), optional :: val
 
@@ -206,11 +204,11 @@ contains
       self%psize = n
       call self%FixValuePtrs()
 
-   end subroutine
+   end function
    !
-   subroutine NewFromArray(self, array)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(out) :: self
-      STD_TEMPLATE_TYPE                         , intent(in)  :: array(:)
+   function NewFromArray(array) result(self)
+      type(stdVector/**/STD_TEMPLATE_TYPE_NAME)              :: self
+      STD_TEMPLATE_TYPE                        , intent(in)  :: array(:)
 
       ! Constructs a container with a copy of each of the elements in array, in the same order.
 
@@ -219,7 +217,7 @@ contains
       self%psize = size(array)
       call self%FixValuePtrs()
 
-   end subroutine
+   end function
 
 
 
@@ -235,20 +233,24 @@ contains
    ! Assigns new contents to the container, replacing its current contents, and modifying its size accordingly.
    !
    subroutine AssignArray(self, array)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(out) :: self
-      STD_TEMPLATE_TYPE                         , intent(in)  :: array(:)
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
+      STD_TEMPLATE_TYPE                         , intent(in)    :: array(:)
 
-      ! TODO: more efficient implementation
-      call self%NewFromArray(array)
+      call self%Reserve(size(array))
+      self%storage(1:size(array)) = array
+      self%psize = size(array)
+      call self%FixValuePtrs()
 
    end subroutine
    !
    subroutine AssignOther(self, other)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(out) :: self
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(in)  :: other
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(in)    :: other
 
-      ! TODO: more efficient implementation
-      call self%NewCopyOther(other)
+      call self%Reserve(size(other))
+      self%storage(1:size(other)) = other%data
+      self%psize = size(other)
+      call self%FixValuePtrs()
 
    end subroutine
 
