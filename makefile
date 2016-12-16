@@ -7,8 +7,11 @@ COMPILER = gfortran
 FLAGS    = -std=f2003 -ffree-line-length-none -Wall -Wextra -Wpedantic -Wno-target-lifetime -Wno-surprising -g -J$(BUILDDIR)
 INCLUDES = -Isrc -Itests
 
-tests: $(BUILDDIR)/tests
-	./$(BUILDDIR)/$@
+memcheck: $(BUILDDIR)/tests
+	valgrind --leak-check=yes ./$(BUILDDIR)/tests
+
+test: $(BUILDDIR)/tests
+	./$(BUILDDIR)/tests
 
 $(BUILDDIR):
 	mkdir $(BUILDDIR)
