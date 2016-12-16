@@ -61,6 +61,7 @@ module stdList/**/STD_TEMPLATE_TYPE_NAME/**/Module
       generic  , public :: New => NewDefault, NewCopyOther, NewFill, NewFromArray
 
       procedure, public :: Delete
+      final             :: Finalizer
 
       procedure, public :: Begin
       procedure, public :: End
@@ -74,6 +75,8 @@ module stdList/**/STD_TEMPLATE_TYPE_NAME/**/Module
       procedure, public :: PopFront
       procedure, public :: PushBack
       procedure, public :: PopBack
+
+      procedure         :: FixValuePtrs
 
    end type
 
@@ -192,7 +195,7 @@ contains
       class(ListNode), pointer :: walker, deletor
 
       walker => self%sentinel%next
-      do while (.not.associated(walker,self%sentinel))
+      do while (associated(walker) .and. .not.associated(walker,self%sentinel))
          deletor => walker
          walker => walker%next
          deallocate(deletor)
@@ -204,6 +207,11 @@ contains
       nullify(self%front)
       nullify(self%back)
 
+   end subroutine
+
+   subroutine Finalizer(self)
+      type(stdList/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
+      call self%Delete()
    end subroutine
 
 
@@ -295,22 +303,9 @@ contains
       class(stdList/**/STD_TEMPLATE_TYPE_NAME), intent(inout), target :: self
       STD_TEMPLATE_TYPE                       , intent(in)            :: val
 
-      class(ListNode), pointer :: oldfirst, newfirst
-
+      call InsertNodeAfter(self%sentinel%next%prev, val)
       self%psize = self%psize + 1
-
-      oldfirst => self%sentinel%next
-      allocate(DataNode :: self%sentinel%next)
-      newfirst => self%sentinel%next
-      oldfirst%prev => newfirst
-      newfirst%next => oldfirst
-      newfirst%prev => self%sentinel
-      select type (newfirst)
-      type is (DataNode) ! always true
-         newfirst%data = val
-         self%front => newfirst%data
-         if (self%psize == 1) self%back => newfirst%data
-      end select
+      call self%FixValuePtrs()
 
    end subroutine
 
@@ -323,23 +318,14 @@ contains
    STD_TEMPLATE_TYPE function PopFront(self)
       class(stdList/**/STD_TEMPLATE_TYPE_NAME), intent(inout), target :: self
 
-      class(ListNode), pointer :: newfirst
+      class(ListNode), pointer :: oldfirst
+      oldfirst => self%sentinel%next
 
       PopFront = self%front
       self%psize = self%psize - 1
-
-      newfirst => self%sentinel%next%next
-      deallocate(self%sentinel%next)
-      self%sentinel%next => newfirst
-      newfirst%prev => self%sentinel
-      select type (newfirst)
-      type is (DataNode) ! true unless newfirst is the sentinel (meaning the list is empty). we handle this below ...
-         self%front => newfirst%data
-      end select
-
-      if (self%psize == 0) then
-         nullify(self%front, self%back)
-      endif
+      call UnlinkNode(oldfirst)
+      deallocate(oldfirst)
+      call self%FixValuePtrs()
 
    end function
 
@@ -351,25 +337,12 @@ contains
    ! This effectively increases the container size by one.
    !
    subroutine PushBack(self, val)
-      class(stdList/**/STD_TEMPLATE_TYPE_NAME), intent(inout), target :: self
-      STD_TEMPLATE_TYPE                       , intent(in)            :: val
+      class(stdList/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
+      STD_TEMPLATE_TYPE                       , intent(in)    :: val
 
-      class(ListNode), pointer :: oldlast, newlast
-
+      call InsertNodeAfter(self%sentinel%prev, val)
       self%psize = self%psize + 1
-
-      oldlast => self%sentinel%prev
-      allocate(DataNode :: self%sentinel%prev)
-      newlast => self%sentinel%prev
-      oldlast%next => newlast
-      newlast%prev => oldlast
-      newlast%next => self%sentinel
-      select type (newlast)
-      type is (DataNode) ! always true
-         newlast%data = val
-         self%back => newlast%data
-         if (self%psize == 1) self%front => newlast%data
-      end select
+      call self%FixValuePtrs()
 
    end subroutine
 
@@ -382,25 +355,72 @@ contains
    STD_TEMPLATE_TYPE function PopBack(self)
       class(stdList/**/STD_TEMPLATE_TYPE_NAME), intent(inout), target :: self
 
-      class(ListNode), pointer :: newlast
+      class(ListNode), pointer :: oldlast
+      oldlast => self%sentinel%prev
 
       PopBack = self%back
       self%psize = self%psize - 1
-
-      newlast => self%sentinel%prev%prev
-      deallocate(self%sentinel%prev)
-      self%sentinel%prev => newlast
-      newlast%next => self%sentinel
-      select type (newlast)
-      type is (DataNode) ! true unless newlast is the sentinel (meaning the list is empty). we handle this below ...
-         self%back => newlast%data
-      end select
-
-      if (self%psize == 0) then
-         nullify(self%front, self%back)
-      endif
+      call UnlinkNode(oldlast)
+      deallocate(oldlast)
+      call self%FixValuePtrs()
 
    end function
+
+
+
+   ! =============> Modifiers:
+
+
+
+   subroutine InsertNodeAfter(afternode, val)
+      class(ListNode), pointer, intent(inout) :: afternode
+      STD_TEMPLATE_TYPE       , intent(in)    :: val
+
+      class(ListNode), pointer :: oldnext, newnext
+
+      oldnext => afternode%next
+      allocate(DataNode::afternode%next)
+      newnext => afternode%next
+      newnext%prev => afternode
+      newnext%next => oldnext
+      oldnext%prev => newnext
+      select type (newnext)
+      type is (DataNode) ! always true
+         newnext%data = val
+      end select
+
+   end subroutine
+
+
+
+   subroutine UnlinkNode(node)
+      class(ListNode), intent(inout) :: node
+
+      node%next%prev => node%prev
+      node%prev%next => node%next
+
+   end subroutine
+
+
+
+   subroutine FixValuePtrs(self)
+      class(stdList/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
+
+      if (self%psize == 0) then
+         nullify(self%front,self%back)
+      else
+         select type (first => self%sentinel%next)
+         type is (DataNode)
+            self%front => first%data
+         end select
+         select type (last => self%sentinel%prev)
+         type is (DataNode)
+            self%back => last%data
+         end select
+      endif
+
+   end subroutine
+
 
 
 

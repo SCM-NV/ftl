@@ -430,8 +430,8 @@ contains
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
       STD_TEMPLATE_TYPE                         , intent(in)    :: val
 
+      if (self%psize + 1 > self%Capacity()) call self%IncreaseCapacity()
       self%psize = self%psize + 1
-      if (self%psize > self%Capacity()) call self%IncreaseCapacity()
       self%storage(self%psize) = val
       call self%FixValuePtrs()
 

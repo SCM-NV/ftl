@@ -4,7 +4,7 @@ MAKEFLAGS += --no-builtin-rules
 
 BUILDDIR = build
 COMPILER = gfortran
-FLAGS    = -std=f2003 -ffree-line-length-none -Wall -Wextra -Wpedantic -Wno-target-lifetime -g -J$(BUILDDIR)
+FLAGS    = -std=f2003 -ffree-line-length-none -Wall -Wextra -Wpedantic -Wno-target-lifetime -Wno-surprising -g -J$(BUILDDIR)
 INCLUDES = -Isrc -Itests
 
 tests: $(BUILDDIR)/tests
