@@ -235,20 +235,24 @@ contains
    ! Assigns new contents to the container, replacing its current contents, and modifying its size accordingly.
    !
    subroutine AssignArray(self, array)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(out) :: self
-      STD_TEMPLATE_TYPE                         , intent(in)  :: array(:)
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
+      STD_TEMPLATE_TYPE                         , intent(in)    :: array(:)
 
-      ! TODO: more efficient implementation
-      call self%NewFromArray(array)
+      call self%Reserve(size(array))
+      self%storage(1:size(array)) = array
+      self%psize = size(array)
+      call self%FixValuePtrs()
 
    end subroutine
    !
    subroutine AssignOther(self, other)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(out) :: self
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(in)  :: other
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(in)    :: other
 
-      ! TODO: more efficient implementation
-      call self%NewCopyOther(other)
+      call self%Reserve(size(other))
+      self%storage(1:size(other)) = other%data
+      self%psize = size(other)
+      call self%FixValuePtrs()
 
    end subroutine
 
