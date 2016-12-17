@@ -23,6 +23,11 @@ contains
       call testNewFill
       call testNewFromArray
 
+      call testInsertSingle
+      call testInsertFill
+      call testInsertArray
+      call testInsertIteratorPair
+
       call testPushPopBack
       call testPushPopFront
 
@@ -86,6 +91,122 @@ contains
       ASSERT(l%back == 88)
 
    end subroutine
+
+
+   subroutine testInsertSingle
+      type(stdListInt) :: l
+      type(stdListIntIterator) :: it
+
+      call l%New([23,1,6])
+      it = l%Begin()
+      ASSERT(it%value == 23)
+      call it%Inc()
+      ASSERT(it%value == 1)
+      call l%Insert(it, 42)
+      ASSERT(it%value == 1)
+      call it%Dec()
+      ASSERT(it%value == 42)
+      call it%Dec()
+      ASSERT(it%value == 23)
+
+   end subroutine
+
+
+   subroutine testInsertFill
+      type(stdListInt) :: l
+      type(stdListIntIterator) :: it
+
+      call l%New([23,1,6])
+      it = l%Begin()
+      ASSERT(it%value == 23)
+      call it%Inc()
+      ASSERT(it%value == 1)
+      call l%Insert(it, 2, 42)
+      ASSERT(l%Size() == 5)
+      ASSERT(it%value == 1)
+      call it%Dec()
+      ASSERT(it%value == 42)
+      call it%Dec()
+      ASSERT(it%value == 42)
+      call it%Dec()
+      ASSERT(it%value == 23)
+
+      call l%New()
+      ASSERT(l%Empty())
+      it = l%End()
+      call l%Insert(it, 2, 42) ! Fortran, why can't I pass l%End() directly???? Please ....
+      ASSERT(l%Size() == 2)
+      ASSERT(l%front == 42)
+      ASSERT(l%back == 42)
+
+   end subroutine
+
+
+   subroutine testInsertArray
+      type(stdListInt) :: l
+      type(stdListIntIterator) :: it
+
+      call l%New([23,1,6])
+      it = l%Begin()
+      ASSERT(it%value == 23)
+      call it%Inc()
+      ASSERT(it%value == 1)
+      call l%Insert(it, [26,11,89])
+      ASSERT(it%value == 1)
+      call it%Dec()
+      ASSERT(it%value == 89)
+      call it%Dec()
+      ASSERT(it%value == 11)
+      call it%Dec()
+      ASSERT(it%value == 26)
+      call it%Dec()
+      ASSERT(it%value == 23)
+
+      call l%New()
+      ASSERT(l%Empty())
+      it = l%End()
+      call l%Insert(it, [4,5,6,7]) ! Fortran, why can't I pass l%End() directly???? Please ....
+      ASSERT(l%Size() == 4)
+      ASSERT(l%front == 4)
+      ASSERT(l%back == 7)
+
+   end subroutine
+
+
+
+   subroutine testInsertIteratorPair
+      type(stdListInt) :: l, o
+      type(stdListIntIterator) :: it
+
+      call o%New([2,3,4])
+      call l%New([1,5])
+      it = l%Begin()
+      call it%Inc()
+
+      ASSERT(it%value == 5)
+
+      call l%Insert(it,o%Begin(),o%End())
+
+      ASSERT(l%Size() == 5)
+      ASSERT(l%front == 1)
+      ASSERT(l%back == 5)
+
+      it = l%Begin()
+      ASSERT(it%value == 1)
+      call it%Inc()
+      ASSERT(it%value == 2)
+      call it%Inc()
+      ASSERT(it%value == 3)
+      call it%Inc()
+      ASSERT(it%value == 4)
+      call it%Inc()
+      ASSERT(it%value == 5)
+      ASSERT(it /= l%End())
+      call it%Inc()
+      ASSERT(it == l%End())
+
+   end subroutine
+
 
 
    subroutine testPushPopBack

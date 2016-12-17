@@ -57,8 +57,10 @@ module stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Module
 
       procedure, public :: Delete
 
-      procedure, public :: Begin
-      procedure, public :: End
+      procedure         :: BeginVector
+      generic  , public :: Begin => BeginVector
+      procedure         :: EndVector
+      generic  , public :: End => EndVector
 
       procedure         :: SizeVector
       generic  , public :: Size => SizeVector
@@ -73,9 +75,15 @@ module stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Module
       procedure, public :: PopBack
 
       procedure         :: InsertSingle
+      procedure         :: InsertSingleAtIndex
       procedure         :: InsertFill
+      procedure         :: InsertFillAtIndex
       procedure         :: InsertArray
-      generic  , public :: Insert => InsertSingle, InsertFill, InsertArray
+      procedure         :: InsertArrayAtIndex
+      procedure         :: InsertIteratorPair
+      procedure         :: InsertIteratorPairAtIndex
+      generic  , public :: Insert => InsertSingle, InsertFill, InsertArray, InsertIteratorPair, &
+                                     InsertSingleAtIndex, InsertFillAtIndex, InsertArrayAtIndex, InsertIteratorPairAtIndex
 
       procedure         :: EraseSingle
       procedure         :: EraseRange
@@ -88,6 +96,16 @@ module stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Module
       procedure         :: FixValuePtrs
 
    end type
+
+   public :: Begin
+   interface Begin
+      module procedure BeginVector
+   end interface
+
+   public :: End
+   interface End
+      module procedure EndVector
+   end interface
 
    public :: Size
    interface Size
@@ -269,7 +287,7 @@ contains
    !
    ! If the container is empty, the returned iterator value shall not be dereferenced.
    !
-   type(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator) function Begin(self)
+   type(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator) function BeginVector(self) result(Begin)
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(in), target :: self
 
       Begin%vector => self
@@ -291,7 +309,7 @@ contains
    !
    ! If the container is empty, this function returns the same as vector%begin.
    !
-   type(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator) function End(self)
+   type(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator) function EndVector(self) result(End)
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(in), target :: self
 
       End%vector => self
@@ -469,16 +487,25 @@ contains
    !
    ! The parameters determine how many elements are inserted and to which values they are initialized:
    !
-   subroutine InsertSingle(self, position, val)
+   subroutine InsertSingleAtIndex(self, position, val)
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
       integer                                   , intent(in)    :: position
       STD_TEMPLATE_TYPE                         , intent(in)    :: val
 
-      call self%InsertArray(position, [val])
+      call self%InsertArrayAtIndex(position, [val])
 
    end subroutine
    !
-   subroutine InsertFill(self, position, n, val)
+   subroutine InsertSingle(self, position, val)
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME)           , intent(inout) :: self
+      type(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)    :: position
+      STD_TEMPLATE_TYPE                                    , intent(in)    :: val
+
+      call self%InsertArrayAtIndex(position%index, [val])
+
+   end subroutine
+   !
+   subroutine InsertFillAtIndex(self, position, n, val)
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
       integer                                   , intent(in)    :: position
       integer                                   , intent(in)    :: n
@@ -486,12 +513,23 @@ contains
 
       integer :: i
 
-      if (n == 0) return
-      call self%InsertArray(position, [(val, i=1,n)])
+      call self%InsertArrayAtIndex(position, [(val, i=1,n)])
 
    end subroutine
    !
-   subroutine InsertArray(self, position, array)
+   subroutine InsertFill(self, position, n, val)
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME)           , intent(inout) :: self
+      type(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)    :: position
+      integer                                              , intent(in)    :: n
+      STD_TEMPLATE_TYPE                                    , intent(in)    :: val
+
+      integer :: i
+
+      call self%InsertArrayAtIndex(position%index, [(val, i=1,n)])
+
+   end subroutine
+   !
+   subroutine InsertArrayAtIndex(self, position, array)
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
       integer                                   , intent(in)    :: position
       STD_TEMPLATE_TYPE                         , intent(in)    :: array(:)
@@ -514,6 +552,35 @@ contains
 
       self%psize = self%psize + size(array)
       call self%FixValuePtrs()
+
+   end subroutine
+   !
+   subroutine InsertArray(self, position, array)
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME)           , intent(inout) :: self
+      type(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)    :: position
+      STD_TEMPLATE_TYPE                                    , intent(in)    :: array(:)
+
+      call self%InsertArrayAtIndex(position%index, array)
+
+   end subroutine
+   !
+   subroutine InsertIteratorPairAtIndex(self, position, first, last)
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME)           , intent(inout) :: self
+      integer                                              , intent(in)    :: position
+      type(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)    :: first
+      type(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)    :: last
+
+      call self%InsertArrayAtIndex(position, first%vector%data(first%index:last%index-1))
+
+   end subroutine
+   !
+   subroutine InsertIteratorPair(self, position, first, last)
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME)           , intent(inout) :: self
+      type(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)    :: position
+      type(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)    :: first
+      type(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)    :: last
+
+      call self%InsertArrayAtIndex(position%index, first%vector%data(first%index:last%index-1))
 
    end subroutine
 

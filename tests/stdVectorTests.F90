@@ -37,9 +37,11 @@ contains
       call testPushBack
       call testPopBack
 
+      ! TODO: test insertion methods that take an iterator as position
       call testInsertSingle
       call testInsertFill
       call testInsertArray
+      call testInsertIteratorPair
 
       call testEraseSingle
       call testEraseRange
@@ -296,7 +298,6 @@ contains
       ASSERT(v%front == 320)
       ASSERT(all(v%data == [320,4,1,6,8,3,737]))
 
-
       call v%Insert(8,29)
       ASSERT(v%Size() == 8)
       ASSERT(v%back == 29)
@@ -318,7 +319,6 @@ contains
       ASSERT(v%Size() == 10)
       ASSERT(v%front == 320)
       ASSERT(all(v%data == [320,320,4,1,1,1,6,8,3,737]))
-
 
       call v%Insert(11,5,29)
       ASSERT(v%Size() == 15)
@@ -342,11 +342,23 @@ contains
       ASSERT(v%front == 320)
       ASSERT(all(v%data == [320,321,4,8,9,1,6,8,3,737]))
 
-
       call v%Insert(11,[29,30,31,32,33])
       ASSERT(v%Size() == 15)
       ASSERT(v%back == 33)
       ASSERT(all(v%data == [320,321,4,8,9,1,6,8,3,737,29,30,31,32,33]))
+
+   end subroutine
+
+
+   subroutine testInsertIteratorPair
+      type(stdVectorInt) :: v, o
+
+      call o%New([2,3,4])
+      call v%New([1,5])
+      call v%Insert(2, o%Begin(), o%End())
+
+      ASSERT(v%Size() == 5)
+      ASSERT(all(v%data == [1,2,3,4,5]))
 
    end subroutine
 
