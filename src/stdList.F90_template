@@ -58,7 +58,8 @@ module stdList/**/STD_TEMPLATE_TYPE_NAME/**/Module
       procedure         :: NewCopyOther
       procedure         :: NewFill
       procedure         :: NewFromArray
-      generic  , public :: New => NewDefault, NewCopyOther, NewFill, NewFromArray
+      procedure         :: NewFromIteratorPair
+      generic  , public :: New => NewDefault, NewCopyOther, NewFill, NewFromArray, NewFromIteratorPair
 
       procedure, public :: Delete
       final             :: Finalizer
@@ -72,6 +73,12 @@ module stdList/**/STD_TEMPLATE_TYPE_NAME/**/Module
       generic  , public :: Size => SizeList
 
       procedure, public :: Empty
+
+      procedure         :: AssignOther
+      procedure         :: AssignIteratorPair
+      procedure         :: AssignFill
+      procedure         :: AssignArray
+      generic  , public :: Assign => AssignOther, AssignIteratorPair, AssignFill, AssignArray
 
       procedure         :: InsertSingle
       procedure         :: InsertFill
@@ -87,6 +94,12 @@ module stdList/**/STD_TEMPLATE_TYPE_NAME/**/Module
       procedure, public :: PopFront
       procedure, public :: PushBack
       procedure, public :: PopBack
+
+      procedure, public :: Swap
+
+      procedure, public :: Resize
+
+      procedure, public :: Clear
 
       procedure         :: FixValuePtrs
 
@@ -105,6 +118,16 @@ module stdList/**/STD_TEMPLATE_TYPE_NAME/**/Module
    public :: Size
    interface Size
       module procedure SizeList
+   end interface
+
+   public :: assignment(=)
+   interface assignment(=)
+      module procedure AssignArray, AssignOther
+   end interface
+
+   public :: Swap
+   interface Swap
+      module procedure Swap
    end interface
 
 
@@ -208,6 +231,21 @@ contains
       enddo
 
    end subroutine
+   !
+   subroutine NewFromIteratorPair(self, first, last)
+      class(stdList/**/STD_TEMPLATE_TYPE_NAME)           , intent(out) :: self
+      type(stdList/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)  :: first
+      type(stdList/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)  :: last
+
+      type(stdList/**/STD_TEMPLATE_TYPE_NAME/**/Iterator) :: it
+
+      call self%New()
+      it = self%Begin()
+      call self%Insert(it, first, last) ! Fortran, why can't I pass l%Begin() directly?
+
+   end subroutine
+
+
 
 
 
@@ -310,6 +348,48 @@ contains
 
 
    ! =============> Modifiers:
+
+
+
+   ! Assigns new contents to the list container, replacing its current contents, and modifying its size accordingly.
+   !
+   subroutine AssignOther(self, other)
+      class(stdList/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
+      class(stdList/**/STD_TEMPLATE_TYPE_NAME), intent(in)    :: other
+
+      call self%Delete()
+      call self%New(other)
+
+   end subroutine
+   !
+   subroutine AssignFill(self, n, val)
+      class(stdList/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
+      integer                                 , intent(in)    :: n
+      STD_TEMPLATE_TYPE                       , intent(in)    :: val
+
+      call self%Delete()
+      call self%New(n, val)
+
+   end subroutine
+   !
+   subroutine AssignIteratorPair(self, first, last)
+      class(stdList/**/STD_TEMPLATE_TYPE_NAME)           , intent(inout) :: self
+      type(stdList/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)    :: first
+      type(stdList/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)    :: last
+
+      call self%Delete()
+      call self%New(first, last)
+
+   end subroutine
+   !
+   subroutine AssignArray(self, array)
+      class(stdList/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
+      STD_TEMPLATE_TYPE                       , intent(in)    :: array(:)
+
+      call self%Delete()
+      call self%New(array)
+
+   end subroutine
 
 
 
@@ -491,13 +571,107 @@ contains
 
 
 
+   ! Exchanges the content of the container by the content of another list of the same type. Sizes may differ.
+   !
+   ! After the call to this member function, the elements in this container are those which were in x before the call, and
+   ! the elements of x are those which were in this. All iterators, references and pointers remain valid for the swapped
+   ! objects.
+   !
+   subroutine Swap(self, other)
+      class(stdList/**/STD_TEMPLATE_TYPE_NAME), intent(inout), target :: self
+      class(stdList/**/STD_TEMPLATE_TYPE_NAME), intent(inout), target :: other
+
+      integer :: tmpSize
+      type(ListNode) :: tmpNode
+
+      ! fix pointers from data nodes to the sentinels
+
+      self%sentinel%prev%next => other%sentinel
+      self%sentinel%next%prev => other%sentinel
+
+      other%sentinel%prev%next => self%sentinel
+      other%sentinel%next%prev => self%sentinel
+
+      ! exchange sentinels themselves
+
+      tmpNode = self%sentinel
+      tmpSize = self%psize
+
+      self%sentinel = other%sentinel
+      self%psize    = other%psize
+
+      other%sentinel = tmpNode
+      other%psize    = tmpSize
+
+      ! fix front/back pointers for both lists
+
+      call self%FixValuePtrs()
+      call other%FixValuePtrs()
+
+   end subroutine
+
+
+
+   ! Resizes the container so that it contains n elements.
+   !
+   ! If n is smaller than the current container size, the content is reduced to its first n elements, removing those beyond
+   ! (and destroying them).
+   !
+   ! If n is greater than the current container size, the content is expanded by inserting at the end as many elements as
+   ! needed to reach a size of n. If val is specified, the new elements are initialized as copies of val, otherwise, they are
+   ! value-initialized.
+   !
+   ! Notice that this function changes the actual content of the container by inserting or erasing elements from it.
+   !
+   subroutine Resize(self, n, val)
+      class(stdList/**/STD_TEMPLATE_TYPE_NAME), intent(inout)           :: self
+      integer                                 , intent(in)              :: n
+      STD_TEMPLATE_TYPE                       , intent(in)   , optional :: val
+
+      type(stdList/**/STD_TEMPLATE_TYPE_NAME/**/Iterator) :: it
+      integer :: i
+
+      if (n == self%psize) then
+         return
+      else if (n < self%psize) then
+         it = self%Begin()
+         do i = 2, n
+            call it%Inc()
+         enddo
+         call it%Inc()
+         call self%Erase(it,self%End())
+      else ! n > self%psize
+         do i = 1, n - self%psize
+            call InsertNodeAfter(self%sentinel%prev, val)
+         enddo
+      endif
+
+      self%psize = n
+      call self%FixValuePtrs()
+
+   end subroutine
+
+
+
+   ! Removes all elements from the list container (which are destroyed), and leaving the container with a size of 0.
+   !
+   subroutine Clear(self)
+      class(stdList/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
+
+      call self%Delete()
+      call self%New()
+
+   end subroutine
+
+
+
    ! =============> Internal methods:
 
 
 
    subroutine InsertNodeBefore(beforenode, val)
-      class(ListNode), pointer, intent(inout) :: beforenode
-      STD_TEMPLATE_TYPE       , intent(in)    :: val
+      class(ListNode), pointer, intent(inout)           :: beforenode
+      STD_TEMPLATE_TYPE       , intent(in)   , optional :: val
 
       class(ListNode), pointer :: oldprev, newprev
 
@@ -507,18 +681,20 @@ contains
       newprev%next => beforenode
       newprev%prev => oldprev
       oldprev%next => newprev
-      select type (newprev)
-      type is (DataNode) ! always true
-         newprev%data = val
-      end select
+      if (present(val)) then
+         select type (newprev)
+         type is (DataNode) ! always true
+            newprev%data = val
+         end select
+      endif
 
    end subroutine
 
 
 
    subroutine InsertNodeAfter(afternode, val)
-      class(ListNode), pointer, intent(inout) :: afternode
-      STD_TEMPLATE_TYPE       , intent(in)    :: val
+      class(ListNode), pointer, intent(inout)           :: afternode
+      STD_TEMPLATE_TYPE       , intent(in)   , optional :: val
 
       class(ListNode), pointer :: oldnext, newnext
 
@@ -528,10 +704,12 @@ contains
       newnext%prev => afternode
       newnext%next => oldnext
       oldnext%prev => newnext
-      select type (newnext)
-      type is (DataNode) ! always true
-         newnext%data = val
-      end select
+      if (present(val)) then
+         select type (newnext)
+         type is (DataNode) ! always true
+            newnext%data = val
+         end select
+      endif
 
    end subroutine
 

@@ -22,6 +22,9 @@ contains
       call testNewCopyOther
       call testNewFill
       call testNewFromArray
+      call testNewFromIteratorPair
+
+      call testAssignments
 
       call testInsertSingle
       call testInsertFill
@@ -33,6 +36,12 @@ contains
 
       call testEraseSingle
       call testEraseIteratorPair
+
+      call testSwap
+
+      call testResize
+
+      call testClear
 
    end subroutine
 
@@ -92,6 +101,61 @@ contains
       ASSERT(Size(l) == 7)
       ASSERT(l%front == 5)
       ASSERT(l%back == 88)
+
+   end subroutine
+
+
+   subroutine testNewFromIteratorPair
+      type(stdListInt) :: l, o
+
+      call o%New([5,13,41,97,17,10,88])
+      call l%New(o%Begin(), o%End())
+
+      ASSERT(.not.l%Empty())
+      ASSERT(l%Size() == 7)
+      ASSERT(Size(l) == 7)
+      ASSERT(l%front == 5)
+      ASSERT(l%back == 88)
+      ASSERT(.not.associated(o%front,l%front))
+      ASSERT(.not.associated(o%back,l%back))
+
+   end subroutine
+
+
+   subroutine testAssignments
+      type(stdListInt) :: l, o
+      type(stdListIntIterator) :: it
+
+      call o%New([5,13,41,97,17,10,88])
+      l = o
+
+      ASSERT(.not.l%Empty())
+      ASSERT(l%Size() == 7)
+      ASSERT(l%front == 5)
+      ASSERT(l%back == 88)
+      ASSERT(.not.associated(o%front,l%front))
+      ASSERT(.not.associated(o%back,l%back))
+
+      it = o%Begin()
+      call it%Inc()
+      call l%Assign(it, o%End())
+
+      ASSERT(.not.l%Empty())
+      ASSERT(l%Size() == 6)
+      ASSERT(l%front == 13)
+      ASSERT(l%back == 88)
+      ASSERT(.not.associated(it%value,l%front))
+      ASSERT(.not.associated(o%back,l%back))
+
+      call l%Assign(5, 12)
+      ASSERT(l%Size() == 5)
+      ASSERT(l%front == 12)
+      ASSERT(l%back == 12)
+
+      l = [23,446,864,3]
+      ASSERT(l%Size() == 4)
+      ASSERT(l%front == 23)
+      ASSERT(l%back == 3)
 
    end subroutine
 
@@ -351,6 +415,84 @@ contains
       it1 = l%Begin()
       call l%Erase(it1,l%End()) ! Fortran, why can't I pass l%Begin() directly? It works for the second parameter FFS ...
       ASSERT(l%Empty())
+
+   end subroutine
+
+
+   subroutine testSwap
+      type(stdListInt) :: l, o
+      type(stdListIntIterator) :: it
+
+      l = [4,7,813,5]
+      o = [5,9,6]
+
+      call Swap(l,o)
+
+      ASSERT(l%Size() == 3)
+      ASSERT(l%front == 5)
+      ASSERT(l%back == 6)
+
+      it = l%Begin()
+      ASSERT(it%value == 5)
+      call it%Inc()
+      ASSERT(it%value == 9)
+      call it%Inc()
+      ASSERT(it%value == 6)
+      call it%Inc()
+      ASSERT(it == l%End())
+
+      ASSERT(o%Size() == 4)
+      ASSERT(o%front == 4)
+      ASSERT(o%back == 5)
+
+      it = o%Begin()
+      ASSERT(it%value == 4)
+      call it%Inc()
+      ASSERT(it%value == 7)
+      call it%Inc()
+      ASSERT(it%value == 813)
+      call it%Inc()
+      ASSERT(it%value == 5)
+      call it%Inc()
+      ASSERT(it == o%End())
+
+   end subroutine
+
+
+   subroutine testResize
+      type(stdListInt) :: l
+      type(stdListIntIterator) :: it
+
+      call l%New([5,-2,3,66,0])
+
+      ASSERT(l%Size() == 5)
+      ASSERT(l%back == 0)
+
+      call l%Resize(4)
+
+      ASSERT(l%Size() == 4)
+      ASSERT(l%back == 66)
+
+      call l%Resize(6)
+      it = l%End()
+      call it%Dec()
+      call it%Dec()
+      call it%Dec()
+
+      ASSERT(it%value == 66)
+
+   end subroutine
+
+
+   subroutine testClear
+      type(stdListInt) :: l
+
+      call l%New([4,5,7,8])
+      call l%Clear()
+
+      ASSERT(l%Empty())
+      ASSERT(l%Size() == 0)
+      ASSERT(l%Begin() == l%End())
 
    end subroutine
 
