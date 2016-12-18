@@ -31,6 +31,9 @@ contains
       call testPushPopBack
       call testPushPopFront
 
+      call testEraseSingle
+      call testEraseIteratorPair
+
    end subroutine
 
 
@@ -285,6 +288,69 @@ contains
       ASSERT(i == 5)
       ASSERT(l%Empty())
       ASSERT(l%Size() == 0)
+
+   end subroutine
+
+
+   subroutine testEraseSingle
+      type(stdListInt) :: l
+      type(stdListIntIterator :: it
+
+      call l%New([4,5,6,7])
+      it = l%Begin()
+      call it%Inc()
+      call it%Inc()
+      ASSERT(it%value == 6)
+
+      call l%Erase(it)
+      ASSERT(l%Size() == 3)
+
+      it = l%End()
+      call it%Dec()
+      ASSERT(it%value == 7)
+      call it%Dec()
+      ASSERT(it%value == 5)
+      call it%Dec()
+      ASSERT(it%value == 4)
+      ASSERT(it == l%Begin())
+
+      it = l%Begin()
+      call l%Erase(it) ! Fortran, why can't I pass l%Begin() directly???? Please ....
+      ASSERT(l%Size() == 2)
+      ASSERT(l%front == 5)
+
+   end subroutine
+
+
+   subroutine testEraseIteratorPair
+      type(stdListInt) :: l
+      type(stdListIntIterator :: it1, it2
+
+      call l%New([12,23,34,45,56,76])
+
+      it1 = Begin(l)
+      call it1%Inc()
+      call it1%Inc()
+      ASSERT(it1%value == 34)
+
+      it2 = it1
+      call it2%Inc()
+      call it2%Inc()
+      ASSERT(it2%value == 56)
+
+      call l%Erase(it1, it2)
+      ASSERT(l%Size() == 4)
+
+      ASSERT(it2%value == 56)
+      call it2%Inc()
+      call it2%Inc()
+      ASSERT(it2 == l%End())
+
+
+      call l%New([12,23,34,45,56,76])
+      it1 = l%Begin()
+      call l%Erase(it1,l%End()) ! Fortran, why can't I pass l%Begin() directly? It works for the second parameter FFS ...
+      ASSERT(l%Empty())
 
    end subroutine
 

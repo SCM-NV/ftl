@@ -86,8 +86,10 @@ module stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Module
                                      InsertSingleAtIndex, InsertFillAtIndex, InsertArrayAtIndex, InsertIteratorPairAtIndex
 
       procedure         :: EraseSingle
-      procedure         :: EraseRange
-      generic  , public :: Erase => EraseSingle, EraseRange
+      procedure         :: EraseSingleIndex
+      procedure         :: EraseIndexPair
+      procedure         :: EraseIteratorPair
+      generic  , public :: Erase => EraseSingle, EraseSingleIndex, EraseIndexPair, EraseIteratorPair
 
       procedure, public :: Clear
 
@@ -596,14 +598,22 @@ contains
    ! as list or forward_list).
    !
    subroutine EraseSingle(self, position)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
-      integer                                   , intent(in)    :: position
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME)           , intent(inout) :: self
+      type(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)    :: position
 
-      call self%EraseRange(position, position+1)
+      call self%EraseIndexPair(position%index, position%index+1)
 
    end subroutine
    !
-   subroutine EraseRange(self, first, last)
+   subroutine EraseSingleIndex(self, position)
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
+      integer                                   , intent(in)    :: position
+
+      call self%EraseIndexPair(position, position+1)
+
+   end subroutine
+   !
+   subroutine EraseIndexPair(self, first, last)
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
       integer                                   , intent(in)    :: first
       integer                                   , intent(in)    :: last
@@ -623,6 +633,15 @@ contains
       call self%FixValuePtrs()
 
    end subroutine
+   !
+   subroutine EraseIteratorPair(self, first, last)
+      class(stdVector/**/STD_TEMPLATE_TYPE_NAME)           , intent(inout) :: self
+      type(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)    :: first
+      type(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)    :: last
+
+      call self%EraseIndexPair(first%index, last%index)
+
+   end subroutine
 
 
 
@@ -634,7 +653,7 @@ contains
    subroutine Clear(self)
       class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
 
-      call self%EraseRange(1, self%psize+1)
+      call self%EraseIndexPair(1, self%psize+1)
 
    end subroutine
 

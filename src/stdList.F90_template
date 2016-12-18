@@ -79,6 +79,10 @@ module stdList/**/STD_TEMPLATE_TYPE_NAME/**/Module
       procedure         :: InsertIteratorPair
       generic  , public :: Insert => InsertSingle, InsertFill, InsertArray, InsertIteratorPair
 
+      procedure         :: EraseSingle
+      procedure         :: EraseIteratorPair
+      generic  , public :: Erase => EraseSingle, EraseIteratorPair
+
       procedure, public :: PushFront
       procedure, public :: PopFront
       procedure, public :: PushBack
@@ -447,6 +451,43 @@ contains
       call self%FixValuePtrs()
 
    end function
+
+
+
+   ! Removes from the list container either a single element (position) or a range of elements ([first,last)).
+   !
+   ! This effectively reduces the container size by the number of elements removed, which are destroyed.
+   !
+   ! Unlike other standard sequence containers, list and forward_list objects are specifically designed to be efficient
+   ! inserting and removing elements in any position, even in the middle of the sequence.
+   !
+   subroutine EraseSingle(self, position)
+      class(stdList/**/STD_TEMPLATE_TYPE_NAME)           , intent(inout) :: self
+      type(stdList/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(inout) :: position
+
+      call UnlinkNode(position%node)
+      deallocate(position%node)
+      self%psize = self%psize - 1
+      call self%FixValuePtrs()
+
+   end subroutine
+   !
+   subroutine EraseIteratorPair(self, first, last)
+      class(stdList/**/STD_TEMPLATE_TYPE_NAME)           , intent(inout) :: self
+      type(stdList/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(inout) :: first
+      type(stdList/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)    :: last
+
+      type(stdList/**/STD_TEMPLATE_TYPE_NAME/**/Iterator) :: deletor
+      associate(walker => first)
+
+      do while (walker /= last)
+         deletor = walker
+         call walker%Inc()
+         call self%EraseSingle(deletor)
+      enddo
+
+      end associate
+   end subroutine
 
 
 

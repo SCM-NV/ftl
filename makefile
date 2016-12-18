@@ -9,7 +9,6 @@ INCLUDES = -Isrc -Itests
 
 memcheck: $(BUILDDIR)/tests
 	valgrind --leak-check=yes ./$(BUILDDIR)/tests
-	rm vgcore.*
 
 test: $(BUILDDIR)/tests
 	./$(BUILDDIR)/tests
