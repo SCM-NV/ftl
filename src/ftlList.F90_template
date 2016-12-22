@@ -18,8 +18,17 @@
 ! also consume some extra memory to keep the linking information associated to each element (which may be an important
 ! factor for large lists of small-sized elements).
 
+#define FTL_CONTAINER ftlList
 #define FTL_CONTAINER_PROVIDES_BIDIRECTIONAL_ITERATOR
 
+#ifdef FTL_INSTANTIATE_TEMPLATE
+
+#if !defined(FTL_TEMPLATE_TYPE)
+#error FTL_TEMPLATE_TYPE must be defined when instantiating ftlList
+#endif
+#if !defined(FTL_TEMPLATE_TYPE_NAME)
+#error FTL_TEMPLATE_TYPE_NAME must be defined when instantiating ftlList
+#endif
 
 module ftlList/**/FTL_TEMPLATE_TYPE_NAME/**/Module
 
@@ -821,3 +830,4 @@ contains
 
 
 end module
+#endif

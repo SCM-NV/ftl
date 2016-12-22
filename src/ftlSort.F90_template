@@ -1,0 +1,59 @@
+#ifdef FTL_INSTANTIATE_TEMPLATE
+
+#if !defined(FTL_TEMPLATE_TYPE)
+#error FTL_TEMPLATE_TYPE must be defined when instantiating ftlSort
+#endif
+#if !defined(FTL_TEMPLATE_TYPE_NAME)
+#error FTL_TEMPLATE_TYPE_NAME must be defined when instantiating ftlSort
+#endif
+#if !defined(FTL_CONTAINER)
+#error FTL_CONTAINER must be defined when instantiating ftlSort
+#endif
+#if !defined(FTL_CONTAINER_PROVIDES_FORWARD_ITERATOR)       && \
+    !defined(FTL_CONTAINER_PROVIDES_BIDIRECTIONAL_ITERATOR) && \
+    !defined(FTL_CONTAINER_PROVIDES_RANDOM_ACCESS_ITERATOR)
+#error FTL_CONTAINER_PROVIDES_*_INTERATOR must be defined when instantiating ftlSort
+#endif
+
+
+module ftlSort/**/FTL_CONTAINER/**/FTL_TEMPLATE_TYPE_NAME/**/Module
+
+   use FTL_CONTAINER/**/FTL_TEMPLATE_TYPE_NAME/**/Module
+
+   implicit none
+   private
+
+   public :: ftlSort
+   interface ftlSort
+      module procedure ftlSort/**/FTL_CONTAINER/**/FTL_TEMPLATE_TYPE_NAME
+   end interface
+
+contains
+
+   subroutine ftlSort/**/FTL_CONTAINER/**/FTL_TEMPLATE_TYPE_NAME(container)
+      type(FTL_CONTAINER/**/FTL_TEMPLATE_TYPE_NAME), intent(inout) :: container
+
+      type(FTL_CONTAINER/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator) :: i, j, smallestIt
+      FTL_TEMPLATE_TYPE :: tmp
+
+      ! TODO: implement something faster than selection sort ;-) ...
+
+      j = container%Begin()
+      do while (j /= container%End())
+         smallestIt = j
+         i = j
+         call i%Inc()
+         do while (i /= container%End())
+            if (i%value < smallestIt%value) smallestIt = i
+            call i%Inc()
+         enddo
+         tmp = j%value
+         j%value = smallestIt%value
+         smallestIt%value = tmp
+         call j%Inc()
+      enddo
+
+   end subroutine
+
+end module
+#endif

@@ -16,7 +16,7 @@ test: $(BUILDDIR)/tests
 $(BUILDDIR):
 	mkdir $(BUILDDIR)
 
-$(BUILDDIR)/tests: tests/tests.F90 $(BUILDDIR)/ftlTestTools.o $(BUILDDIR)/ftlVectorTests.o $(BUILDDIR)/ftlListTests.o | $(BUILDDIR)
+$(BUILDDIR)/tests: tests/tests.F90 $(BUILDDIR)/ftlTestTools.o $(BUILDDIR)/ftlVectorTests.o $(BUILDDIR)/ftlListTests.o $(BUILDDIR)/ftlSortTests.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) $< $(BUILDDIR)/*.o -o $@
 
 $(BUILDDIR)/ftlTestTools.o: tests/ftlTestTools.F90 tests/ftlTestTools.inc | $(BUILDDIR)
@@ -32,6 +32,15 @@ $(BUILDDIR)/ftlListTests.o: tests/ftlListTests.F90 $(BUILDDIR)/ftlListInt.o | $(
 	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
 
 $(BUILDDIR)/ftlListInt.o: tests/instantiations/ftlListInt.F90 src/ftlList.F90_template | $(BUILDDIR)
+	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
+
+$(BUILDDIR)/ftlSortTests.o: tests/ftlSortTests.F90 $(BUILDDIR)/ftlSortftlVectorInt.o $(BUILDDIR)/ftlVectorInt.o $(BUILDDIR)/ftlSortftlListInt.o $(BUILDDIR)/ftlListInt.o | $(BUILDDIR)
+	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
+
+$(BUILDDIR)/ftlSortftlVectorInt.o: tests/instantiations/ftlSortftlVectorInt.F90 src/ftlSort.F90_template | $(BUILDDIR)
+	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
+
+$(BUILDDIR)/ftlSortftlListInt.o: tests/instantiations/ftlSortftlListInt.F90 src/ftlSort.F90_template | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
 
 clean:
