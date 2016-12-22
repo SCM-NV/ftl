@@ -1,5 +1,0 @@
-#define FTL_TEMPLATE_TYPE type(SingleOrbitalTransitionType)
-#define FTL_TEMPLATE_TYPE_NAME SingleOrbitalTransition
-#define FTL_TEMPLATE_TYPE_MODULE SingleOrbitalTransitionModule
-#define FTL_INSTANTIATE_TEMPLATE
-#include "ftlVector.F90_template"

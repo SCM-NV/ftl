@@ -1,23 +1,23 @@
 #include "ftlTestTools.inc"
 
-module ftlSortTestsModule
+module ftlAlgorithmsTestsModule
 
    use ftlTestToolsModule
    use ftlVectorIntModule
-   use ftlSortftlVectorIntModule
+   use ftlVectorIntAlgorithmsModule
    use ftlListIntModule
-   use ftlSortftlListIntModule
+   use ftlListIntAlgorithmsModule
 
    implicit none
    private
-   public :: ftlSortTests
+   public :: ftlAlgorithmsTests
 
 contains
 
 
-   subroutine ftlSortTests
+   subroutine ftlAlgorithmsTests
 
-      write (*,'(A)') 'Running ftlSort tests ...'
+      write (*,'(A)') 'Running ftlAlgorithms tests ...'
 
       call testSortVector
       call testSortList
