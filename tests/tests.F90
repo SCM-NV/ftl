@@ -1,16 +1,16 @@
-#include "stdTestTools.inc"
+#include "ftlTestTools.inc"
 
 program tests
 
-   use stdTestToolsModule
-   use stdVectorTestsModule
-   use stdListTestsModule
+   use ftlTestToolsModule
+   use ftlVectorTestsModule
+   use ftlListTestsModule
 
    ! dummy assertion to test that assertions themselves work ...
    ASSERT(.false.)
 
-   call stdVectorTests
-   call stdListTests
+   call ftlVectorTests
+   call ftlListTests
 
    write (*,'(A,I0,A,I0)') 'Failed assertions: ',num_failed,'/',num_asserts
    if (num_failed > 0) then

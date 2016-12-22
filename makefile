@@ -16,22 +16,22 @@ test: $(BUILDDIR)/tests
 $(BUILDDIR):
 	mkdir $(BUILDDIR)
 
-$(BUILDDIR)/tests: tests/tests.F90 $(BUILDDIR)/stdTestTools.o $(BUILDDIR)/stdVectorTests.o $(BUILDDIR)/stdListTests.o | $(BUILDDIR)
+$(BUILDDIR)/tests: tests/tests.F90 $(BUILDDIR)/ftlTestTools.o $(BUILDDIR)/ftlVectorTests.o $(BUILDDIR)/ftlListTests.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) $< $(BUILDDIR)/*.o -o $@
 
-$(BUILDDIR)/stdTestTools.o: tests/stdTestTools.F90 tests/stdTestTools.inc | $(BUILDDIR)
+$(BUILDDIR)/ftlTestTools.o: tests/ftlTestTools.F90 tests/ftlTestTools.inc | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
 
-$(BUILDDIR)/stdVectorTests.o: tests/stdVectorTests.F90 $(BUILDDIR)/stdVectorInt.o | $(BUILDDIR)
+$(BUILDDIR)/ftlVectorTests.o: tests/ftlVectorTests.F90 $(BUILDDIR)/ftlVectorInt.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
 
-$(BUILDDIR)/stdVectorInt.o: tests/instantiations/stdVectorInt.F90 src/stdVector.F90_template | $(BUILDDIR)
+$(BUILDDIR)/ftlVectorInt.o: tests/instantiations/ftlVectorInt.F90 src/ftlVector.F90_template | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
 
-$(BUILDDIR)/stdListTests.o: tests/stdListTests.F90 $(BUILDDIR)/stdListInt.o | $(BUILDDIR)
+$(BUILDDIR)/ftlListTests.o: tests/ftlListTests.F90 $(BUILDDIR)/ftlListInt.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
 
-$(BUILDDIR)/stdListInt.o: tests/instantiations/stdListInt.F90 src/stdList.F90_template | $(BUILDDIR)
+$(BUILDDIR)/ftlListInt.o: tests/instantiations/ftlListInt.F90 src/ftlList.F90_template | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
 
 clean:

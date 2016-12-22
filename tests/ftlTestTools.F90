@@ -1,4 +1,4 @@
-module stdTestToolsModule
+module ftlTestToolsModule
 
    implicit none
 

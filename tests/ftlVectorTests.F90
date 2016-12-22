@@ -1,22 +1,22 @@
-#include "stdTestTools.inc"
+#include "ftlTestTools.inc"
 
-module stdVectorTestsModule
+module ftlVectorTestsModule
 
-   use stdTestToolsModule
-   use stdVectorIntModule
+   use ftlTestToolsModule
+   use ftlVectorIntModule
 
    implicit none
    private
-   public :: stdVectorTests
+   public :: ftlVectorTests
 
 contains
 
 
-   subroutine stdVectorTests
+   subroutine ftlVectorTests
 
-      write (*,'(A)') 'Running stdVector tests ...'
+      write (*,'(A)') 'Running ftlVector tests ...'
 
-      ! Tests of the stdVector container itself:
+      ! Tests of the ftlVector container itself:
 
       call testNewDefault
       call testNewCopyOther
@@ -63,7 +63,7 @@ contains
 
 
    subroutine testNewDefault
-      type(stdVectorInt) :: v
+      type(ftlVectorInt) :: v
 
       call v%New()
 
@@ -78,7 +78,7 @@ contains
 
 
    subroutine testNewCopyOther
-      type(stdVectorInt) :: v,o
+      type(ftlVectorInt) :: v,o
 
       call o%New([5,13,41,97,17,10,88])
       call v%New(o)
@@ -99,7 +99,7 @@ contains
 
 
    subroutine testNewFill
-      type(stdVectorInt) :: u,v
+      type(ftlVectorInt) :: u,v
 
       call u%New(33)
 
@@ -122,7 +122,7 @@ contains
 
 
    subroutine testNewFromArray
-      type(stdVectorInt) :: v
+      type(ftlVectorInt) :: v
 
       call v%New([5,13,41,97,17,10,88])
 
@@ -139,7 +139,7 @@ contains
 
 
    subroutine testDelete
-      type(stdVectorInt) :: v
+      type(ftlVectorInt) :: v
 
       call v%New([5,13,41,97,17,10,88])
       call v%Delete()
@@ -152,8 +152,8 @@ contains
 
 
    subroutine testBegin
-      type(stdVectorInt) :: v
-      type(stdVectorIntIterator) :: it
+      type(ftlVectorInt) :: v
+      type(ftlVectorIntIterator) :: it
 
       call v%New([4,6,38,216,48468,3,2,67,9])
       it = v%Begin()
@@ -167,8 +167,8 @@ contains
 
 
    subroutine testEnd
-      type(stdVectorInt) :: v
-      type(stdVectorIntIterator) :: it
+      type(ftlVectorInt) :: v
+      type(ftlVectorIntIterator) :: it
 
       call v%New([4,6,38,216,48468,3,2,67,27])
       it = v%End()
@@ -183,7 +183,7 @@ contains
 
 
    subroutine testSizeAndCapacity
-      type(stdVectorInt) :: v
+      type(ftlVectorInt) :: v
       integer            :: i
 
       call v%New()
@@ -201,7 +201,7 @@ contains
 
 
    subroutine testResize
-      type(stdVectorInt) :: v
+      type(ftlVectorInt) :: v
 
       call v%New([246,57,2,6,7,38,245,2,6274,446])
       call v%Resize(20,1)
@@ -220,7 +220,7 @@ contains
 
 
    subroutine testEmpty
-      type(stdVectorInt) :: v
+      type(ftlVectorInt) :: v
 
       call v%New()
       ASSERT(v%Empty())
@@ -233,7 +233,7 @@ contains
 
 
    subroutine testReserve
-      type(stdVectorInt) :: v
+      type(ftlVectorInt) :: v
 
       call v%New([4,5,6,7])
       call v%Reserve(50)
@@ -245,7 +245,7 @@ contains
 
 
    subroutine testShrinkToFit
-      type(stdVectorInt) :: v
+      type(ftlVectorInt) :: v
 
       call v%New([4,5,6,7])
       call v%Reserve(50)
@@ -258,7 +258,7 @@ contains
 
 
    subroutine testPushBack
-      type(stdVectorInt) :: v
+      type(ftlVectorInt) :: v
       integer            :: i
 
       call v%New()
@@ -271,7 +271,7 @@ contains
 
 
    subroutine testPopBack
-      type(stdVectorInt) :: v
+      type(ftlVectorInt) :: v
 
       call v%New([4,62,78,836,3])
       ASSERT(v%PopBack() == 3)
@@ -285,7 +285,7 @@ contains
 
 
    subroutine testInsertSingle
-      type(stdVectorInt) :: v
+      type(ftlVectorInt) :: v
 
       call v%New([4,6,8,3,737])
 
@@ -307,7 +307,7 @@ contains
 
 
    subroutine testInsertFill
-      type(stdVectorInt) :: v
+      type(ftlVectorInt) :: v
 
       call v%New([4,6,8,3,737])
 
@@ -329,7 +329,7 @@ contains
 
 
    subroutine testInsertArray
-      type(stdVectorInt) :: v
+      type(ftlVectorInt) :: v
 
       call v%New([4,6,8,3,737])
 
@@ -351,7 +351,7 @@ contains
 
 
    subroutine testInsertIteratorPair
-      type(stdVectorInt) :: v, o
+      type(ftlVectorInt) :: v, o
 
       call o%New([2,3,4])
       call v%New([1,5])
@@ -364,7 +364,7 @@ contains
 
 
    subroutine testEraseSingle
-      type(stdVectorInt) :: v
+      type(ftlVectorInt) :: v
 
       call v%New([3,6,12,-4,733])
 
@@ -386,7 +386,7 @@ contains
 
 
    subroutine testEraseRange
-      type(stdVectorInt) :: v
+      type(ftlVectorInt) :: v
 
       call v%New([1,-5,2,5126,-356,33,823,3,1,2])
 
@@ -408,7 +408,7 @@ contains
 
 
    subroutine testClear
-      type(stdVectorInt) :: v
+      type(ftlVectorInt) :: v
 
       call v%New([1,-5,2,5126,-356,33,823,3,1,2])
       call v%Clear()
@@ -420,7 +420,7 @@ contains
 
 
    subroutine testNewItDefault
-      type(stdVectorIntIterator) :: it
+      type(ftlVectorIntIterator) :: it
 
       call it%New()
       ASSERT(.not.associated(it%value))
@@ -429,8 +429,8 @@ contains
 
 
    subroutine testNewItCopyOther
-      type(stdVectorInt) :: v
-      type(stdVectorIntIterator) :: it1, it2
+      type(ftlVectorInt) :: v
+      type(ftlVectorIntIterator) :: it1, it2
 
       call v%New([353,6,5,2,2274,33])
       it1 = v%Begin()
@@ -443,8 +443,8 @@ contains
 
 
    subroutine testInc
-      type(stdVectorInt) :: v
-      type(stdVectorIntIterator) :: it
+      type(ftlVectorInt) :: v
+      type(ftlVectorIntIterator) :: it
 
       call v%New([353,6,5,2,2274,33])
       it = v%Begin()
@@ -461,8 +461,8 @@ contains
 
 
    subroutine testDec
-      type(stdVectorInt) :: v
-      type(stdVectorIntIterator) :: it
+      type(ftlVectorInt) :: v
+      type(ftlVectorIntIterator) :: it
 
       call v%New([353,6,5,2,2274,33])
       it = v%End()
@@ -480,8 +480,8 @@ contains
 
 
    subroutine testAdvanceReverseDiff
-      type(stdVectorInt) :: v
-      type(stdVectorIntIterator) :: it1, it2
+      type(ftlVectorInt) :: v
+      type(ftlVectorIntIterator) :: it1, it2
 
       call v%New([353,6,5,2,2274,33])
       it1 = v%Begin()
@@ -500,8 +500,8 @@ contains
 
 
    subroutine testLogicalOperations
-      type(stdVectorInt) :: v
-      type(stdVectorIntIterator) :: it1, it2
+      type(ftlVectorInt) :: v
+      type(ftlVectorIntIterator) :: it1, it2
 
       call v%New([4,7,3,6,8])
       it1 = v%Begin() + 2

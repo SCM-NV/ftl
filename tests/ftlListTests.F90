@@ -1,22 +1,22 @@
-#include "stdTestTools.inc"
+#include "ftlTestTools.inc"
 
-module stdListTestsModule
+module ftlListTestsModule
 
-   use stdTestToolsModule
-   use stdListIntModule
+   use ftlTestToolsModule
+   use ftlListIntModule
 
    implicit none
    private
-   public :: stdListTests
+   public :: ftlListTests
 
 contains
 
 
-   subroutine stdListTests
+   subroutine ftlListTests
 
-      write (*,'(A)') 'Running stdList tests ...'
+      write (*,'(A)') 'Running ftlList tests ...'
 
-      ! Tests of the stdList container itself:
+      ! Tests of the ftlList container itself:
 
       call testNewDefault
       call testNewCopyOther
@@ -47,7 +47,7 @@ contains
 
 
    subroutine testNewDefault
-      type(stdListInt) :: l
+      type(ftlListInt) :: l
 
       call l%New()
 
@@ -61,7 +61,7 @@ contains
 
 
    subroutine testNewCopyOther
-      type(stdListInt) :: l,o
+      type(ftlListInt) :: l,o
 
       call o%New([5,13,41,97,17,10,88])
       call l%New(o)
@@ -78,7 +78,7 @@ contains
 
 
    subroutine testNewFill
-      type(stdListInt) :: l
+      type(ftlListInt) :: l
 
       call l%New(5, 72)
 
@@ -92,7 +92,7 @@ contains
 
 
    subroutine testNewFromArray
-      type(stdListInt) :: l
+      type(ftlListInt) :: l
 
       call l%New([5,13,41,97,17,10,88])
 
@@ -106,7 +106,7 @@ contains
 
 
    subroutine testNewFromIteratorPair
-      type(stdListInt) :: l, o
+      type(ftlListInt) :: l, o
 
       call o%New([5,13,41,97,17,10,88])
       call l%New(o%Begin(), o%End())
@@ -123,8 +123,8 @@ contains
 
 
    subroutine testAssignments
-      type(stdListInt) :: l, o
-      type(stdListIntIterator) :: it
+      type(ftlListInt) :: l, o
+      type(ftlListIntIterator) :: it
 
       call o%New([5,13,41,97,17,10,88])
       l = o
@@ -161,8 +161,8 @@ contains
 
 
    subroutine testInsertSingle
-      type(stdListInt) :: l
-      type(stdListIntIterator) :: it
+      type(ftlListInt) :: l
+      type(ftlListIntIterator) :: it
 
       call l%New([23,1,6])
       it = l%Begin()
@@ -180,8 +180,8 @@ contains
 
 
    subroutine testInsertFill
-      type(stdListInt) :: l
-      type(stdListIntIterator) :: it
+      type(ftlListInt) :: l
+      type(ftlListIntIterator) :: it
 
       call l%New([23,1,6])
       it = l%Begin()
@@ -210,8 +210,8 @@ contains
 
 
    subroutine testInsertArray
-      type(stdListInt) :: l
-      type(stdListIntIterator) :: it
+      type(ftlListInt) :: l
+      type(ftlListIntIterator) :: it
 
       call l%New([23,1,6])
       it = l%Begin()
@@ -242,8 +242,8 @@ contains
 
 
    subroutine testInsertIteratorPair
-      type(stdListInt) :: l, o
-      type(stdListIntIterator) :: it
+      type(ftlListInt) :: l, o
+      type(ftlListIntIterator) :: it
 
       call o%New([2,3,4])
       call l%New([1,5])
@@ -277,7 +277,7 @@ contains
 
 
    subroutine testPushPopBack
-      type(stdListInt) :: l
+      type(ftlListInt) :: l
       integer          :: i
 
       call l%New()
@@ -317,7 +317,7 @@ contains
 
 
    subroutine testPushPopFront
-      type(stdListInt) :: l
+      type(ftlListInt) :: l
       integer          :: i
 
       call l%New()
@@ -357,8 +357,8 @@ contains
 
 
    subroutine testEraseSingle
-      type(stdListInt) :: l
-      type(stdListIntIterator :: it
+      type(ftlListInt) :: l
+      type(ftlListIntIterator :: it
 
       call l%New([4,5,6,7])
       it = l%Begin()
@@ -387,8 +387,8 @@ contains
 
 
    subroutine testEraseIteratorPair
-      type(stdListInt) :: l
-      type(stdListIntIterator :: it1, it2
+      type(ftlListInt) :: l
+      type(ftlListIntIterator :: it1, it2
 
       call l%New([12,23,34,45,56,76])
 
@@ -420,8 +420,8 @@ contains
 
 
    subroutine testSwap
-      type(stdListInt) :: l, o
-      type(stdListIntIterator) :: it
+      type(ftlListInt) :: l, o
+      type(ftlListIntIterator) :: it
 
       l = [4,7,813,5]
       o = [5,9,6]
@@ -460,8 +460,8 @@ contains
 
 
    subroutine testResize
-      type(stdListInt) :: l
-      type(stdListIntIterator) :: it
+      type(ftlListInt) :: l
+      type(ftlListIntIterator) :: it
 
       call l%New([5,-2,3,66,0])
 
@@ -485,7 +485,7 @@ contains
 
 
    subroutine testClear
-      type(stdListInt) :: l
+      type(ftlListInt) :: l
 
       call l%New([4,5,7,8])
       call l%Clear()

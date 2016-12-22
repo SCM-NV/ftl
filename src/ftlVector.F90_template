@@ -23,28 +23,28 @@
 ! inserting or removing elements at positions other than the end, they perform worse than the others, and have less consistent
 ! iterators and references than lists and forward_lists.
 
-#define STD_CONTAINER_PROVIDES_RANDOM_ACCESS_ITERATOR
+#define FTL_CONTAINER_PROVIDES_RANDOM_ACCESS_ITERATOR
 
 
-module stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Module
+module ftlVector/**/FTL_TEMPLATE_TYPE_NAME/**/Module
 
-#ifdef STD_TEMPLATE_TYPE_MODULE
-   use STD_TEMPLATE_TYPE_MODULE
+#ifdef FTL_TEMPLATE_TYPE_MODULE
+   use FTL_TEMPLATE_TYPE_MODULE
 #endif
 
    implicit none
    private
 
-! ====== Type of the stdVector container itself ==================================================================================
+! ====== Type of the ftlVector container itself ==================================================================================
 
-   type, public :: stdVector/**/STD_TEMPLATE_TYPE_NAME
+   type, public :: ftlVector/**/FTL_TEMPLATE_TYPE_NAME
       private
 
       integer                                :: psize = 0
-      STD_TEMPLATE_TYPE, allocatable         :: storage(:)
-      STD_TEMPLATE_TYPE, pointer    , public :: data(:) => null()
-      STD_TEMPLATE_TYPE, pointer    , public :: front => null()
-      STD_TEMPLATE_TYPE, pointer    , public :: back => null()
+      FTL_TEMPLATE_TYPE, allocatable         :: storage(:)
+      FTL_TEMPLATE_TYPE, pointer    , public :: data(:) => null()
+      FTL_TEMPLATE_TYPE, pointer    , public :: front => null()
+      FTL_TEMPLATE_TYPE, pointer    , public :: back => null()
 
    contains
       private
@@ -120,14 +120,14 @@ module stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Module
    end interface
 
 
-! ====== Type of an iterator over a stdVector container ==========================================================================
+! ====== Type of an iterator over a ftlVector container ==========================================================================
 
-   type, public :: stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator
+   type, public :: ftlVector/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator
       private
 
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), pointer         :: vector => null()
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME), pointer         :: vector => null()
       integer                                                     :: index = 0
-      STD_TEMPLATE_TYPE                         , pointer, public :: value => null()
+      FTL_TEMPLATE_TYPE                         , pointer, public :: value => null()
 
    contains
       private
@@ -186,13 +186,13 @@ contains
 
 
 
-! ====== Implementation of stdVector methods =====================================================================================
+! ====== Implementation of ftlVector methods =====================================================================================
 
 
    ! Constructs a vector, initializing its contents depending on the constructor version used:
    !
    subroutine NewDefault(self)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(out) :: self
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME), intent(out) :: self
 
       ! Constructs an empty vector, with no elements.
 
@@ -202,8 +202,8 @@ contains
    end subroutine
    !
    subroutine NewCopyOther(self, other)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(out) :: self
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(in)  :: other
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME), intent(out) :: self
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME), intent(in)  :: other
 
       ! Constructs a vector as a copy of another vector.
 
@@ -215,9 +215,9 @@ contains
    end subroutine
    !
    subroutine NewFill(self, n, val)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(out)          :: self
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME), intent(out)          :: self
       integer                                   , intent(in)           :: n
-      STD_TEMPLATE_TYPE                         , intent(in), optional :: val
+      FTL_TEMPLATE_TYPE                         , intent(in), optional :: val
 
       ! Constructs a container with n elements. Each element is a copy of val (if present).
 
@@ -229,8 +229,8 @@ contains
    end subroutine
    !
    subroutine NewFromArray(self, array)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(out) :: self
-      STD_TEMPLATE_TYPE                         , intent(in)  :: array(:)
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME), intent(out) :: self
+      FTL_TEMPLATE_TYPE                         , intent(in)  :: array(:)
 
       ! Constructs a container with a copy of each of the elements in array, in the same order.
 
@@ -244,7 +244,7 @@ contains
 
 
    subroutine Delete(self)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(out) :: self
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME), intent(out) :: self
 
       ! Nothing to do here: intent(out) will deallocate self%storage and reset self%psize and self%data
 
@@ -255,8 +255,8 @@ contains
    ! Assigns new contents to the container, replacing its current contents, and modifying its size accordingly.
    !
    subroutine AssignArray(self, array)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
-      STD_TEMPLATE_TYPE                         , intent(in)    :: array(:)
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME), intent(inout) :: self
+      FTL_TEMPLATE_TYPE                         , intent(in)    :: array(:)
 
       call self%Reserve(size(array))
       self%storage(1:size(array)) = array
@@ -266,8 +266,8 @@ contains
    end subroutine
    !
    subroutine AssignOther(self, other)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(in)    :: other
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME), intent(inout) :: self
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME), intent(in)    :: other
 
       call self%Reserve(size(other))
       self%storage(1:size(other)) = other%data
@@ -289,8 +289,8 @@ contains
    !
    ! If the container is empty, the returned iterator value shall not be dereferenced.
    !
-   type(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator) function BeginVector(self) result(Begin)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(in), target :: self
+   type(ftlVector/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator) function BeginVector(self) result(Begin)
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME), intent(in), target :: self
 
       Begin%vector => self
       Begin%index = 1
@@ -311,8 +311,8 @@ contains
    !
    ! If the container is empty, this function returns the same as vector%begin.
    !
-   type(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator) function EndVector(self) result(End)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(in), target :: self
+   type(ftlVector/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator) function EndVector(self) result(End)
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME), intent(in), target :: self
 
       End%vector => self
       End%index = self%psize + 1
@@ -331,7 +331,7 @@ contains
    ! This is the number of actual objects held in the vector, which is not necessarily equal to its storage capacity.
    !
    pure integer function SizeVector(self) result(Size)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(in) :: self
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME), intent(in) :: self
 
       Size = self%psize
 
@@ -353,9 +353,9 @@ contains
    ! Notice that this function changes the actual content of the container by inserting or erasing elements from it.
    !
    subroutine Resize(self, n, val)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout)        :: self
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME), intent(inout)        :: self
       integer                                   , intent(in)           :: n
-      STD_TEMPLATE_TYPE                         , intent(in), optional :: val
+      FTL_TEMPLATE_TYPE                         , intent(in), optional :: val
 
       if (n == self%psize) return
 
@@ -377,10 +377,10 @@ contains
    ! Notice that this capacity does not suppose a limit on the size of the vector. When this capacity is exhausted and more is
    ! needed, it is automatically expanded by the container (reallocating it storage space).
    !
-   ! The capacity of a vector can be explicitly altered by calling member stdVector%reserve.
+   ! The capacity of a vector can be explicitly altered by calling member ftlVector%reserve.
    !
    pure integer function Capacity(self)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(in) :: self
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME), intent(in) :: self
 
       if (allocated(self%storage)) then
          Capacity = size(self%storage)
@@ -394,10 +394,10 @@ contains
 
    ! Returns whether the vector is empty (i.e. whether its size is 0).
    !
-   ! This function does not modify the container in any way. To clear the content of a vector, see stdVector%clear.
+   ! This function does not modify the container in any way. To clear the content of a vector, see ftlVector%clear.
    !
    pure logical function Empty(self)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(in) :: self
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME), intent(in) :: self
 
       Empty = (self%psize == 0)
 
@@ -415,7 +415,7 @@ contains
    ! This function has no effect on the vector size and cannot alter its elements.
    !
    subroutine Reserve(self, n)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME), intent(inout) :: self
       integer                                   , intent(in)    :: n
 
       if (n > self%Capacity()) call self%ChangeCapacity(n)
@@ -432,7 +432,7 @@ contains
    ! This may cause a reallocation, but has no effect on the vector size and cannot alter its elements.
    !
    subroutine ShrinkToFit(self)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME), intent(inout) :: self
 
       call self%ChangeCapacity(self%psize)
 
@@ -451,8 +451,8 @@ contains
    ! space if -and only if- the new vector size surpasses the current vector capacity.
    !
    subroutine PushBack(self, val)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
-      STD_TEMPLATE_TYPE                         , intent(in)    :: val
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME), intent(inout) :: self
+      FTL_TEMPLATE_TYPE                         , intent(in)    :: val
 
       if (self%psize + 1 > self%Capacity()) call self%IncreaseCapacity()
       self%psize = self%psize + 1
@@ -467,8 +467,8 @@ contains
    !
    ! This destroys the removed element.
    !
-   STD_TEMPLATE_TYPE function PopBack(self)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
+   FTL_TEMPLATE_TYPE function PopBack(self)
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME), intent(inout) :: self
 
       PopBack = self%storage(self%psize)
       self%psize = self%psize - 1
@@ -490,28 +490,28 @@ contains
    ! The parameters determine how many elements are inserted and to which values they are initialized:
    !
    subroutine InsertSingleAtIndex(self, position, val)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME), intent(inout) :: self
       integer                                   , intent(in)    :: position
-      STD_TEMPLATE_TYPE                         , intent(in)    :: val
+      FTL_TEMPLATE_TYPE                         , intent(in)    :: val
 
       call self%InsertArrayAtIndex(position, [val])
 
    end subroutine
    !
    subroutine InsertSingle(self, position, val)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME)           , intent(inout) :: self
-      type(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)    :: position
-      STD_TEMPLATE_TYPE                                    , intent(in)    :: val
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME)           , intent(inout) :: self
+      type(ftlVector/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)    :: position
+      FTL_TEMPLATE_TYPE                                    , intent(in)    :: val
 
       call self%InsertArrayAtIndex(position%index, [val])
 
    end subroutine
    !
    subroutine InsertFillAtIndex(self, position, n, val)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME), intent(inout) :: self
       integer                                   , intent(in)    :: position
       integer                                   , intent(in)    :: n
-      STD_TEMPLATE_TYPE                         , intent(in)    :: val
+      FTL_TEMPLATE_TYPE                         , intent(in)    :: val
 
       integer :: i
 
@@ -520,10 +520,10 @@ contains
    end subroutine
    !
    subroutine InsertFill(self, position, n, val)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME)           , intent(inout) :: self
-      type(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)    :: position
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME)           , intent(inout) :: self
+      type(ftlVector/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)    :: position
       integer                                              , intent(in)    :: n
-      STD_TEMPLATE_TYPE                                    , intent(in)    :: val
+      FTL_TEMPLATE_TYPE                                    , intent(in)    :: val
 
       integer :: i
 
@@ -532,9 +532,9 @@ contains
    end subroutine
    !
    subroutine InsertArrayAtIndex(self, position, array)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME), intent(inout) :: self
       integer                                   , intent(in)    :: position
-      STD_TEMPLATE_TYPE                         , intent(in)    :: array(:)
+      FTL_TEMPLATE_TYPE                         , intent(in)    :: array(:)
 
       integer :: i
 
@@ -558,29 +558,29 @@ contains
    end subroutine
    !
    subroutine InsertArray(self, position, array)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME)           , intent(inout) :: self
-      type(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)    :: position
-      STD_TEMPLATE_TYPE                                    , intent(in)    :: array(:)
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME)           , intent(inout) :: self
+      type(ftlVector/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)    :: position
+      FTL_TEMPLATE_TYPE                                    , intent(in)    :: array(:)
 
       call self%InsertArrayAtIndex(position%index, array)
 
    end subroutine
    !
    subroutine InsertIteratorPairAtIndex(self, position, first, last)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME)           , intent(inout) :: self
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME)           , intent(inout) :: self
       integer                                              , intent(in)    :: position
-      type(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)    :: first
-      type(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)    :: last
+      type(ftlVector/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)    :: first
+      type(ftlVector/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)    :: last
 
       call self%InsertArrayAtIndex(position, first%vector%data(first%index:last%index-1))
 
    end subroutine
    !
    subroutine InsertIteratorPair(self, position, first, last)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME)           , intent(inout) :: self
-      type(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)    :: position
-      type(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)    :: first
-      type(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)    :: last
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME)           , intent(inout) :: self
+      type(ftlVector/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)    :: position
+      type(ftlVector/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)    :: first
+      type(ftlVector/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)    :: last
 
       call self%InsertArrayAtIndex(position%index, first%vector%data(first%index:last%index-1))
 
@@ -598,15 +598,15 @@ contains
    ! as list or forward_list).
    !
    subroutine EraseSingle(self, position)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME)           , intent(inout) :: self
-      type(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)    :: position
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME)           , intent(inout) :: self
+      type(ftlVector/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)    :: position
 
       call self%EraseIndexPair(position%index, position%index+1)
 
    end subroutine
    !
    subroutine EraseSingleIndex(self, position)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME), intent(inout) :: self
       integer                                   , intent(in)    :: position
 
       call self%EraseIndexPair(position, position+1)
@@ -614,7 +614,7 @@ contains
    end subroutine
    !
    subroutine EraseIndexPair(self, first, last)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME), intent(inout) :: self
       integer                                   , intent(in)    :: first
       integer                                   , intent(in)    :: last
 
@@ -635,9 +635,9 @@ contains
    end subroutine
    !
    subroutine EraseIteratorPair(self, first, last)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME)           , intent(inout) :: self
-      type(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)    :: first
-      type(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)    :: last
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME)           , intent(inout) :: self
+      type(ftlVector/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)    :: first
+      type(ftlVector/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)    :: last
 
       call self%EraseIndexPair(first%index, last%index)
 
@@ -651,7 +651,7 @@ contains
    ! function.
    !
    subroutine Clear(self)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME), intent(inout) :: self
 
       call self%EraseIndexPair(1, self%psize+1)
 
@@ -664,7 +664,7 @@ contains
 
 
    subroutine FixValuePtrs(self)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout), target :: self
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME), intent(inout), target :: self
 
       self%data => self%storage(1:self%psize)
       if (self%psize == 0) then
@@ -680,10 +680,10 @@ contains
 
 
    subroutine ChangeCapacity(self, n)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME), intent(inout) :: self
       integer                                   , intent(in)    :: n
 
-      STD_TEMPLATE_TYPE, allocatable :: newstorage(:)
+      FTL_TEMPLATE_TYPE, allocatable :: newstorage(:)
       integer :: numretain
 
       if (n == self%Capacity()) return
@@ -700,7 +700,7 @@ contains
 
 
    subroutine IncreaseCapacity(self)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME), intent(inout) :: self
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME), intent(inout) :: self
 
       call self%changeCapacity(max(2 * self%Capacity(), 1))
 
@@ -708,20 +708,20 @@ contains
 
 
 
-! ====== Implementation of stdVectorIterator methods =============================================================================
+! ====== Implementation of ftlVectorIterator methods =============================================================================
 
 
 
    subroutine NewItDefault(self)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(out) :: self
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(out) :: self
 
       ! Nothing to do here: intent(out) already resets everything
 
    end subroutine
    !
    subroutine NewItCopyOther(self, other)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(out) :: self
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)  :: other
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(out) :: self
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)  :: other
 
       self%vector => other%vector
       self%index = other%index
@@ -736,7 +736,7 @@ contains
 
 
    subroutine Inc(self)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(inout) :: self
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(inout) :: self
 
       self%index =  self%index + 1
       self%value => self%vector%storage(self%index)
@@ -744,7 +744,7 @@ contains
    end subroutine
    !
    subroutine Dec(self)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(inout) :: self
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(inout) :: self
 
       self%index =  self%index - 1
       self%value => self%vector%storage(self%index)
@@ -753,8 +753,8 @@ contains
 
 
 
-   type(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator) function AdvanceN(self, n)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: self
+   type(ftlVector/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator) function AdvanceN(self, n)
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: self
       integer                                               , intent(in) :: n
 
       call AdvanceN%New(self)
@@ -763,8 +763,8 @@ contains
 
    end function
    !
-   type(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator) function ReverseN(self, n)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: self
+   type(ftlVector/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator) function ReverseN(self, n)
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: self
       integer                                               , intent(in) :: n
 
       call ReverseN%New(self)
@@ -776,8 +776,8 @@ contains
 
 
    pure integer function DiffOther(self, other)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: self
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: other
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: self
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: other
 
       if (associated(self%vector,other%vector)) then
          DiffOther = self%index - other%index
@@ -794,48 +794,48 @@ contains
 
 
    pure logical function EqualOther(self, other)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: self
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: other
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: self
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: other
 
       EqualOther = associated(self%vector,other%vector) .and. (self%index == other%index)
 
    end function
    !
    pure logical function UnequalOther(self, other)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: self
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: other
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: self
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: other
 
       UnequalOther = .not.associated(self%vector,other%vector) .or. (self%index /= other%index)
 
    end function
    !
    pure logical function SmallerOther(self, other)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: self
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: other
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: self
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: other
 
       SmallerOther = associated(self%vector,other%vector) .and. (self%index < other%index)
 
    end function
    !
    pure logical function SmallerEqualOther(self, other)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: self
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: other
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: self
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: other
 
       SmallerEqualOther = associated(self%vector,other%vector) .and. (self%index <= other%index)
 
    end function
    !
    pure logical function GreaterOther(self, other)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: self
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: other
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: self
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: other
 
       GreaterOther = associated(self%vector,other%vector) .and. (self%index > other%index)
 
    end function
    !
    pure logical function GreaterEqualOther(self, other)
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: self
-      class(stdVector/**/STD_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: other
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: self
+      class(ftlVector/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: other
 
       GreaterEqualOther = associated(self%vector,other%vector) .and. (self%index >= other%index)
 
