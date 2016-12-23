@@ -56,6 +56,18 @@ module FTL_CONTAINER/**/FTL_TEMPLATE_TYPE_NAME/**/AlgorithmsModule
       module procedure ftlNoneOf/**/FTL_CONTAINER/**/FTL_TEMPLATE_TYPE_NAME
    end interface
 
+   public :: ftlForEach
+   interface ftlForEach
+      module procedure ftlForEach/**/FTL_CONTAINER/**/FTL_TEMPLATE_TYPE_NAME/**/IteratorPair
+      module procedure ftlForEach/**/FTL_CONTAINER/**/FTL_TEMPLATE_TYPE_NAME
+   end interface
+
+   public :: ftlFind
+   interface ftlFind
+      module procedure ftlFind/**/FTL_CONTAINER/**/FTL_TEMPLATE_TYPE_NAME/**/IteratorPair
+      module procedure ftlFind/**/FTL_CONTAINER/**/FTL_TEMPLATE_TYPE_NAME
+   end interface
+
    public :: ftlCount
    interface ftlCount
       module procedure ftlCount/**/FTL_CONTAINER/**/FTL_TEMPLATE_TYPE_NAME/**/IteratorPair
@@ -87,6 +99,10 @@ module FTL_CONTAINER/**/FTL_TEMPLATE_TYPE_NAME/**/AlgorithmsModule
       logical function Comparator(a, b)
          FTL_TEMPLATE_TYPE, intent(in) :: a, b
       end function
+
+      subroutine UnarySubroutine(a)
+         FTL_TEMPLATE_TYPE, intent(inout) :: a
+      end subroutine
 
    end interface
 
@@ -176,6 +192,60 @@ contains
       procedure(UnaryPredicate)                                 :: pred
 
       nonetrue = .not.ftlAnyOf/**/FTL_CONTAINER/**/FTL_TEMPLATE_TYPE_NAME/**/IteratorPair(container%Begin(), container%End(), pred)
+
+   end function
+
+
+
+   ! Calls subroutine subr on each of the elements in the range [first,last).
+   !
+   subroutine ftlForEach/**/FTL_CONTAINER/**/FTL_TEMPLATE_TYPE_NAME/**/IteratorPair(first, last, subr)
+      type(FTL_CONTAINER/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: first, last
+      procedure(UnarySubroutine)                                            :: subr
+
+      type(FTL_CONTAINER/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator) :: it
+
+      it = first
+      do while (it /= last)
+         call subr(it%value)
+         call it%Inc()
+      enddo
+
+   end subroutine
+   !
+   subroutine ftlForEach/**/FTL_CONTAINER/**/FTL_TEMPLATE_TYPE_NAME(container, subr)
+      type(FTL_CONTAINER/**/FTL_TEMPLATE_TYPE_NAME), intent(in) :: container
+      procedure(UnarySubroutine)                                :: subr
+
+      call ftlForEach/**/FTL_CONTAINER/**/FTL_TEMPLATE_TYPE_NAME/**/IteratorPair(container%Begin(), container%End(), subr)
+
+   end subroutine
+
+
+
+   ! Returns an iterator to the first element in the range [first,last) that compares equal to val. If no such element is
+   ! found, the function returns last.
+   !
+   ! The function uses operator== to compare the individual elements to val.
+   !
+   function ftlFind/**/FTL_CONTAINER/**/FTL_TEMPLATE_TYPE_NAME/**/IteratorPair(first, last, val) result(it)
+      type(FTL_CONTAINER/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: first, last
+      FTL_TEMPLATE_TYPE                                        , intent(in) :: val
+      type(FTL_CONTAINER/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator)             :: it
+
+      it = first
+      do while (it%value /= val .and. it /= last)
+         call it%Inc()
+      enddo
+
+   end function
+   !
+   function ftlFind/**/FTL_CONTAINER/**/FTL_TEMPLATE_TYPE_NAME(container, val) result(it)
+      type(FTL_CONTAINER/**/FTL_TEMPLATE_TYPE_NAME)            , intent(in) :: container
+      FTL_TEMPLATE_TYPE                                        , intent(in) :: val
+      type(FTL_CONTAINER/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator)             :: it
+
+      it = ftlFind/**/FTL_CONTAINER/**/FTL_TEMPLATE_TYPE_NAME/**/IteratorPair(container%Begin(), container%End(), val)
 
    end function
 

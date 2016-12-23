@@ -23,6 +23,10 @@ contains
       call testAnyOf
       call testNoneOf
 
+      call testForEach
+
+      call testFind
+
       call testCount
       call testCountIf
 
@@ -78,6 +82,41 @@ contains
       call it%Dec()
       call it%Dec()
       ASSERT(ftlNoneOf(l%Begin(),it,IsUneven))
+
+   end subroutine
+
+
+   subroutine testForEach
+      type(ftlVectorInt) :: v
+      type(ftlVectorIntIterator) :: it
+
+      call v%New([1,2,3,4,5])
+      call ftlForEach(v, Square)
+
+      ASSERT(all(v%data == [1,4,9,16,25]))
+
+      it = v%Begin() + 2
+      call ftlForEach(it, v%End(), Square)
+
+      ASSERT(all(v%data == [1,4,81,256,625]))
+
+   end subroutine
+
+
+   subroutine testFind
+      type(ftlVectorInt) :: v
+      type(ftlVectorIntIterator) :: it
+
+      call v%New([3,8,93,5,93,67])
+      it = ftlFind(v, 93)
+
+      ASSERT(it%value == 93)
+      ASSERT(it - v%Begin() == 2)
+
+      it = ftlFind(v%Begin() + 3, v%End(), 93)
+
+      ASSERT(it%value == 93)
+      ASSERT(it - v%Begin() == 4)
 
    end subroutine
 
@@ -211,6 +250,13 @@ contains
       integer, intent(in) :: n,m
       Greater = (n > m)
    end function
+
+   ! example unary subroutines:
+
+   subroutine Square(n)
+      integer, intent(inout) :: n
+      n = n**2
+   end subroutine
 
 
 end module
