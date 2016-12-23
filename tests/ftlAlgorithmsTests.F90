@@ -34,6 +34,9 @@ contains
 
       call testMismatch
 
+      call testIsPermutationVector
+      call testIsPermutationList
+
       call testSortVector
       call testSortList
 
@@ -223,6 +226,86 @@ contains
    end subroutine
 
 
+   subroutine testMismatch
+      type(ftlVectorInt) :: u, v
+      type(ftlVectorIntIterator) :: it(2)
+
+      call u%New([9,6,3,6,1])
+      call v%New([9,6,3,4,2])
+
+      it = ftlMismatch(u%Begin(), u%End(), v%Begin())
+
+      ASSERT(it(1)%value == 6)
+      ASSERT(it(1) == u%End() - 2)
+      ASSERT(it(2)%value == 4)
+      ASSERT(it(2) == v%End() - 2)
+
+      call u%New([10,7,4,6,1])
+      call v%New([9,6,3,4,2])
+
+      it = ftlMismatch(u, v, Greater)
+
+      ASSERT(it(1)%value == 1)
+      ASSERT(it(1) == u%End() - 1)
+      ASSERT(it(2)%value == 2)
+      ASSERT(it(2) == v%End() - 1)
+
+   end subroutine
+
+
+   subroutine testIsPermutationVector
+      type(ftlVectorInt) :: u, v
+
+      call u%New([12,7,5,9,4,6,0,99])
+      call v%New([6,9,99,5,7,12,0,4])
+
+      ASSERT(ftlIsPermutation(u,v))
+
+      call u%New([1,2,3,4,5,9,8,7,6,5])
+      call v%New([1,2,3,4,5,5,6,7,8,9])
+
+      ASSERT(ftlIsPermutation(u,v))
+
+      call u%New([1,2,3,4,5])
+
+      ASSERT(.not.ftlIsPermutation(u,v))
+
+      call u%New([0,0,0,1,2,3,4,5])
+      call v%New([1,1,1,1,2,3,4,5])
+
+      ASSERT(.not.ftlIsPermutation(u,v))
+      ASSERT(ftlIsPermutation(u%Begin()+3,u%End(),v%Begin()+3))
+      ASSERT(ftlIsPermutation(ftlAdvance(u%Begin(),3),u%End(),ftlAdvance(v%Begin(),3)))
+
+   end subroutine
+
+
+   subroutine testIsPermutationList
+      type(ftlVectorInt) :: k, l
+
+      call k%New([12,7,5,9,4,6,0,99])
+      call l%New([6,9,99,5,7,12,0,4])
+
+      ASSERT(ftlIsPermutation(k,l))
+
+      call k%New([1,2,3,4,5,9,8,7,6,5])
+      call l%New([1,2,3,4,5,5,6,7,8,9])
+
+      ASSERT(ftlIsPermutation(k,l))
+
+      call k%New([1,2,3,4,5])
+
+      ASSERT(.not.ftlIsPermutation(k,l))
+
+      call k%New([0,0,0,1,2,3,4,5])
+      call l%New([1,1,1,1,2,3,4,5])
+
+      ASSERT(.not.ftlIsPermutation(k,l))
+      ASSERT(ftlIsPermutation(ftlAdvance(k%Begin(),3),k%End(),ftlAdvance(l%Begin(),3)))
+
+   end subroutine
+
+
    subroutine testSortList
       type(ftlListInt) :: l
       type(ftlListIntIterator) :: it
@@ -266,33 +349,6 @@ contains
       ASSERT(it%value == 3)
       call it%Inc()
       ASSERT(it == l%End())
-
-   end subroutine
-
-
-   subroutine testMismatch
-      type(ftlVectorInt) :: u, v
-      type(ftlVectorIntIterator) :: it(2)
-
-      call u%New([9,6,3,6,1])
-      call v%New([9,6,3,4,2])
-
-      it = ftlMismatch(u%Begin(), u%End(), v%Begin())
-
-      ASSERT(it(1)%value == 6)
-      ASSERT(it(1) == u%End() - 2)
-      ASSERT(it(2)%value == 4)
-      ASSERT(it(2) == v%End() - 2)
-
-      call u%New([10,7,4,6,1])
-      call v%New([9,6,3,4,2])
-
-      it = ftlMismatch(u, v, Greater)
-
-      ASSERT(it(1)%value == 1)
-      ASSERT(it(1) == u%End() - 1)
-      ASSERT(it(2)%value == 2)
-      ASSERT(it(2) == v%End() - 1)
 
    end subroutine
 

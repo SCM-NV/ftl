@@ -98,6 +98,12 @@ module FTL_CONTAINER/**/FTL_TEMPLATE_TYPE_NAME/**/AlgorithmsModule
       module procedure ftlMismatchContainers
    end interface
 
+   public :: ftlIsPermutation
+   interface ftlIsPermutation
+      module procedure ftlIsPermutationIterators
+      module procedure ftlIsPermutationContainers
+   end interface
+
 
    ! =============> Sorting operations:
 
@@ -107,6 +113,21 @@ module FTL_CONTAINER/**/FTL_TEMPLATE_TYPE_NAME/**/AlgorithmsModule
    end interface
 
 
+   ! =============> Iterator operations:
+   ! (in C++ these are in the <iterator> header, not in <algorithm>)
+
+   public :: ftlAdvance
+   interface ftlAdvance
+      module procedure ftlAdvancePrivate
+   end interface
+
+   public :: ftlDistance
+   interface ftlDistance
+      module procedure ftlDistancePrivate
+   end interface
+
+
+   ! =============> Interfaces for dummy procedures:
 
    abstract interface
 
@@ -384,20 +405,20 @@ contains
    ! Compares the elements in the range [first1,last1) with those in the range beginning at first2, and returns the
    ! first element of both sequences that does not match.
    !
-   ! The elements are compared using operator== or pred (if present).
+   ! The elements are compared using operator== or comp (if present).
    !
    ! The function returns a pair of iterators to the first element in each range that does not match.
    !
-   function ftlMismatchIterators(first1, last1, first2, pred) result(it)
+   function ftlMismatchIterators(first1, last1, first2, comp) result(it)
       type(FTL_CONTAINER/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: first1, last1, first2
-      procedure(Comparator)                                    , optional   :: pred
+      procedure(Comparator)                                    , optional   :: comp
       type(FTL_CONTAINER/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator)             :: it(2)
 
       it(1) = first1
       it(2) = first2
       do while (it(1) /= last1)
-         if (present(pred)) then
-            if (.not.pred(it(1)%value,it(2)%value)) exit
+         if (present(comp)) then
+            if (.not.comp(it(1)%value,it(2)%value)) exit
          else
             if (it(1)%value /= it(2)%value) exit
          endif
@@ -407,15 +428,68 @@ contains
 
    end function
    !
-   function ftlMismatchContainers(container1, container2, pred) result(it)
+   function ftlMismatchContainers(container1, container2, comp) result(it)
       type(FTL_CONTAINER/**/FTL_TEMPLATE_TYPE_NAME)            , intent(in) :: container1, container2
-      procedure(Comparator)                                    , optional   :: pred
+      procedure(Comparator)                                    , optional   :: comp
       type(FTL_CONTAINER/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator)             :: it(2)
 
-      it = ftlMismatchIterators(container1%Begin(), container1%End(), container2%Begin(), pred)
+      it = ftlMismatchIterators(container1%Begin(), container1%End(), container2%Begin(), comp)
 
    end function
 
+
+
+   ! Compares the elements in the range [first1,last1) with those in the range beginning at first2, and returns true if all of the
+   ! elements in both ranges match, even in a different order.
+   !
+   ! The elements are compared using operator==.
+   !
+   logical function ftlIsPermutationIterators(first1, last1, first2) result(isPermutation)
+      type(FTL_CONTAINER/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: first1, last1, first2
+
+      type(FTL_CONTAINER/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator) :: firstdiff(2), last2, it1
+      integer :: n
+
+      isPermutation = .true.
+
+      ! check if sequences are identical or at least have a common beginning (which we would ignore later)
+      firstdiff = ftlMismatchIterators(first1, last1, first2)
+      if (firstdiff(1) == last1) return
+
+      ! get an iterator to the end of range 2
+      last2 = firstdiff(2)
+      last2 = ftlAdvance(last2, ftlDistance(firstdiff(1), last1))
+
+      it1 = firstdiff(1)
+      do while (it1 /= last1)
+
+         if (ftlFind(firstdiff(1), it1, it1%value) == it1) then ! this is the first time we see it1%value
+            n = ftlCount(firstdiff(2), last2, it1%value)
+            if (n == 0) then ! it1%value is not anywhere in range 2
+               isPermutation = .false.
+               return
+            endif
+            if (n /= ftlCount(firstdiff(1), last1, it1%value)) then ! count of it1%value is different in range 1 and range 2
+               isPermutation = .false.
+               return
+            endif
+         endif
+
+         call it1%Inc()
+      enddo
+
+   end function
+   !
+   logical function ftlIsPermutationContainers(container1, container2) result(isPermutation)
+      type(FTL_CONTAINER/**/FTL_TEMPLATE_TYPE_NAME)            , intent(in) :: container1, container2
+
+      if (container1%Size() /= container2%Size()) then
+         isPermutation = .false.
+      else
+         isPermutation = ftlIsPermutationIterators(container1%Begin(), container1%End(), container2%Begin())
+      endif
+
+   end function
 
 
 
@@ -460,6 +534,51 @@ contains
       enddo
 
    end subroutine
+
+
+
+   ! =============> Iterator operations:
+
+
+
+   function ftlAdvancePrivate(itin, n) result(itout)
+      type(FTL_CONTAINER/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: itin
+      integer                                                  , intent(in) :: n
+      type(FTL_CONTAINER/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator)             :: itout
+
+#ifdef FTL_CONTAINER_PROVIDES_RANDOM_ACCESS_ITERATOR
+      itout = itin + n
+#else
+      integer :: i
+
+      itout = itin
+      do i = 1, n
+         call itout%Inc()
+      enddo
+#endif
+
+   end function
+
+
+
+   integer function ftlDistancePrivate(it1, it2) result(dist)
+      type(FTL_CONTAINER/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: it1, it2
+
+#ifdef FTL_CONTAINER_PROVIDES_RANDOM_ACCESS_ITERATOR
+      dist = it2 - it1
+#else
+      type(FTL_CONTAINER/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator) :: it
+
+      dist = 0
+      it = it1
+      do while (it /= it2)
+         dist = dist + 1
+         call it%Inc()
+      enddo
+#endif
+
+   end function
+
 
 end module
 #endif
