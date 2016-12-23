@@ -26,6 +26,8 @@ contains
       call testForEach
 
       call testFind
+      call testFindIf
+      call testFindIfNot
 
       call testCount
       call testCountIf
@@ -117,6 +119,40 @@ contains
 
       ASSERT(it%value == 93)
       ASSERT(it - v%Begin() == 4)
+
+   end subroutine
+
+
+   subroutine testFindIf
+      type(ftlVectorInt) :: v
+      type(ftlVectorIntIterator) :: it
+
+      call v%New([3,8,93,5,93,67])
+      it = ftlFindIf(v, IsEven)
+
+      ASSERT(it%value == 8)
+      ASSERT(it - v%Begin() == 1)
+
+      it = ftlFindIf(v%Begin()+2, v%End(), IsEven)
+
+      ASSERT(it == v%End())
+
+   end subroutine
+
+
+   subroutine testFindIfNot
+      type(ftlVectorInt) :: v
+      type(ftlVectorIntIterator) :: it
+
+      call v%New([3,8,93,5,93,67])
+      it = ftlFindIfNot(v, IsUneven)
+
+      ASSERT(it%value == 8)
+      ASSERT(it - v%Begin() == 1)
+
+      it = ftlFindIfNot(v%Begin()+2, v%End(), IsUneven)
+
+      ASSERT(it == v%End())
 
    end subroutine
 
