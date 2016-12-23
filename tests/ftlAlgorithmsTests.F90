@@ -32,6 +32,8 @@ contains
       call testCount
       call testCountIf
 
+      call testMismatch
+
       call testSortVector
       call testSortList
 
@@ -62,10 +64,10 @@ contains
       ASSERT(.not.ftlAnyOf(v,IsEven))
 
       call v%New([2,4,6,8,10,12,13])
-      ASSERT(ftlAnyOf(v,IsUneven))
+      ASSERT(ftlAnyOf(v,IsOdd))
 
       it = v%End() - 1
-      ASSERT(.not.ftlAnyOf(v%Begin(),it,IsUneven))
+      ASSERT(.not.ftlAnyOf(v%Begin(),it,IsOdd))
 
    end subroutine
 
@@ -78,12 +80,12 @@ contains
       ASSERT(ftlNoneOf(l,IsEven))
 
       call l%New([2,4,6,8,10,12,13])
-      ASSERT(.not.ftlNoneOf(l,IsUneven))
+      ASSERT(.not.ftlNoneOf(l,IsOdd))
 
       it = l%End()
       call it%Dec()
       call it%Dec()
-      ASSERT(ftlNoneOf(l%Begin(),it,IsUneven))
+      ASSERT(ftlNoneOf(l%Begin(),it,IsOdd))
 
    end subroutine
 
@@ -145,12 +147,12 @@ contains
       type(ftlVectorIntIterator) :: it
 
       call v%New([3,8,93,5,93,67])
-      it = ftlFindIfNot(v, IsUneven)
+      it = ftlFindIfNot(v, IsOdd)
 
       ASSERT(it%value == 8)
       ASSERT(it - v%Begin() == 1)
 
-      it = ftlFindIfNot(v%Begin()+2, v%End(), IsUneven)
+      it = ftlFindIfNot(v%Begin()+2, v%End(), IsOdd)
 
       ASSERT(it == v%End())
 
@@ -187,14 +189,14 @@ contains
       call l%New([6,2,895,6,3,6,43,2,6,3])
 
       ASSERT(ftlCountIf(l,IsEven) == 6)
-      ASSERT(ftlCountIf(l,IsUneven) == 4)
+      ASSERT(ftlCountIf(l,IsOdd) == 4)
 
       it = l%End()
       call it%Dec()
       call it%Dec()
 
       ASSERT(ftlCountIf(l%Begin(),it,IsEven) == 5)
-      ASSERT(ftlCountIf(l%Begin(),it,IsUneven) == 3)
+      ASSERT(ftlCountIf(l%Begin(),it,IsOdd) == 3)
 
    end subroutine
 
@@ -268,6 +270,33 @@ contains
    end subroutine
 
 
+   subroutine testMismatch
+      type(ftlVectorInt) :: u, v
+      type(ftlVectorIntIterator) :: it(2)
+
+      call u%New([9,6,3,6,1])
+      call v%New([9,6,3,4,2])
+
+      it = ftlMismatch(u%Begin(), u%End(), v%Begin())
+
+      ASSERT(it(1)%value == 6)
+      ASSERT(it(1) == u%End() - 2)
+      ASSERT(it(2)%value == 4)
+      ASSERT(it(2) == v%End() - 2)
+
+      call u%New([10,7,4,6,1])
+      call v%New([9,6,3,4,2])
+
+      it = ftlMismatch(u, v, Greater)
+
+      ASSERT(it(1)%value == 1)
+      ASSERT(it(1) == u%End() - 1)
+      ASSERT(it(2)%value == 2)
+      ASSERT(it(2) == v%End() - 1)
+
+   end subroutine
+
+
    ! example unary predicates:
 
    pure logical function IsEven(n)
@@ -275,9 +304,9 @@ contains
       IsEven = (mod(n,2) == 0)
    end function
 
-   pure logical function IsUneven(n)
+   pure logical function IsOdd(n)
       integer, intent(in) :: n
-      IsUneven = (mod(n,2) == 1)
+      IsOdd = (mod(n,2) == 1)
    end function
 
    ! example comparator:

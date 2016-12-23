@@ -92,6 +92,12 @@ module FTL_CONTAINER/**/FTL_TEMPLATE_TYPE_NAME/**/AlgorithmsModule
       module procedure ftlCountIfContainer
    end interface
 
+   public :: ftlMismatch
+   interface ftlMismatch
+      module procedure ftlMismatchIterators
+      module procedure ftlMismatchContainers
+   end interface
+
 
    ! =============> Sorting operations:
 
@@ -246,7 +252,8 @@ contains
       type(FTL_CONTAINER/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator)             :: it
 
       it = first
-      do while (it%value /= val .and. it /= last)
+      do while (it /= last)
+         if (it%value == val) exit
          call it%Inc()
       enddo
 
@@ -272,7 +279,8 @@ contains
       type(FTL_CONTAINER/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator)             :: it
 
       it = first
-      do while (.not.pred(it%value) .and. it /= last)
+      do while (it /= last)
+         if (pred(it%value)) exit
          call it%Inc()
       enddo
 
@@ -298,7 +306,8 @@ contains
       type(FTL_CONTAINER/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator)             :: it
 
       it = first
-      do while (pred(it%value) .and. it /= last)
+      do while (it /= last)
+         if (.not.pred(it%value)) exit
          call it%Inc()
       enddo
 
@@ -369,6 +378,44 @@ contains
       num = ftlCountIfIteratorPair(container%Begin(), container%End(), pred)
 
    end function
+
+
+
+   ! Compares the elements in the range [first1,last1) with those in the range beginning at first2, and returns the
+   ! first element of both sequences that does not match.
+   !
+   ! The elements are compared using operator== or pred (if present).
+   !
+   ! The function returns a pair of iterators to the first element in each range that does not match.
+   !
+   function ftlMismatchIterators(first1, last1, first2, pred) result(it)
+      type(FTL_CONTAINER/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: first1, last1, first2
+      procedure(Comparator)                                    , optional   :: pred
+      type(FTL_CONTAINER/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator)             :: it(2)
+
+      it(1) = first1
+      it(2) = first2
+      do while (it(1) /= last1)
+         if (present(pred)) then
+            if (.not.pred(it(1)%value,it(2)%value)) exit
+         else
+            if (it(1)%value /= it(2)%value) exit
+         endif
+         call it(1)%Inc()
+         call it(2)%Inc()
+      enddo
+
+   end function
+   !
+   function ftlMismatchContainers(container1, container2, pred) result(it)
+      type(FTL_CONTAINER/**/FTL_TEMPLATE_TYPE_NAME)            , intent(in) :: container1, container2
+      procedure(Comparator)                                    , optional   :: pred
+      type(FTL_CONTAINER/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator)             :: it(2)
+
+      it = ftlMismatchIterators(container1%Begin(), container1%End(), container2%Begin(), pred)
+
+   end function
+
 
 
 
