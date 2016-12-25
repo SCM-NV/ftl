@@ -307,7 +307,7 @@ contains
 
       Begin%vector => self
       Begin%index = 1
-      Begin%value => self%storage(1)
+      if (self%psize /= 0) Begin%value => self%storage(1)
 
    end function
 
@@ -329,7 +329,6 @@ contains
 
       End%vector => self
       End%index = self%psize + 1
-      End%value => self%storage(self%psize + 1)
 
    end function
 
@@ -736,7 +735,7 @@ contains
 
       self%vector => other%vector
       self%index = other%index
-      self%value => self%vector%storage(self%index)
+      if (self%vector%psize > 0 .and. self%index <= self%vector%psize) self%value => self%vector%storage(self%index)
 
    end subroutine
 
@@ -750,7 +749,11 @@ contains
       class(CAT3(ftlVector,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(inout) :: self
 
       self%index =  self%index + 1
-      self%value => self%vector%storage(self%index)
+      if (self%index <= self%vector%psize) then
+         self%value => self%vector%storage(self%index)
+      else
+         nullify(self%value)
+      endif
 
    end subroutine
    !
@@ -758,7 +761,11 @@ contains
       class(CAT3(ftlVector,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(inout) :: self
 
       self%index =  self%index - 1
-      self%value => self%vector%storage(self%index)
+      if (self%index > 0) then
+         self%value => self%vector%storage(self%index)
+      else
+         nullify(self%value)
+      endif
 
    end subroutine
 
@@ -770,7 +777,11 @@ contains
 
       call AdvanceN%New(self)
       AdvanceN%index =  AdvanceN%index + n
-      AdvanceN%value => AdvanceN%vector%storage(AdvanceN%index)
+      if (AdvanceN%index <= AdvanceN%vector%psize) then
+         AdvanceN%value => AdvanceN%vector%storage(AdvanceN%index)
+      else
+         nullify(AdvanceN%value)
+      endif
 
    end function
    !
@@ -780,7 +791,11 @@ contains
 
       call ReverseN%New(self)
       ReverseN%index =  ReverseN%index - n
-      ReverseN%value => ReverseN%vector%storage(ReverseN%index)
+      if (ReverseN%index > 0) then
+         ReverseN%value => ReverseN%vector%storage(ReverseN%index)
+      else
+         nullify(ReverseN%value)
+      endif
 
    end function
 

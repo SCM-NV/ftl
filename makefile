@@ -2,9 +2,17 @@
 MAKEFLAGS += --no-builtin-rules
 .SUFFIXES:
 
-BUILDDIR = build
-COMPILER = gfortran
-FLAGS    = -std=f2003 -ffree-line-length-none -Wall -Wextra -Wpedantic -Wno-target-lifetime -Wno-surprising -g -J$(BUILDDIR)
+BUILD ?= gnu
+BUILDDIR = build.$(BUILD)
+ifeq ($(BUILD), gnu)
+	COMPILER = gfortran
+	FLAGS    = -std=f2003 -ffree-line-length-none -fcheck=bounds,do,mem,pointer,recursion -Wall -Wextra -Wpedantic -Wno-target-lifetime -Wno-surprising -g -J$(BUILDDIR)
+else ifeq ($(BUILD), intel)
+	COMPILER = ifort
+	FLAGS    = -g -O0 -check all -debug all -warn -traceback -module $(BUILDDIR)
+else
+  $(error unrecognized BUILD)
+endif
 INCLUDES = -Isrc -Itests
 
 memcheck: $(BUILDDIR)/tests

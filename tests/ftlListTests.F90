@@ -127,7 +127,12 @@ contains
       type(ftlListIntIterator) :: it
 
       call o%New([5,13,41,97,17,10,88])
+#ifdef __INTEL_COMPILER
+      !l = o ! <-- just an alias for l%AssignOther(o) but causes infinite loop with ifort 15.0.3. compiler bug?
+      call l%Assign(o)
+#else
       l = o
+#endif
 
       ASSERT(.not.l%Empty())
       ASSERT(l%Size() == 7)
@@ -358,7 +363,7 @@ contains
 
    subroutine testEraseSingle
       type(ftlListInt) :: l
-      type(ftlListIntIterator :: it
+      type(ftlListIntIterator) :: it
 
       call l%New([4,5,6,7])
       it = l%Begin()
@@ -388,7 +393,7 @@ contains
 
    subroutine testEraseIteratorPair
       type(ftlListInt) :: l
-      type(ftlListIntIterator :: it1, it2
+      type(ftlListIntIterator) :: it1, it2
 
       call l%New([12,23,34,45,56,76])
 
