@@ -30,7 +30,10 @@
 #error FTL_TEMPLATE_TYPE_NAME must be defined when instantiating ftlList
 #endif
 
-module ftlList/**/FTL_TEMPLATE_TYPE_NAME/**/Module
+#include "ftlMacros.inc"
+
+
+module CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Module)
 
 #ifdef FTL_TEMPLATE_TYPE_MODULE
    use FTL_TEMPLATE_TYPE_MODULE
@@ -52,7 +55,7 @@ module ftlList/**/FTL_TEMPLATE_TYPE_NAME/**/Module
    end type
 
 
-   type, public :: ftlList/**/FTL_TEMPLATE_TYPE_NAME
+   type, public :: CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)
       private
 
       integer                            :: psize = 0
@@ -142,7 +145,7 @@ module ftlList/**/FTL_TEMPLATE_TYPE_NAME/**/Module
 
 ! ====== Type of an iterator over a ftlList container ============================================================================
 
-   type, public :: ftlList/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator
+   type, public :: CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)
       private
 
       class(ListNode)  , pointer         :: node => null()
@@ -181,7 +184,7 @@ contains
    ! Constructs a list container object, initializing its contents depending on the constructor version used:
    !
    subroutine NewDefault(self)
-      class(ftlList/**/FTL_TEMPLATE_TYPE_NAME), intent(out), target :: self
+      class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(out), target :: self
 
       ! Constructs an empty list, with no elements.
 
@@ -191,10 +194,10 @@ contains
    end subroutine
    !
    subroutine NewCopyOther(self, other)
-      class(ftlList/**/FTL_TEMPLATE_TYPE_NAME), intent(out) :: self
-      class(ftlList/**/FTL_TEMPLATE_TYPE_NAME), intent(in)  :: other
+      class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(out) :: self
+      class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(in)  :: other
 
-      type(ftlList/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator) :: it
+      type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: it
 
       ! Constructs a list as a copy of another list.
 
@@ -209,9 +212,9 @@ contains
    end subroutine
    !
    subroutine NewFill(self, n, val)
-      class(ftlList/**/FTL_TEMPLATE_TYPE_NAME), intent(out)          :: self
-      integer                                 , intent(in)           :: n
-      FTL_TEMPLATE_TYPE                       , intent(in), optional :: val
+      class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(out)          :: self
+      integer                                   , intent(in)           :: n
+      FTL_TEMPLATE_TYPE                         , intent(in), optional :: val
 
       ! Constructs a container with n elements. Each element is a copy of val (if present).
 
@@ -226,8 +229,8 @@ contains
    end subroutine
    !
    subroutine NewFromArray(self, array)
-      class(ftlList/**/FTL_TEMPLATE_TYPE_NAME), intent(out) :: self
-      FTL_TEMPLATE_TYPE                       , intent(in)  :: array(:)
+      class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(out) :: self
+      FTL_TEMPLATE_TYPE                         , intent(in)  :: array(:)
 
       ! Constructs a container with a copy of each of the elements in array, in the same order.
 
@@ -242,11 +245,11 @@ contains
    end subroutine
    !
    subroutine NewFromIteratorPair(self, first, last)
-      class(ftlList/**/FTL_TEMPLATE_TYPE_NAME)           , intent(out) :: self
-      type(ftlList/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)  :: first
-      type(ftlList/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)  :: last
+      class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME))         , intent(out) :: self
+      type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)  :: first
+      type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)  :: last
 
-      type(ftlList/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator) :: it
+      type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: it
 
       call self%New()
       it = self%Begin()
@@ -259,7 +262,7 @@ contains
 
 
    subroutine Delete(self)
-      class(ftlList/**/FTL_TEMPLATE_TYPE_NAME), intent(inout), target :: self
+      class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(inout), target :: self
 
       class(ListNode), pointer :: walker, deletor
 
@@ -279,7 +282,7 @@ contains
    end subroutine
 
    subroutine Finalizer(self)
-      type(ftlList/**/FTL_TEMPLATE_TYPE_NAME), intent(inout) :: self
+      type(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
       call self%Delete()
    end subroutine
 
@@ -296,8 +299,8 @@ contains
    !
    ! If the container is empty, the returned iterator value shall not be dereferenced.
    !
-   type(ftlList/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator) function BeginList(self) result(Begin)
-      class(ftlList/**/FTL_TEMPLATE_TYPE_NAME), intent(in), target :: self
+   type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)) function BeginList(self) result(Begin)
+      class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(in), target :: self
 
       Begin%node => self%sentinel%next
       select type (node => Begin%node)
@@ -320,8 +323,8 @@ contains
    !
    ! If the container is empty, this function returns the same as list%begin.
    !
-   type(ftlList/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator) function EndList(self) result(End)
-      class(ftlList/**/FTL_TEMPLATE_TYPE_NAME), intent(in), target :: self
+   type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)) function EndList(self) result(End)
+      class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(in), target :: self
 
       End%node => self%sentinel
 
@@ -336,7 +339,7 @@ contains
    ! Returns the number of elements in the list.
    !
    pure integer function SizeList(self) result(Size)
-      class(ftlList/**/FTL_TEMPLATE_TYPE_NAME), intent(in) :: self
+      class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: self
 
       Size = self%psize
 
@@ -348,7 +351,7 @@ contains
    ! This function does not modify the container in any way. To clear the content of a list, see ftlList%clear.
    !
    pure logical function Empty(self)
-      class(ftlList/**/FTL_TEMPLATE_TYPE_NAME), intent(in) :: self
+      class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: self
 
       Empty = (self%psize == 0)
 
@@ -363,8 +366,8 @@ contains
    ! Assigns new contents to the list container, replacing its current contents, and modifying its size accordingly.
    !
    subroutine AssignOther(self, other)
-      class(ftlList/**/FTL_TEMPLATE_TYPE_NAME), intent(inout) :: self
-      class(ftlList/**/FTL_TEMPLATE_TYPE_NAME), intent(in)    :: other
+      class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
+      class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(in)    :: other
 
       call self%Delete()
       call self%New(other)
@@ -372,9 +375,9 @@ contains
    end subroutine
    !
    subroutine AssignFill(self, n, val)
-      class(ftlList/**/FTL_TEMPLATE_TYPE_NAME), intent(inout) :: self
-      integer                                 , intent(in)    :: n
-      FTL_TEMPLATE_TYPE                       , intent(in)    :: val
+      class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
+      integer                                   , intent(in)    :: n
+      FTL_TEMPLATE_TYPE                         , intent(in)    :: val
 
       call self%Delete()
       call self%New(n, val)
@@ -382,9 +385,9 @@ contains
    end subroutine
    !
    subroutine AssignIteratorPair(self, first, last)
-      class(ftlList/**/FTL_TEMPLATE_TYPE_NAME)           , intent(inout) :: self
-      type(ftlList/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)    :: first
-      type(ftlList/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)    :: last
+      class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME))         , intent(inout) :: self
+      type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)    :: first
+      type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)    :: last
 
       call self%Delete()
       call self%New(first, last)
@@ -392,8 +395,8 @@ contains
    end subroutine
    !
    subroutine AssignArray(self, array)
-      class(ftlList/**/FTL_TEMPLATE_TYPE_NAME), intent(inout) :: self
-      FTL_TEMPLATE_TYPE                       , intent(in)    :: array(:)
+      class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
+      FTL_TEMPLATE_TYPE                         , intent(in)    :: array(:)
 
       call self%Delete()
       call self%New(array)
@@ -412,8 +415,8 @@ contains
    ! The arguments determine how many elements are inserted and to which values they are initialized.
    !
    subroutine InsertSingle(self, position, val)
-      class(ftlList/**/FTL_TEMPLATE_TYPE_NAME)           , intent(inout) :: self
-      type(ftlList/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(inout) :: position
+      class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME))         , intent(inout) :: self
+      type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(inout) :: position
       FTL_TEMPLATE_TYPE                                  , intent(in)    :: val
 
       call self%InsertArray(position, [val])
@@ -421,8 +424,8 @@ contains
    end subroutine
    !
    subroutine InsertFill(self, position, n, val)
-      class(ftlList/**/FTL_TEMPLATE_TYPE_NAME)           , intent(inout) :: self
-      type(ftlList/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(inout) :: position
+      class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME))         , intent(inout) :: self
+      type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(inout) :: position
       integer                                            , intent(in)    :: n
       FTL_TEMPLATE_TYPE                                  , intent(in)    :: val
 
@@ -434,8 +437,8 @@ contains
    end subroutine
    !
    subroutine InsertArray(self, position, array)
-      class(ftlList/**/FTL_TEMPLATE_TYPE_NAME)           , intent(inout) :: self
-      type(ftlList/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(inout) :: position
+      class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME))         , intent(inout) :: self
+      type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(inout) :: position
       FTL_TEMPLATE_TYPE                                  , intent(in)    :: array(:)
 
       integer :: i
@@ -449,12 +452,12 @@ contains
    end subroutine
    !
    subroutine InsertIteratorPair(self, position, first, last)
-      class(ftlList/**/FTL_TEMPLATE_TYPE_NAME)           , intent(inout) :: self
-      type(ftlList/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(inout) :: position
-      type(ftlList/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)    :: first
-      type(ftlList/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)    :: last
+      class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME))         , intent(inout) :: self
+      type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(inout) :: position
+      type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)    :: first
+      type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)    :: last
 
-      type(ftlList/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator) :: it
+      type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: it
 
       it = first
       do while (it /= last)
@@ -475,8 +478,8 @@ contains
    ! This effectively increases the container size by one.
    !
    subroutine PushFront(self, val)
-      class(ftlList/**/FTL_TEMPLATE_TYPE_NAME), intent(inout), target :: self
-      FTL_TEMPLATE_TYPE                       , intent(in)            :: val
+      class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(inout), target :: self
+      FTL_TEMPLATE_TYPE                         , intent(in)            :: val
 
       call InsertNodeBefore(self%sentinel%next, val)
       self%psize = self%psize + 1
@@ -491,7 +494,7 @@ contains
    ! This destroys the removed element.
    !
    FTL_TEMPLATE_TYPE function PopFront(self)
-      class(ftlList/**/FTL_TEMPLATE_TYPE_NAME), intent(inout), target :: self
+      class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(inout), target :: self
 
       class(ListNode), pointer :: oldfirst
       oldfirst => self%sentinel%next
@@ -512,8 +515,8 @@ contains
    ! This effectively increases the container size by one.
    !
    subroutine PushBack(self, val)
-      class(ftlList/**/FTL_TEMPLATE_TYPE_NAME), intent(inout) :: self
-      FTL_TEMPLATE_TYPE                       , intent(in)    :: val
+      class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
+      FTL_TEMPLATE_TYPE                         , intent(in)    :: val
 
       call InsertNodeAfter(self%sentinel%prev, val)
       self%psize = self%psize + 1
@@ -528,7 +531,7 @@ contains
    ! This destroys the removed element.
    !
    FTL_TEMPLATE_TYPE function PopBack(self)
-      class(ftlList/**/FTL_TEMPLATE_TYPE_NAME), intent(inout), target :: self
+      class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(inout), target :: self
 
       class(ListNode), pointer :: oldlast
       oldlast => self%sentinel%prev
@@ -551,8 +554,8 @@ contains
    ! inserting and removing elements in any position, even in the middle of the sequence.
    !
    subroutine EraseSingle(self, position)
-      class(ftlList/**/FTL_TEMPLATE_TYPE_NAME)           , intent(inout) :: self
-      type(ftlList/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(inout) :: position
+      class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME))         , intent(inout) :: self
+      type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(inout) :: position
 
       call UnlinkNode(position%node)
       deallocate(position%node)
@@ -562,11 +565,11 @@ contains
    end subroutine
    !
    subroutine EraseIteratorPair(self, first, last)
-      class(ftlList/**/FTL_TEMPLATE_TYPE_NAME)           , intent(inout) :: self
-      type(ftlList/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(inout) :: first
-      type(ftlList/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)    :: last
+      class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME))         , intent(inout) :: self
+      type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(inout) :: first
+      type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)    :: last
 
-      type(ftlList/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator) :: deletor
+      type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: deletor
       associate(walker => first)
 
       do while (walker /= last)
@@ -587,8 +590,8 @@ contains
    ! objects.
    !
    subroutine Swap(self, other)
-      class(ftlList/**/FTL_TEMPLATE_TYPE_NAME), intent(inout), target :: self
-      class(ftlList/**/FTL_TEMPLATE_TYPE_NAME), intent(inout), target :: other
+      class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(inout), target :: self
+      class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(inout), target :: other
 
       integer :: tmpSize
       type(ListNode) :: tmpNode
@@ -633,11 +636,11 @@ contains
    ! Notice that this function changes the actual content of the container by inserting or erasing elements from it.
    !
    subroutine Resize(self, n, val)
-      class(ftlList/**/FTL_TEMPLATE_TYPE_NAME), intent(inout)           :: self
-      integer                                 , intent(in)              :: n
-      FTL_TEMPLATE_TYPE                       , intent(in)   , optional :: val
+      class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(inout)           :: self
+      integer                                   , intent(in)              :: n
+      FTL_TEMPLATE_TYPE                         , intent(in)   , optional :: val
 
-      type(ftlList/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator) :: it
+      type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: it
       integer :: i
 
       if (n == self%psize) then
@@ -665,7 +668,7 @@ contains
    ! Removes all elements from the list container (which are destroyed), and leaving the container with a size of 0.
    !
    subroutine Clear(self)
-      class(ftlList/**/FTL_TEMPLATE_TYPE_NAME), intent(inout) :: self
+      class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
 
       call self%Delete()
       call self%New()
@@ -735,7 +738,7 @@ contains
 
 
    subroutine FixValuePtrs(self)
-      class(ftlList/**/FTL_TEMPLATE_TYPE_NAME), intent(inout) :: self
+      class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
 
       if (self%psize == 0) then
          nullify(self%front,self%back)
@@ -760,15 +763,15 @@ contains
 
 
    subroutine NewItDefault(self)
-      class(ftlList/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(out) :: self
+      class(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(out) :: self
 
       ! Nothing to do here: intent(out) already resets everything
 
    end subroutine
    !
    subroutine NewItCopyOther(self, other)
-      class(ftlList/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(out) :: self
-      class(ftlList/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(in)  :: other
+      class(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(out) :: self
+      class(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)  :: other
 
       self%node => other%node
       select type (node => self%node)
@@ -785,7 +788,7 @@ contains
 
 
    subroutine Inc(self)
-      class(ftlList/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(inout) :: self
+      class(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(inout) :: self
 
       self%node => self%node%next
       select type (node => self%node)
@@ -796,7 +799,7 @@ contains
    end subroutine
    !
    subroutine Dec(self)
-      class(ftlList/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(inout) :: self
+      class(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(inout) :: self
 
       self%node => self%node%prev
       select type (node => self%node)
@@ -813,16 +816,16 @@ contains
 
 
    pure logical function EqualOther(self, other)
-      class(ftlList/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: self
-      class(ftlList/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: other
+      class(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: self
+      class(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: other
 
       EqualOther = associated(self%node,other%node)
 
    end function
    !
    pure logical function UnequalOther(self, other)
-      class(ftlList/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: self
-      class(ftlList/**/FTL_TEMPLATE_TYPE_NAME/**/Iterator), intent(in) :: other
+      class(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: self
+      class(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: other
 
       UnequalOther = .not.associated(self%node,other%node)
 
