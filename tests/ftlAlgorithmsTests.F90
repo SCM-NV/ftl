@@ -41,6 +41,8 @@ contains
       call testIsPermutationVector
       call testIsPermutationList
 
+      call testSearch
+
       ! Modifying sequence operations:
 
       call testIterSwap
@@ -363,6 +365,44 @@ contains
    end subroutine
 
 
+   subroutine testSearch
+      type(ftlListInt) :: l, k
+      type(ftlListIntIterator) :: it
+
+      call l%New([376,658,422,875,324,467,589])
+
+      call k%New([422,875,324])
+      it = ftlSearch(l,k)
+
+      ASSERT(it%value == 422)
+      ASSERT(ftlDistance(l%Begin(),it) == 2)
+
+      call k%New()
+      it = ftlSearch(l,k)
+
+      ASSERT(it == l%Begin())
+
+      call k%New([85,34,47])
+      it = ftlSearch(l,k)
+
+      ASSERT(it == l%End())
+
+      ASSERT(LastDigitMatches(546,56))
+      ASSERT(.not.LastDigitMatches(546,25))
+
+      it = ftlSearch(l,k,LastDigitMatches)
+
+      ASSERT(it%value == 875)
+      ASSERT(ftlDistance(l%Begin(),it) == 3)
+
+#ifdef FTL_NO_FINALIZERS
+      call l%Delete()
+      call k%Delete()
+#endif
+
+   end subroutine
+
+
    subroutine testSortList
       type(ftlListInt) :: l
       type(ftlListIntIterator) :: it
@@ -426,11 +466,16 @@ contains
       IsOdd = (mod(n,2) == 1)
    end function
 
-   ! example comparator:
+   ! example comparators:
 
    pure logical function Greater(n,m)
-      integer, intent(in) :: n,m
+      integer, intent(in) :: n, m
       Greater = (n > m)
+   end function
+
+   logical function LastDigitMatches(n,m)
+      integer, intent(in) :: n, m
+      LastDigitMatches = (mod(n,10) == mod(m,10))
    end function
 
    ! example unary subroutines:
@@ -439,6 +484,5 @@ contains
       integer, intent(inout) :: n
       n = n**2
    end subroutine
-
 
 end module
