@@ -15,6 +15,12 @@ else
 endif
 INCLUDES = -Isrc -Itests
 
+# option to disable the use of finalizers (in case your compiler can't handle them ...)
+ifeq ($(FINALIZERS), skip)
+FLAGS += -DFTL_NO_FINALIZERS
+endif
+
+
 memcheck: $(BUILDDIR)/tests
 	valgrind --leak-check=yes ./$(BUILDDIR)/tests
 
@@ -52,4 +58,7 @@ $(BUILDDIR)/ftlListIntAlgorithms.o: tests/instantiations/ftlListIntAlgorithms.F9
 	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
 
 clean:
-	rm -r $(BUILDDIR)
+	rm -rf $(BUILDDIR)
+
+cleanall:
+	rm -rf build.gnu build.intel

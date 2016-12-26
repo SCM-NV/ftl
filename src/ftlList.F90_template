@@ -74,7 +74,9 @@ module CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Module)
       generic  , public :: New => NewDefault, NewCopyOther, NewFill, NewFromArray, NewFromIteratorPair
 
       procedure, public :: Delete
+#ifndef FTL_NO_FINALIZERS
       final             :: Finalizer
+#endif
 
       procedure         :: BeginList
       generic  , public :: Begin => BeginList
@@ -184,9 +186,11 @@ contains
    ! Constructs a list container object, initializing its contents depending on the constructor version used:
    !
    subroutine NewDefault(self)
-      class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(out), target :: self
+      class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(inout), target :: self
 
       ! Constructs an empty list, with no elements.
+
+      call self%Delete()
 
       self%sentinel%next => self%sentinel
       self%sentinel%prev => self%sentinel
@@ -194,8 +198,8 @@ contains
    end subroutine
    !
    subroutine NewCopyOther(self, other)
-      class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(out) :: self
-      class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(in)  :: other
+      class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
+      class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(in)    :: other
 
       type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: it
 
@@ -212,7 +216,7 @@ contains
    end subroutine
    !
    subroutine NewFill(self, n, val)
-      class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(out)          :: self
+      class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(inout)        :: self
       integer                                   , intent(in)           :: n
       FTL_TEMPLATE_TYPE                         , intent(in), optional :: val
 
@@ -229,8 +233,8 @@ contains
    end subroutine
    !
    subroutine NewFromArray(self, array)
-      class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(out) :: self
-      FTL_TEMPLATE_TYPE                         , intent(in)  :: array(:)
+      class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
+      FTL_TEMPLATE_TYPE                         , intent(in)    :: array(:)
 
       ! Constructs a container with a copy of each of the elements in array, in the same order.
 
@@ -245,9 +249,9 @@ contains
    end subroutine
    !
    subroutine NewFromIteratorPair(self, first, last)
-      class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME))         , intent(out) :: self
-      type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)  :: first
-      type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)  :: last
+      class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME))         , intent(inout) :: self
+      type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)    :: first
+      type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)    :: last
 
       type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: it
 
@@ -281,10 +285,12 @@ contains
 
    end subroutine
 
+#ifndef FTL_NO_FINALIZERS
    subroutine Finalizer(self)
       type(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
       call self%Delete()
    end subroutine
+#endif
 
 
 
@@ -369,7 +375,6 @@ contains
       class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
       class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(in)    :: other
 
-      call self%Delete()
       call self%New(other)
 
    end subroutine
@@ -379,7 +384,6 @@ contains
       integer                                   , intent(in)    :: n
       FTL_TEMPLATE_TYPE                         , intent(in)    :: val
 
-      call self%Delete()
       call self%New(n, val)
 
    end subroutine
@@ -389,7 +393,6 @@ contains
       type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)    :: first
       type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)    :: last
 
-      call self%Delete()
       call self%New(first, last)
 
    end subroutine
@@ -398,7 +401,6 @@ contains
       class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
       FTL_TEMPLATE_TYPE                         , intent(in)    :: array(:)
 
-      call self%Delete()
       call self%New(array)
 
    end subroutine

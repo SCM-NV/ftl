@@ -90,6 +90,10 @@ contains
       call it%Dec()
       ASSERT(ftlNoneOf(l%Begin(),it,IsOdd))
 
+#ifdef FTL_NO_FINALIZERS
+      call l%Delete()
+#endif
+
    end subroutine
 
 
@@ -201,6 +205,10 @@ contains
       ASSERT(ftlCountIf(l%Begin(),it,IsEven) == 5)
       ASSERT(ftlCountIf(l%Begin(),it,IsOdd) == 3)
 
+#ifdef FTL_NO_FINALIZERS
+      call l%Delete()
+#endif
+
    end subroutine
 
 
@@ -303,6 +311,11 @@ contains
       ASSERT(.not.ftlIsPermutation(k,l))
       ASSERT(ftlIsPermutation(ftlAdvance(k%Begin(),3),k%End(),ftlAdvance(l%Begin(),3)))
 
+#ifdef FTL_NO_FINALIZERS
+      call l%Delete()
+      call k%Delete()
+#endif
+
    end subroutine
 
 
@@ -349,6 +362,10 @@ contains
       ASSERT(it%value == 3)
       call it%Inc()
       ASSERT(it == l%End())
+
+#ifdef FTL_NO_FINALIZERS
+      call l%Delete()
+#endif
 
    end subroutine
 

@@ -57,6 +57,10 @@ contains
       ASSERT(l%Begin() == l%End())
       ASSERT(.not.(l%Begin() /= l%End()))
 
+#ifdef FTL_NO_FINALIZERS
+      call l%Delete()
+#endif
+
    end subroutine
 
 
@@ -74,6 +78,11 @@ contains
       ASSERT(.not.associated(o%front,l%front))
       ASSERT(.not.associated(o%back,l%back))
 
+#ifdef FTL_NO_FINALIZERS
+      call l%Delete()
+      call o%Delete()
+#endif
+
    end subroutine
 
 
@@ -88,6 +97,10 @@ contains
       ASSERT(l%front == 72)
       ASSERT(l%back == 72)
 
+#ifdef FTL_NO_FINALIZERS
+      call l%Delete()
+#endif
+
    end subroutine
 
 
@@ -101,6 +114,10 @@ contains
       ASSERT(Size(l) == 7)
       ASSERT(l%front == 5)
       ASSERT(l%back == 88)
+
+#ifdef FTL_NO_FINALIZERS
+      call l%Delete()
+#endif
 
    end subroutine
 
@@ -118,6 +135,11 @@ contains
       ASSERT(l%back == 88)
       ASSERT(.not.associated(o%front,l%front))
       ASSERT(.not.associated(o%back,l%back))
+
+#ifdef FTL_NO_FINALIZERS
+      call l%Delete()
+      call o%Delete()
+#endif
 
    end subroutine
 
@@ -162,6 +184,11 @@ contains
       ASSERT(l%front == 23)
       ASSERT(l%back == 3)
 
+#ifdef FTL_NO_FINALIZERS
+      call l%Delete()
+      call o%Delete()
+#endif
+
    end subroutine
 
 
@@ -180,6 +207,10 @@ contains
       ASSERT(it%value == 42)
       call it%Dec()
       ASSERT(it%value == 23)
+
+#ifdef FTL_NO_FINALIZERS
+      call l%Delete()
+#endif
 
    end subroutine
 
@@ -206,10 +237,14 @@ contains
       call l%New()
       ASSERT(l%Empty())
       it = l%End()
-      call l%Insert(it, 2, 42) ! Fortran, why can't I pass l%End() directly???? Please ....
+      call l%Insert(it, 2, 42) ! gfortran complains when you pass l%End() directly. compiler bug?
       ASSERT(l%Size() == 2)
       ASSERT(l%front == 42)
       ASSERT(l%back == 42)
+
+#ifdef FTL_NO_FINALIZERS
+      call l%Delete()
+#endif
 
    end subroutine
 
@@ -241,6 +276,10 @@ contains
       ASSERT(l%Size() == 4)
       ASSERT(l%front == 4)
       ASSERT(l%back == 7)
+
+#ifdef FTL_NO_FINALIZERS
+      call l%Delete()
+#endif
 
    end subroutine
 
@@ -276,6 +315,11 @@ contains
       ASSERT(it /= l%End())
       call it%Inc()
       ASSERT(it == l%End())
+
+#ifdef FTL_NO_FINALIZERS
+      call l%Delete()
+      call o%Delete()
+#endif
 
    end subroutine
 
@@ -318,6 +362,10 @@ contains
       ASSERT(l%Empty())
       ASSERT(l%Size() == 0)
 
+#ifdef FTL_NO_FINALIZERS
+      call l%Delete()
+#endif
+
    end subroutine
 
 
@@ -358,6 +406,10 @@ contains
       ASSERT(l%Empty())
       ASSERT(l%Size() == 0)
 
+#ifdef FTL_NO_FINALIZERS
+      call l%Delete()
+#endif
+
    end subroutine
 
 
@@ -387,6 +439,10 @@ contains
       call l%Erase(it) ! Fortran, why can't I pass l%Begin() directly???? Please ....
       ASSERT(l%Size() == 2)
       ASSERT(l%front == 5)
+
+#ifdef FTL_NO_FINALIZERS
+      call l%Delete()
+#endif
 
    end subroutine
 
@@ -420,6 +476,10 @@ contains
       it1 = l%Begin()
       call l%Erase(it1,l%End()) ! Fortran, why can't I pass l%Begin() directly? It works for the second parameter FFS ...
       ASSERT(l%Empty())
+
+#ifdef FTL_NO_FINALIZERS
+      call l%Delete()
+#endif
 
    end subroutine
 
@@ -461,6 +521,11 @@ contains
       call it%Inc()
       ASSERT(it == o%End())
 
+#ifdef FTL_NO_FINALIZERS
+      call l%Delete()
+      call o%Delete()
+#endif
+
    end subroutine
 
 
@@ -486,6 +551,10 @@ contains
 
       ASSERT(it%value == 66)
 
+#ifdef FTL_NO_FINALIZERS
+      call l%Delete()
+#endif
+
    end subroutine
 
 
@@ -498,6 +567,10 @@ contains
       ASSERT(l%Empty())
       ASSERT(l%Size() == 0)
       ASSERT(l%Begin() == l%End())
+
+#ifdef FTL_NO_FINALIZERS
+      call l%Delete()
+#endif
 
    end subroutine
 
