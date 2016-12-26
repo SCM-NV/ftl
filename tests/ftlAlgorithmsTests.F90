@@ -19,6 +19,8 @@ contains
 
       write (*,'(A)') 'Running ftlAlgorithms tests ...'
 
+      ! Non-modifying sequence operations:
+
       call testAllOf
       call testAnyOf
       call testNoneOf
@@ -29,6 +31,8 @@ contains
       call testFindIf
       call testFindIfNot
 
+      call testFirstOf
+
       call testCount
       call testCountIf
 
@@ -36,6 +40,12 @@ contains
 
       call testIsPermutationVector
       call testIsPermutationList
+
+      ! Modifying sequence operations:
+
+      call testIterSwap
+
+      ! Sorting operations:
 
       call testSortVector
       call testSortList
@@ -166,6 +176,28 @@ contains
    end subroutine
 
 
+   subroutine testFirstOf
+      type(ftlListInt) :: l, k
+      type(ftlListIntIterator) :: it
+
+      call l%New([5,6,98,3,4,6])
+      call k%New([12,65,4])
+
+      it = ftlFirstOf(l,k)
+
+      ASSERT(it%value == 4)
+      call it%Inc()
+      call it%Inc()
+      ASSERT(it == l%End())
+
+#ifdef FTL_NO_FINALIZERS
+      call l%Delete()
+      call k%Delete()
+#endif
+
+   end subroutine
+
+
    subroutine testCount
       type(ftlVectorInt) :: v
       type(ftlVectorIntIterator) :: it
@@ -208,6 +240,18 @@ contains
 #ifdef FTL_NO_FINALIZERS
       call l%Delete()
 #endif
+
+   end subroutine
+
+
+   subroutine testIterSwap
+      type(ftlVectorInt) :: v
+
+      call v%New([2,1,3,4,5,6])
+      call ftlIterSwap(v%Begin(), v%Begin()+1)
+
+      ASSERT(all(v%data == [1,2,3,4,5,6]))
+      ASSERT(v%front == 1)
 
    end subroutine
 

@@ -253,8 +253,6 @@ contains
       type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)    :: first
       type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)    :: last
 
-      type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: it
-
       call self%New()
       call self%Insert(self%Begin(), first, last)
 

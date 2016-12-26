@@ -82,6 +82,16 @@ module CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,AlgorithmsModule)
       module procedure ftlFindIfNotContainer
    end interface
 
+   ! TODO: ftlFindEnd
+
+   public :: ftlFirstOf
+   interface ftlFirstOf
+      module procedure ftlFirstOfIteratorPair
+      module procedure ftlFirstOfContainer
+   end interface
+
+   ! TODO: ftlAdjacentFind
+
    public :: ftlCount
    interface ftlCount
       module procedure ftlCountIteratorPair
@@ -100,10 +110,23 @@ module CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,AlgorithmsModule)
       module procedure ftlMismatchContainers
    end interface
 
+   ! TODO: ftlEqual
+
    public :: ftlIsPermutation
    interface ftlIsPermutation
       module procedure ftlIsPermutationIterators
       module procedure ftlIsPermutationContainers
+   end interface
+
+   ! TODO: ftlSearch
+   ! TODO: ftlSearchN
+
+
+   ! =============> Modifying sequence operations:
+
+   public :: ftlIterSwap
+   interface ftlIterSwap
+      module procedure ftlIterSwapPrivate
    end interface
 
 
@@ -153,6 +176,7 @@ contains
 
 
    ! =============> Non-modifying sequence operations:
+
 
 
    ! Returns true if pred returns true for all the elements in the range [first,last) or if the range is empty,
@@ -215,6 +239,7 @@ contains
       anytrue = ftlAnyOfIteratorPair(container%Begin(), container%End(), pred)
 
    end function
+
 
 
    ! Returns true if pred returns false for all the elements in the range [first,last) or if the range is empty,
@@ -345,6 +370,50 @@ contains
 
    end function
 
+
+
+   ! Returns an iterator to the first element in the range [first1,last1) that matches any of the elements in [first2,last2).
+   ! If no such element is found, the function returns last1.
+   !
+   ! The elements in [first1,last1) are sequentially compared to each of the values in [first2,last2) using operator== (or
+   ! comp, if present), until a pair matches.
+   !
+   function ftlFirstOfIteratorPair(first1, last1, first2, last2, comp) result(firstOf)
+      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first1, last1, first2, last2
+      procedure(Comparator)                                    , optional   :: comp
+      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator))             :: firstOf
+
+      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: it
+
+      if (first2 == last2) then
+         firstOf = last1
+         return
+      endif
+
+      firstOf = first1
+      do while (firstOf /= last1)
+         it = first2
+         do while (it /= last2)
+            if (present(comp)) then
+               if (comp(firstOf%value, it%value)) return
+            else
+               if (firstOf%value == it%value) return
+            endif
+            call it%Inc()
+         enddo
+         call firstOf%Inc()
+      enddo
+
+   end function
+   !
+   function ftlFirstOfContainer(container1, container2, comp) result(firstOf)
+      type(CAT(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME))          , intent(in) :: container1, container2
+      procedure(Comparator)                                    , optional   :: comp
+      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator))             :: firstOf
+
+      firstOf = ftlFirstOfIteratorPair(container1%Begin(), container1%End(), container2%Begin(), container2%End(), comp)
+
+   end function
 
 
    ! Returns the number of elements in the range [first,last) that compare equal to val.
@@ -494,6 +563,23 @@ contains
 
 
 
+   ! =============> Modifying sequence operations:
+
+
+
+   subroutine ftlIterSwapPrivate(it1,it2)
+      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: it1, it2
+
+      FTL_TEMPLATE_TYPE :: tmp
+
+      tmp = it1%value
+      it1%value = it2%value
+      it2%value = tmp
+
+   end subroutine
+
+
+
    ! =============> Sorting operations:
 
 
@@ -507,7 +593,6 @@ contains
 #endif
 
       type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: i, j, smallestIt
-      FTL_TEMPLATE_TYPE :: tmp
 
       ! TODO: implement something faster than selection sort ;-) ...
 
@@ -528,9 +613,7 @@ contains
 #endif
             call i%Inc()
          enddo
-         tmp = j%value
-         j%value = smallestIt%value
-         smallestIt%value = tmp
+         call ftlIterSwap(j, smallestIt)
          call j%Inc()
       enddo
 
