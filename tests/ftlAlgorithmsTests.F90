@@ -37,6 +37,7 @@ contains
       call testCountIf
 
       call testMismatch
+      call testEqual
 
       call testIsPermutationVector
       call testIsPermutationList
@@ -303,6 +304,29 @@ contains
       ASSERT(it(1) == u%End() - 1)
       ASSERT(it(2)%value == 2)
       ASSERT(it(2) == v%End() - 1)
+
+   end subroutine
+
+
+   subroutine testEqual
+      type(ftlListInt) :: l, k
+
+      call l%New([4,5,6,7,8,9,0])
+      call k%New([6,7,8,9,0])
+
+      ASSERT(.not.ftlEqual(l,k))
+      ASSERT(ftlEqual(ftlAdvance(l%Begin(),2),l%End(),k%Begin()))
+
+      call l%New([41,52,63,74])
+      call k%New([61,72,83,94])
+
+      ASSERT(.not.ftlEqual(l,k))
+      ASSERT(ftlEqual(l,k,LastDigitMatches))
+
+#ifdef FTL_NO_FINALIZERS
+      call l%Delete()
+      call k%Delete()
+#endif
 
    end subroutine
 

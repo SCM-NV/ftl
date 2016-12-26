@@ -110,7 +110,11 @@ module CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,AlgorithmsModule)
       module procedure ftlMismatchContainers
    end interface
 
-   ! TODO: ftlEqual
+   public :: ftlEqual
+   interface ftlEqual
+      module procedure ftlEqualIterators
+      module procedure ftlEqualContainers
+   end interface
 
    public :: ftlIsPermutation
    interface ftlIsPermutation
@@ -509,6 +513,48 @@ contains
       type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator))             :: it(2)
 
       it = ftlMismatchIterators(container1%Begin(), container1%End(), container2%Begin(), comp)
+
+   end function
+
+
+
+   ! Compares the elements in the range [first1,last1) with those in the range beginning at first2, and returns true if all
+   ! of the elements in both ranges match.
+   !
+   ! The elements are compared using operator== (or comp, if present).
+   !
+   logical function ftlEqualIterators(first1, last1, first2, comp) result(equal)
+      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first1, last1, first2
+      procedure(Comparator)                                    , optional   :: comp
+
+      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: it1, it2
+
+      equal = .true.
+      it1 = first1
+      it2 = first2
+
+      do while (it1 /= last1)
+         if (present(comp)) then
+            equal = comp(it1%value, it2%value)
+         else
+            equal = (it1%value == it2%value)
+         endif
+         if (.not.equal) return
+         call it1%Inc()
+         call it2%Inc()
+      enddo
+
+   end function
+   !
+   logical function ftlEqualContainers(container1, container2, comp) result(equal)
+      type(CAT(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: container1, container2
+      procedure(Comparator)                          , optional   :: comp
+
+      if (container1%Size() /= container2%Size()) then
+         equal = .false.
+      else
+         equal = ftlEqualIterators(container1%Begin(), container1%End(), container2%Begin(), comp)
+      endif
 
    end function
 
