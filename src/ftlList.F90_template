@@ -256,12 +256,9 @@ contains
       type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: it
 
       call self%New()
-      it = self%Begin()
-      call self%Insert(it, first, last) ! Fortran, why can't I pass l%Begin() directly?
+      call self%Insert(self%Begin(), first, last)
 
    end subroutine
-
-
 
 
 
@@ -418,7 +415,7 @@ contains
    !
    subroutine InsertSingle(self, position, val)
       class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME))         , intent(inout) :: self
-      type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(inout) :: position
+      type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator))                :: position
       FTL_TEMPLATE_TYPE                                  , intent(in)    :: val
 
       call self%InsertArray(position, [val])
@@ -427,7 +424,7 @@ contains
    !
    subroutine InsertFill(self, position, n, val)
       class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME))         , intent(inout) :: self
-      type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(inout) :: position
+      type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator))                :: position
       integer                                            , intent(in)    :: n
       FTL_TEMPLATE_TYPE                                  , intent(in)    :: val
 
@@ -440,7 +437,7 @@ contains
    !
    subroutine InsertArray(self, position, array)
       class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME))         , intent(inout) :: self
-      type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(inout) :: position
+      type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator))                :: position
       FTL_TEMPLATE_TYPE                                  , intent(in)    :: array(:)
 
       integer :: i
@@ -455,7 +452,7 @@ contains
    !
    subroutine InsertIteratorPair(self, position, first, last)
       class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME))         , intent(inout) :: self
-      type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(inout) :: position
+      type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator))                :: position
       type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)    :: first
       type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)    :: last
 
@@ -557,7 +554,7 @@ contains
    !
    subroutine EraseSingle(self, position)
       class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME))         , intent(inout) :: self
-      type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(inout) :: position
+      type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator))                :: position
 
       call UnlinkNode(position%node)
       deallocate(position%node)
@@ -568,7 +565,7 @@ contains
    !
    subroutine EraseIteratorPair(self, first, last)
       class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME))         , intent(inout) :: self
-      type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(inout) :: first
+      type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator))                :: first
       type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)    :: last
 
       type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: deletor

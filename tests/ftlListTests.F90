@@ -236,8 +236,7 @@ contains
 
       call l%New()
       ASSERT(l%Empty())
-      it = l%End()
-      call l%Insert(it, 2, 42) ! gfortran complains when you pass l%End() directly. compiler bug?
+      call l%Insert(l%End(), 2, 42)
       ASSERT(l%Size() == 2)
       ASSERT(l%front == 42)
       ASSERT(l%back == 42)
@@ -271,8 +270,7 @@ contains
 
       call l%New()
       ASSERT(l%Empty())
-      it = l%End()
-      call l%Insert(it, [4,5,6,7]) ! Fortran, why can't I pass l%End() directly???? Please ....
+      call l%Insert(l%End(), [4,5,6,7])
       ASSERT(l%Size() == 4)
       ASSERT(l%front == 4)
       ASSERT(l%back == 7)
@@ -435,8 +433,7 @@ contains
       ASSERT(it%value == 4)
       ASSERT(it == l%Begin())
 
-      it = l%Begin()
-      call l%Erase(it) ! Fortran, why can't I pass l%Begin() directly???? Please ....
+      call l%Erase(l%Begin())
       ASSERT(l%Size() == 2)
       ASSERT(l%front == 5)
 
@@ -471,10 +468,8 @@ contains
       call it2%Inc()
       ASSERT(it2 == l%End())
 
-
       call l%New([12,23,34,45,56,76])
-      it1 = l%Begin()
-      call l%Erase(it1,l%End()) ! Fortran, why can't I pass l%Begin() directly? It works for the second parameter FFS ...
+      call l%Erase(l%Begin(),l%End())
       ASSERT(l%Empty())
 
 #ifdef FTL_NO_FINALIZERS
