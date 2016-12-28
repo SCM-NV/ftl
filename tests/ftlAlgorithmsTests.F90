@@ -48,6 +48,11 @@ contains
 
       call testIterSwap
 
+      ! Partitions:
+
+      call testIsPartitioned
+      call testPartition
+
       ! Sorting operations:
 
       call testSortVector
@@ -267,28 +272,6 @@ contains
    end subroutine
 
 
-   subroutine testSortVector
-      type(ftlVectorInt) :: v
-
-      call v%New([9,6,3,4,7])
-
-      call ftlSort(v)
-
-      ASSERT(v%Size() == 5)
-      ASSERT(v%front == 3)
-      ASSERT(v%back == 9)
-      ASSERT(all(v%data == [3,4,6,7,9]))
-
-      call ftlSort(v, Greater)
-
-      ASSERT(v%Size() == 5)
-      ASSERT(v%front == 9)
-      ASSERT(v%back == 3)
-      ASSERT(all(v%data == [9,7,6,4,3]))
-
-   end subroutine
-
-
    subroutine testMismatch
       type(ftlVectorInt) :: u, v
       type(ftlVectorIntIterator) :: it(2)
@@ -431,6 +414,65 @@ contains
       call l%Delete()
       call k%Delete()
 #endif
+
+   end subroutine
+
+
+   subroutine testIsPartitioned
+      type(ftlListInt) :: l
+
+      call l%New([1,3,5,7,9,2,4,6,8])
+      ASSERT(.not.ftlIsPartitioned(l, IsEven))
+      ASSERT(ftlIsPartitioned(l, IsOdd))
+
+      call l%New([2,4,6,8,0,1,3,5,7,9])
+      ASSERT(ftlIsPartitioned(l, IsEven))
+      ASSERT(.not.ftlIsPartitioned(l, IsOdd))
+
+#ifdef FTL_NO_FINALIZERS
+      call l%Delete()
+#endif
+
+   end subroutine
+
+
+   subroutine testPartition
+      type(ftlVectorInt) :: v
+      type(ftlVectorIntIterator) :: it
+      integer :: n, i
+
+      do n = 1, 100
+         call v%New([ (RandomInt(), i = 1, 10+mod(n,20)) ])
+         it = ftlPartition(v, IsEven)
+         ASSERT(ftlIsPartitioned(v, IsEven))
+         if (it /= v%End()) ASSERT(.not.IsEven(it%value))
+         if (it /= v%Begin()) then
+            call it%Dec()
+            ASSERT(IsEven(it%value))
+         endif
+      end do
+
+   end subroutine
+
+
+   subroutine testSortVector
+      type(ftlVectorInt) :: v
+
+      call v%New([9,6,3,4,7])
+
+      call ftlSort(v)
+
+      ASSERT(v%Size() == 5)
+      ASSERT(v%front == 3)
+      ASSERT(v%back == 9)
+      ASSERT(all(v%data == [3,4,6,7,9]))
+
+      call ftlSort(v, Greater)
+
+      ASSERT(v%Size() == 5)
+      ASSERT(v%front == 9)
+      ASSERT(v%back == 3)
+      ASSERT(all(v%data == [9,7,6,4,3]))
 
    end subroutine
 

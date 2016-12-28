@@ -139,6 +139,21 @@ module CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,AlgorithmsModule)
    end interface
 
 
+   ! =============> Partitions:
+
+   public :: ftlIsPartitioned
+   interface ftlIsPartitioned
+      module procedure ftlIsPartitionedIterators
+      module procedure ftlIsPartitionedContainer
+   end interface
+
+   public :: ftlPartition
+   interface ftlPartition
+      module procedure ftlPartitionIterators
+      module procedure ftlPartitionContainer
+   end interface
+
+
    ! =============> Sorting operations:
 
    public :: ftlSort
@@ -735,6 +750,94 @@ contains
       it2%value = tmp
 
    end subroutine
+
+
+
+   ! =============> Partitions:
+
+
+
+   ! Rearranges the elements from the range [first,last), in such a way that all the elements for which pred returns true
+   ! precede all those for which it returns false. The iterator returned points to the first element of the second group.
+   !
+   ! The relative ordering within each group is not necessarily the same as before the call. See stable_partition for a
+   ! function with a similar behavior but with stable ordering within each group.
+   !
+   function ftlPartitionIterators(first, last, pred) result(pivot)
+      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
+      procedure(UnaryPredicate)                                             :: pred
+      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator))             :: pivot
+
+      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: itRev
+
+      ! TODO: implementation for forward iterators
+
+      pivot = first
+      itRev = last
+      do while (pivot /= itRev)
+         do while (pred(pivot%value))
+            call pivot%Inc()
+            if (pivot == itRev) return
+         enddo
+         do while (.true.)
+            call itRev%Dec()
+            if (pivot == itRev) return
+            if (pred(itRev%value)) exit
+         enddo
+         call ftlIterSwap(pivot,itRev)
+         call pivot%Inc()
+      enddo
+
+   end function
+   !
+   function ftlPartitionContainer(container, pred) result(pivot)
+      type(CAT(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME)           , intent(in) :: container
+      procedure(UnaryPredicate)                                             :: pred
+      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator))             :: pivot
+
+      pivot = ftlPartitionIterators(container%Begin(), container%End(), pred)
+
+   end function
+
+
+
+   ! Returns true if all the elements in the range [first,last) for which pred returns true precede those for which it
+   ! returns false.
+   !
+   ! If the range is empty, the function returns true.
+   !
+   logical function ftlIsPartitionedIterators(first, last, pred) result(isPartitioned)
+      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
+      procedure(UnaryPredicate)                                             :: pred
+
+      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: it
+
+      isPartitioned = .true.
+      it = first
+      do while (it /= last)
+         if (pred(it%value)) then
+            call it%Inc()
+         else
+            exit
+         endif
+      enddo
+      do while (it /= last)
+         if (pred(it%value)) then
+            isPartitioned = .false.
+            return
+         endif
+         call it%Inc()
+      enddo
+
+   end function
+   !
+   logical function ftlIsPartitionedContainer(container, pred) result(isPartitioned)
+      type(CAT(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME), intent(in) :: container
+      procedure(UnaryPredicate)                                  :: pred
+
+      isPartitioned = ftlIsPartitionedIterators(container%Begin(), container%End(), pred)
+
+   end function
 
 
 
