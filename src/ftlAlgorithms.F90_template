@@ -791,7 +791,7 @@ contains
    end function
    !
    function ftlPartitionContainer(container, pred) result(pivot)
-      type(CAT(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME)           , intent(in) :: container
+      type(CAT(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME))          , intent(in) :: container
       procedure(UnaryPredicate)                                             :: pred
       type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator))             :: pivot
 
@@ -832,8 +832,8 @@ contains
    end function
    !
    logical function ftlIsPartitionedContainer(container, pred) result(isPartitioned)
-      type(CAT(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME), intent(in) :: container
-      procedure(UnaryPredicate)                                  :: pred
+      type(CAT(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: container
+      procedure(UnaryPredicate)                                   :: pred
 
       isPartitioned = ftlIsPartitionedIterators(container%Begin(), container%End(), pred)
 
