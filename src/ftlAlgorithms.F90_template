@@ -146,9 +146,26 @@ module CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,AlgorithmsModule)
       module procedure ftlSortContainer
    end interface
 
+   public :: ftlIsSorted
+   interface ftlIsSorted
+      module procedure ftlIsSortedIterators
+      module procedure ftlIsSortedContainer
+   end interface
+
+   public :: ftlIsSortedUntil
+   interface ftlIsSortedUntil
+      module procedure ftlIsSortedUntilIterators
+      module procedure ftlIsSortedUntilContainer
+   end interface
+
 
    ! =============> Iterator operations:
    ! (in C++ these are in the <iterator> header, not in <algorithm>)
+
+   public :: ftlIterCompare ! doesn't exist in C++ but is incredibly useful ...
+   interface ftlIterCompare
+      module procedure ftlIterComparePrivate
+   end interface
 
    public :: ftlAdvance
    interface ftlAdvance
@@ -159,6 +176,35 @@ module CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,AlgorithmsModule)
    interface ftlDistance
       module procedure ftlDistancePrivate
    end interface
+
+
+#ifdef FTL_CONTAINER_PROVIDES_RANDOM_ACCESS_ITERATOR
+   ! =============> Heap:
+
+   public :: ftlMakeHeap
+   interface ftlMakeHeap
+      module procedure ftlMakeHeapIterators
+      module procedure ftlMakeHeapContainer
+   end interface
+
+   public :: ftlPopHeap
+   interface ftlPopHeap
+      module procedure ftlPopHeapIterators
+      module procedure ftlPopHeapContainer
+   end interface
+
+   public :: ftlIsHeap
+   interface ftlIsHeap
+      module procedure ftlIsHeapIterators
+      module procedure ftlIsHeapContainer
+   end interface
+
+   public :: ftlIsHeapUntil
+   interface ftlIsHeapUntil
+      module procedure ftlIsHeapUntilIterators
+      module procedure ftlIsHeapUntilContainer
+   end interface
+#endif
 
 
    ! =============> Interfaces for dummy procedures:
@@ -708,15 +754,7 @@ contains
          i = j
          call i%Inc()
          do while (i /= container%End())
-#ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
-            if (present(comp)) then
-               if (comp(i%value, smallestIt%value)) smallestIt = i
-            else
-               if (i%value < smallestIt%value) smallestIt = i
-            endif
-#else
-            if (comp(i%value, smallestIt%value)) smallestIt = i
-#endif
+            if (ftlIterCompare(i, smallestIt, comp)) smallestIt = i
             call i%Inc()
          enddo
          call ftlIterSwap(j, smallestIt)
@@ -727,7 +765,103 @@ contains
 
 
 
+   ! Returns true if the range [first,last) is sorted into ascending order.
+   !
+   ! The elements are compared using operator< (if available), or comp (if present).
+   !
+   logical function ftlIsSortedIterators(first, last, comp) result(isSorted)
+      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
+#ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
+      procedure(Comparator)                                    , optional   :: comp
+#else
+      procedure(Comparator)                                                 :: comp
+#endif
+
+      isSorted = (ftlIsSortedUntilIterators(first, last, comp) == last)
+
+   end function
+   !
+   logical function ftlIsSortedContainer(container, comp) result(isSorted)
+      type(CAT(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: container
+#ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
+      procedure(Comparator)                          , optional   :: comp
+#else
+      procedure(Comparator)                                       :: comp
+#endif
+
+      isSorted = ftlIsSortedIterators(container%Begin(), container%End(), comp)
+
+   end function
+
+
+
+   ! Returns an iterator to the first element in the range [first,last) which does not follow an ascending order.
+   !
+   ! The range between first and the iterator returned is sorted.
+   !
+   ! If the entire range is sorted, the function returns last.
+   !
+   ! The elements are compared using operator< (if available), or comp (if present).
+   !
+   function ftlIsSortedUntilIterators(first, last, comp) result(firstUnsorted)
+      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
+#ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
+      procedure(Comparator)                                    , optional   :: comp
+#else
+      procedure(Comparator)                                                 :: comp
+#endif
+      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator))             :: firstUnsorted
+
+      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: lastSorted
+
+      firstUnsorted = first
+      if (first == last) return
+
+      lastSorted = first
+      call firstUnsorted%Inc()
+      do while (firstUnsorted /= last)
+         if (ftlIterCompare(firstUnsorted, lastSorted, comp)) return
+         call firstUnsorted%Inc()
+         call lastSorted%Inc()
+      enddo
+
+   end function
+   !
+   function ftlIsSortedUntilContainer(container, comp) result(firstUnsorted)
+      type(CAT(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: container
+#ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
+      procedure(Comparator)                          , optional   :: comp
+#else
+      procedure(Comparator)                                       :: comp
+#endif
+      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator))   :: firstUnsorted
+
+      firstUnsorted = ftlIsSortedUntilIterators(container%Begin(), container%End(), comp)
+
+   end function
+
+
+
    ! =============> Iterator operations:
+
+
+
+   logical function ftlIterComparePrivate(it1, it2, comp) result(iterCompare)
+      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: it1, it2
+#ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
+      procedure(Comparator)                                    , optional   :: comp
+
+      if (present(comp)) then
+         iterCompare = comp(it1%value, it2%value)
+      else
+         iterCompare = (it1%value < it2%value)
+      endif
+#else
+      procedure(Comparator)                                                 :: comp
+
+      iterCompare = comp(it1%value, it2%value)
+#endif
+   end function
 
 
 
@@ -768,6 +902,199 @@ contains
 #endif
 
    end function
+
+
+
+#ifdef FTL_CONTAINER_PROVIDES_RANDOM_ACCESS_ITERATOR
+   ! =============> Heap:
+
+
+
+   ! Rearranges the elements in the range [first,last) in such a way that they form a heap.
+   !
+   ! A heap is a way to organize the elements of a range that allows for fast retrieval of the element with the highest
+   ! value at any moment (with pop_heap), even repeatedly, while allowing for fast insertion of new elements (with
+   ! push_heap).
+   !
+   ! The element with the highest value is always pointed by first. The order of the other elements depends on the
+   ! particular implementation, but it is consistent throughout all heap-related functions of this header.
+   !
+   ! The elements are compared using operator< (for the first version), or comp (for the second): The element with the
+   ! highest value is an element for which this would return false when compared to every other element in the range.
+   !
+   ! The standard container adaptor priority_queue calls make_heap, push_heap and pop_heap automatically to maintain heap
+   ! properties for a container.
+   !
+   subroutine ftlMakeHeapIterators(first, last, comp)
+      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
+#ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
+      procedure(Comparator)                                    , optional   :: comp
+#else
+      procedure(Comparator)                                                 :: comp
+#endif
+
+      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: it
+
+      it = first + (last-first) / 2
+      do while (.true.)
+         call HeapDown(first, last, it, comp)
+         if (it == first) exit
+         call it%Dec()
+      enddo
+
+   end subroutine
+   !
+   subroutine ftlMakeHeapContainer(container, comp)
+      type(CAT(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: container
+#ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
+      procedure(Comparator)                          , optional   :: comp
+#else
+      procedure(Comparator)                                       :: comp
+#endif
+
+      call ftlMakeHeapIterators(container%Begin(), container%End(), comp)
+
+   end subroutine
+
+
+
+   subroutine ftlPopHeapIterators(first, last, comp)
+      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
+#ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
+      procedure(Comparator)                                    , optional   :: comp
+#else
+      procedure(Comparator)                                                 :: comp
+#endif
+
+      call ftlIterSwap(first, last-1)
+      call HeapDown(first, last-1, first, comp)
+
+   end subroutine
+   !
+   subroutine ftlPopHeapContainer(container, comp)
+      type(CAT(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: container
+#ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
+      procedure(Comparator)                          , optional   :: comp
+#else
+      procedure(Comparator)                                       :: comp
+#endif
+
+      call ftlPopHeapIterators(container%Begin(), container%End(), comp)
+
+   end subroutine
+
+
+
+   ! Internal heap helper methods
+   !
+   subroutine HeapDown(first, last, downIn, comp)
+      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last, downIn
+#ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
+      procedure(Comparator)                                    , optional   :: comp
+#else
+      procedure(Comparator)                                                 :: comp
+#endif
+
+      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: down, leftChild, rightChild, largerChild
+
+      down = downIn
+      do while (.true.)
+
+         leftChild = first + (down-first)*2 + 1
+         if (leftChild >= last) exit ! node is all the way at the bottom, we are done
+         largerChild = leftChild
+
+         rightChild = leftChild + 1
+         if (rightChild < last) then
+            if (ftlIterCompare(leftChild, rightChild, comp)) largerChild = rightChild
+         endif
+
+         if (ftlIterCompare(down, largerChild, comp)) then
+            call ftlIterSwap(down, largerChild)
+            down = largerChild
+         else
+            exit
+         endif
+
+      enddo
+
+   end subroutine
+
+
+
+   ! Returns true if the range [first,last) forms a heap, as if constructed with make_heap.
+   !
+   ! The elements are compared using operator< (if available) for the first version, or comp (if present).
+   !
+   logical function ftlIsHeapIterators(first, last, comp) result(isHeap)
+      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
+#ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
+      procedure(Comparator)                                    , optional   :: comp
+#else
+      procedure(Comparator)                                                 :: comp
+#endif
+
+      isHeap = (ftlIsHeapUntilIterators(first, last, comp) == last)
+
+   end function
+   !
+   logical function ftlIsHeapContainer(container, comp) result(isHeap)
+      type(CAT(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: container
+#ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
+      procedure(Comparator)                          , optional   :: comp
+#else
+      procedure(Comparator)                                       :: comp
+#endif
+
+      isHeap = ftlIsHeapIterators(container%Begin(), container%End(), comp)
+
+   end function
+
+
+
+   ! Returns an iterator to the first element in the range [first,last) which is not in a valid position if the range is
+   ! considered a heap (as if constructed with make_heap).
+   !
+   ! The range between first and the iterator returned is a heap.
+   !
+   ! If the entire range is a valid heap, the function returns last.
+   !
+   ! The elements are compared using operator< (if available) for the first version, or comp (if present).
+   !
+   function ftlIsHeapUntilIterators(first, last, comp) result(heapUntil)
+      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
+#ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
+      procedure(Comparator)                                    , optional   :: comp
+#else
+      procedure(Comparator)                                                 :: comp
+#endif
+      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator))             :: heapUntil
+
+      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: parent
+
+      heapUntil = first
+      do while (heapUntil /= last)
+         parent = first + (heapUntil-first-1)/2
+         if (ftlIterCompare(parent, heapUntil, comp)) return
+         call heapUntil%Inc()
+      enddo
+
+   end function
+   !
+   function ftlIsHeapUntilContainer(container, comp) result(heapUntil)
+      type(CAT(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: container
+#ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
+      procedure(Comparator)                          , optional   :: comp
+#else
+      procedure(Comparator)                                       :: comp
+#endif
+      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator))   :: heapUntil
+
+      heapUntil = ftlIsHeapUntilIterators(container%Begin(), container%End(), comp)
+
+   end function
+
+#endif /*FTL_CONTAINER_PROVIDES_RANDOM_ACCESS_ITERATOR*/
 
 
 end module

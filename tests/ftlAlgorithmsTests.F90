@@ -52,6 +52,13 @@ contains
 
       call testSortVector
       call testSortList
+      call testIsSorted
+
+      ! Heap:
+
+      call testMakeHeap
+      call testPopHeap
+      call testIsHeap
 
    end subroutine
 
@@ -438,6 +445,7 @@ contains
       ASSERT(l%Size() == 5)
       ASSERT(l%front == 3)
       ASSERT(l%back == 9)
+      ASSERT(ftlIsSorted(l))
 
       it = l%Begin()
       ASSERT(it%value == 3)
@@ -457,6 +465,7 @@ contains
       ASSERT(l%Size() == 5)
       ASSERT(l%front == 9)
       ASSERT(l%back == 3)
+      ASSERT(ftlIsSorted(l, Greater))
 
       it = l%Begin()
       ASSERT(it%value == 9)
@@ -474,6 +483,119 @@ contains
 #ifdef FTL_NO_FINALIZERS
       call l%Delete()
 #endif
+
+   end subroutine
+
+
+   subroutine testIsSorted
+      type(ftlVectorInt) :: v
+
+      call v%New()
+
+      ASSERT(ftlIsSorted(v))
+      ASSERT(ftlIsSorted(v,Greater))
+
+      call v%New([5,7,8,9,12,46,7,3])
+
+      ASSERT(.not.ftlIsSorted(v%Begin(),v%End()))
+      ASSERT(ftlIsSorted(v%Begin(),v%End()-2))
+      ASSERT(ftlIsSortedUntil(v) == v%End()-2)
+
+      call v%New([9,8,7,6,5,4,3,2,99,199])
+
+      ASSERT(.not.ftlIsSorted(v%Begin(),v%End(),Greater))
+      ASSERT(ftlIsSorted(v%Begin(),v%End()-2,Greater))
+      ASSERT(ftlIsSortedUntil(v,Greater) == v%End()-2)
+
+   end subroutine
+
+
+   subroutine testMakeHeap
+      type(ftlVectorInt) :: v
+      integer :: n, i
+
+      do n = 1, 100
+         call v%New([ (RandomInt(), i = 1, 10+mod(n,20)) ])
+         call ftlMakeHeap(v)
+         ASSERT(ftlIsHeap(v))
+      enddo
+
+      do n = 1, 100
+         call v%New([ (RandomInt(), i = 1, 10+mod(n,20)) ])
+         call ftlMakeHeap(v,Greater)
+         ASSERT(ftlIsHeap(v,Greater))
+      enddo
+
+   end subroutine
+
+
+   subroutine testPopHeap
+      type(ftlVectorInt) :: v
+      type(ftlVectorIntIterator) :: endOfHeap
+      integer :: i, root
+
+      call v%New([ (RandomInt(), i = 1, 100) ])
+      call ftlMakeHeap(v)
+      endOfHeap = v%End()
+      do while (endOfHeap /= v%Begin())
+         root = v%front
+         call ftlPopHeap(v%Begin(),endOfHeap)
+         call endOfHeap%Dec()
+         ASSERT(endOfHeap%value == root)
+         ASSERT(ftlIsHeap(v%Begin(),endOfHeap))
+      enddo
+      ASSERT(ftlIsSorted(v))
+
+      call v%New([ (RandomInt(), i = 1, 100) ])
+      call ftlMakeHeap(v,Greater)
+      endOfHeap = v%End()
+      do while (endOfHeap /= v%Begin())
+         root = v%front
+         call ftlPopHeap(v%Begin(),endOfHeap,Greater)
+         call endOfHeap%Dec()
+         ASSERT(endOfHeap%value == root)
+         ASSERT(ftlIsHeap(v%Begin(),endOfHeap,Greater))
+      enddo
+      ASSERT(ftlIsSorted(v,Greater))
+
+   end subroutine
+
+
+   subroutine testIsHeap
+      type(ftlVectorInt) :: v
+      type(ftlVectorIntIterator) :: it
+
+      call v%New()
+
+      ASSERT(ftlIsHeap(v))
+
+      call v%New([5])
+
+      ASSERT(ftlIsHeap(v))
+
+      call v%New([9,5,4,1,1,3,2,6])
+
+      ASSERT(.not.ftlIsHeap(v))
+
+      it = ftlIsHeapUntil(v)
+
+      ASSERT(it%value == 6)
+      ASSERT(it+1 == v%End())
+
+      call v%New([1,4,2,5,8,3,4])
+
+      ASSERT(ftlIsHeap(v,Greater))
+      ASSERT(ftlIsHeapUntil(v,Greater) == v%End())
+
+      call v%PushBack(1)
+      call v%PushBack(7)
+
+      ASSERT(.not.ftlIsHeap(v))
+
+      it = ftlIsHeapUntil(v,Greater)
+
+      ASSERT(it%value == 1)
+      ASSERT(it+2 == v%End())
 
    end subroutine
 
@@ -508,5 +630,13 @@ contains
       integer, intent(inout) :: n
       n = n**2
    end subroutine
+
+   ! helper methods:
+
+   integer function RandomInt() result(i)
+      real :: r
+      call random_number(r)
+      i = floor(1001*r)
+   end function
 
 end module
