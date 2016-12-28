@@ -187,6 +187,12 @@ module CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,AlgorithmsModule)
       module procedure ftlMakeHeapContainer
    end interface
 
+   public :: ftlPushHeap
+   interface ftlPushHeap
+      module procedure ftlPushHeapIterators
+      module procedure ftlPushHeapContainer
+   end interface
+
    public :: ftlPopHeap
    interface ftlPopHeap
       module procedure ftlPopHeapIterators
@@ -919,11 +925,13 @@ contains
    ! The element with the highest value is always pointed by first. The order of the other elements depends on the
    ! particular implementation, but it is consistent throughout all heap-related functions of this header.
    !
-   ! The elements are compared using operator< (for the first version), or comp (for the second): The element with the
+   ! The elements are compared using operator< (if available), or comp (if present): The element with the
    ! highest value is an element for which this would return false when compared to every other element in the range.
    !
    ! The standard container adaptor priority_queue calls make_heap, push_heap and pop_heap automatically to maintain heap
    ! properties for a container.
+   !
+   ! The elements are compared using operator< (if available, this would produce a max-heap), or comp (if present).
    !
    subroutine ftlMakeHeapIterators(first, last, comp)
       type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
@@ -958,6 +966,51 @@ contains
 
 
 
+   ! Given a heap in the range [first,last-1), this function extends the range considered a heap to [first,last) by placing
+   ! the value in (last-1) into its corresponding location within it.
+   !
+   ! A range can be organized into a heap by calling make_heap. After that, its heap properties are preserved if elements are
+   ! added and removed from it using push_heap and pop_heap, respectively.
+   !
+   ! The elements are compared using operator< (if available), or comp (if present).
+   !
+   subroutine ftlPushHeapIterators(first, last, comp)
+      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
+#ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
+      procedure(Comparator)                                    , optional   :: comp
+#else
+      procedure(Comparator)                                                 :: comp
+#endif
+
+      call HeapUpDown(first, last, last-1, comp)
+
+   end subroutine
+   !
+   subroutine ftlPushHeapContainer(container, comp)
+      type(CAT(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: container
+#ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
+      procedure(Comparator)                          , optional   :: comp
+#else
+      procedure(Comparator)                                       :: comp
+#endif
+
+      call ftlPushHeapIterators(container%Begin(), container%End(), comp)
+
+   end subroutine
+
+
+
+   ! Rearranges the elements in the heap range [first,last) in such a way that the part considered a heap is shortened by
+   ! one: The element with the highest value is moved to (last-1).
+   !
+   ! While the element with the highest value is moved from first to (last-1) (which now is out of the heap), the other
+   ! elements are reorganized in such a way that the range [first,last-1) preserves the properties of a heap.
+   !
+   ! A range can be organized into a heap by calling make_heap. After that, its heap properties are preserved if elements are
+   ! added and removed from it using push_heap and pop_heap, respectively.
+   !
+   ! The elements are compared using operator< (if available), or comp (if present).
+   !
    subroutine ftlPopHeapIterators(first, last, comp)
       type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
 #ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
@@ -1019,12 +1072,33 @@ contains
       enddo
 
    end subroutine
+   !
+   subroutine HeapUpDown(first, last, upIn, comp)
+      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last, upIn
+#ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
+      procedure(Comparator)                                    , optional   :: comp
+#else
+      procedure(Comparator)                                                 :: comp
+#endif
+
+      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: up, parent
+
+      up = UpIn
+      do while (up /= first)
+         parent = first + (up-first-1)/2
+         if (ftlIterCompare(up, parent, comp)) exit
+         call ftlIterSwap(up, parent)
+         up = parent
+      enddo
+      call HeapDown(first, last, up, comp)
+
+   end subroutine
 
 
 
    ! Returns true if the range [first,last) forms a heap, as if constructed with make_heap.
    !
-   ! The elements are compared using operator< (if available) for the first version, or comp (if present).
+   ! The elements are compared using operator< (if available), or comp (if present).
    !
    logical function ftlIsHeapIterators(first, last, comp) result(isHeap)
       type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
@@ -1059,7 +1133,7 @@ contains
    !
    ! If the entire range is a valid heap, the function returns last.
    !
-   ! The elements are compared using operator< (if available) for the first version, or comp (if present).
+   ! The elements are compared using operator< (if available), or comp (if present).
    !
    function ftlIsHeapUntilIterators(first, last, comp) result(heapUntil)
       type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last

@@ -57,6 +57,7 @@ contains
       ! Heap:
 
       call testMakeHeap
+      call testPushHeap
       call testPopHeap
       call testIsHeap
 
@@ -523,6 +524,30 @@ contains
       do n = 1, 100
          call v%New([ (RandomInt(), i = 1, 10+mod(n,20)) ])
          call ftlMakeHeap(v,Greater)
+         ASSERT(ftlIsHeap(v,Greater))
+      enddo
+
+   end subroutine
+
+
+   subroutine testPushHeap
+      type(ftlVectorInt) :: v
+      integer :: i
+
+      call v%New([ (RandomInt(), i = 1, 10) ])
+      call ftlMakeHeap(v)
+      ASSERT(ftlIsHeap(v))
+      do i = 1, 100
+         call v%PushBack(RandomInt())
+         call ftlPushHeap(v)
+         ASSERT(ftlIsHeap(v))
+      enddo
+
+      call ftlMakeHeap(v,Greater)
+      ASSERT(ftlIsHeap(v,Greater))
+      do i = 1, 100
+         call v%PushBack(RandomInt())
+         call ftlPushHeap(v,Greater)
          ASSERT(ftlIsHeap(v,Greater))
       enddo
 
