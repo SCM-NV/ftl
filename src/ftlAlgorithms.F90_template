@@ -845,24 +845,59 @@ contains
 
 
 
+   subroutine ftlSortIterators(first, last, comp)
+      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
+#ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
+      procedure(Comparator)                                    , optional   :: comp
+#else
+      procedure(Comparator)                                                 :: comp
+#endif
+
+#ifdef FTL_CONTAINER_PROVIDES_RANDOM_ACCESS_ITERATOR
+      if (last-first < 16) then
+         call SelectionSort(first, last, comp)
+      else
+         ! TODO: implement introsort
+         call HeapSort(first, last, comp)
+      endif
+#else /* ifdef FTL_CONTAINER_PROVIDES_BIDIRECTIONAL_ITERATOR || ifdef FTL_CONTAINER_PROVIDES_FORWARD_ITERATOR */
+      ! TODO: implement an O(N*log(N)) algorithm
+      call SelectionSort(first, last, comp)
+#endif
+   end subroutine
+   !
    subroutine ftlSortContainer(container, comp)
       type(CAT(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: container
 #ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
-      procedure(Comparator), optional :: comp
+      procedure(Comparator)                          , optional      :: comp
 #else
-      procedure(Comparator)           :: comp
+      procedure(Comparator)                                          :: comp
+#endif
+
+      call ftlSortIterators(container%Begin(), container%End(), comp)
+
+   end subroutine
+
+
+
+   ! Internally used sorting algorithms:
+   !
+   subroutine SelectionSort(first, last, comp)
+      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
+#ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
+      procedure(Comparator)                                    , optional   :: comp
+#else
+      procedure(Comparator)                                                 :: comp
 #endif
 
       type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: i, j, smallestIt
 
-      ! TODO: implement something faster than selection sort ;-) ...
-
-      j = container%Begin()
-      do while (j /= container%End())
+      j = first
+      do while (j /= last)
          smallestIt = j
          i = j
          call i%Inc()
-         do while (i /= container%End())
+         do while (i /= last)
             if (ftlIterCompare(i, smallestIt, comp)) smallestIt = i
             call i%Inc()
          enddo
@@ -871,6 +906,27 @@ contains
       enddo
 
    end subroutine
+   !
+#ifdef FTL_CONTAINER_PROVIDES_RANDOM_ACCESS_ITERATOR
+   subroutine HeapSort(first, last, comp)
+      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
+#ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
+      procedure(Comparator)                                    , optional   :: comp
+#else
+      procedure(Comparator)                                                 :: comp
+#endif
+
+      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: endOfHeap
+
+      call ftlMakeHeap(first, last, comp)
+      endOfHeap = last
+      do while (endOfHeap /= first)
+         call ftlPopHeapIterators(first, endOfHeap, comp)
+         call endOfHeap%Dec()
+      enddo
+
+   end subroutine
+#endif
 
 
 
@@ -1271,7 +1327,7 @@ contains
 
    end function
 
-#endif /*FTL_CONTAINER_PROVIDES_RANDOM_ACCESS_ITERATOR*/
+#endif /* ifdef FTL_CONTAINER_PROVIDES_RANDOM_ACCESS_ITERATOR */
 
 
 end module

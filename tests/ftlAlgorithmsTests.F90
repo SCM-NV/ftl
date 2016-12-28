@@ -466,6 +466,7 @@ contains
       ASSERT(v%front == 3)
       ASSERT(v%back == 9)
       ASSERT(all(v%data == [3,4,6,7,9]))
+      ASSERT(ftlIsSorted(v))
 
       call ftlSort(v, Greater)
 
@@ -473,6 +474,7 @@ contains
       ASSERT(v%front == 9)
       ASSERT(v%back == 3)
       ASSERT(all(v%data == [9,7,6,4,3]))
+      ASSERT(ftlIsSorted(v, Greater))
 
    end subroutine
 
