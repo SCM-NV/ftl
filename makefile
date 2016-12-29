@@ -11,7 +11,7 @@ ifeq ($(PLATFORM), gnu)
 	FLAGS    = -std=f2003 -ffree-line-length-none -Wall -Wextra -Wpedantic -Wno-target-lifetime -Wno-surprising -J$(BUILDDIR)
 else ifeq ($(PLATFORM), intel)
 	COMPILER = ifort
-	FLAGS    = -warn -module $(BUILDDIR)
+	FLAGS    = -warn -heap-arrays 1 -module $(BUILDDIR)
 else
   $(error unrecognized PLATFORM)
 endif
@@ -23,9 +23,9 @@ ifeq ($(PLATFORM)$(BUILD), gnudebug)
 else ifeq ($(PLATFORM)$(BUILD), inteldebug)
 	FLAGS += -g -O0 -check all -debug all -traceback
 else ifeq ($(PLATFORM)$(BUILD), gnurelease)
-	FLAGS += -O3 -march=native -flto
+	FLAGS += -Ofast -fno-stack-arrays -march=native -flto
 else ifeq ($(PLATFORM)$(BUILD), intelrelease)
-	FLAGS += -O2
+	FLAGS += -fast -xHost
 else
   $(error unrecognized BUILD)
 endif
