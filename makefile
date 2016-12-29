@@ -13,7 +13,7 @@ ifeq ($(PLATFORM), gnu)
 	CXXFLAGS = -std=c++11 -Ofast -march=native
 else ifeq ($(PLATFORM), intel)
 	COMPILER = ifort
-	FLAGS    = -stand f03 -warn -heap-arrays 1 -module $(BUILDDIR)
+	FLAGS = -stand f03 -warn -module $(BUILDDIR)
 	CXXCOMPILER = icpc
 	CXXFLAGS = -std=c++11 -fast -xHost
 else
@@ -27,7 +27,7 @@ ifeq ($(PLATFORM)$(BUILD), gnudebug)
 else ifeq ($(PLATFORM)$(BUILD), inteldebug)
 	FLAGS += -g -O0 -check all -debug all -traceback
 else ifeq ($(PLATFORM)$(BUILD), gnurelease)
-	FLAGS += -Ofast -fno-stack-arrays -march=native -flto
+	FLAGS += -Ofast -march=native -flto
 else ifeq ($(PLATFORM)$(BUILD), intelrelease)
 	FLAGS += -fast -xHost
 else
@@ -38,6 +38,7 @@ endif
 ifeq ($(FINALIZERS), skip)
 	FLAGS += -DFTL_NO_FINALIZERS
 endif
+
 
 test: $(BUILDDIR)/tests
 	./$(BUILDDIR)/tests

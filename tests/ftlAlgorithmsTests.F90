@@ -48,6 +48,8 @@ contains
 
       call testIterSwap
 
+      call testGenerate
+
       ! Partitions:
 
       call testIsPartitioned
@@ -268,6 +270,19 @@ contains
 
       ASSERT(all(v%data == [1,2,3,4,5,6]))
       ASSERT(v%front == 1)
+
+   end subroutine
+
+
+   subroutine testGenerate
+      type(ftlVectorInt) :: v
+
+      call v%New(5)
+      call ftlGenerate(v, FortyTwo)
+
+      ASSERT(v%front == 42)
+      ASSERT(v%back == 42)
+      ASSERT(all(v%data == [42,42,42,42,42]))
 
    end subroutine
 

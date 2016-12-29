@@ -138,6 +138,12 @@ module CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,AlgorithmsModule)
       module procedure ftlIterSwapPrivate
    end interface
 
+   public :: ftlGenerate
+   interface ftlGenerate
+      module procedure ftlGenerateIterators
+      module procedure ftlGenerateContainer
+   end interface
+
 
    ! =============> Partitions:
 
@@ -243,6 +249,9 @@ module CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,AlgorithmsModule)
       subroutine UnarySubroutine(a)
          FTL_TEMPLATE_TYPE, intent(inout) :: a
       end subroutine
+
+      FTL_TEMPLATE_TYPE function Generator()
+      end function
 
    end interface
 
@@ -740,7 +749,9 @@ contains
 
 
 
-   subroutine ftlIterSwapPrivate(it1,it2)
+   ! Swaps the elements pointed to by a and b.
+   !
+   subroutine ftlIterSwapPrivate(it1, it2)
       type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: it1, it2
 
       FTL_TEMPLATE_TYPE :: tmp
@@ -748,6 +759,32 @@ contains
       tmp = it1%value
       it1%value = it2%value
       it2%value = tmp
+
+   end subroutine
+
+
+
+   ! Assigns the value returned by successive calls to gen to the elements in the range [first,last).
+   !
+   subroutine ftlGenerateIterators(first, last, gen)
+      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
+      procedure(Generator)                                                  :: gen
+
+      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: it
+
+      it = first
+      do while (it /= last)
+         it%value = gen()
+         call it%Inc()
+      enddo
+
+   end subroutine
+   !
+   subroutine ftlGenerateContainer(container, gen)
+      type(CAT(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: container
+      procedure(Generator)                                        :: gen
+
+      call ftlGenerateIterators(container%Begin(), container%End(), gen)
 
    end subroutine
 
@@ -883,30 +920,30 @@ contains
 
    ! Internally used sorting algorithms:
    !
-   subroutine SelectionSort(first, last, comp)
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
-#ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
-      procedure(Comparator)                                    , optional   :: comp
-#else
-      procedure(Comparator)                                                 :: comp
-#endif
-
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: i, j, smallestIt
-
-      j = first
-      do while (j /= last)
-         smallestIt = j
-         i = j
-         call i%Inc()
-         do while (i /= last)
-            if (ftlIterCompare(i, smallestIt, comp)) smallestIt = i
-            call i%Inc()
-         enddo
-         call ftlIterSwap(j, smallestIt)
-         call j%Inc()
-      enddo
-
-   end subroutine
+!   subroutine SelectionSort(first, last, comp)
+!      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
+!#ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
+!      procedure(Comparator)                                    , optional   :: comp
+!#else
+!      procedure(Comparator)                                                 :: comp
+!#endif
+!
+!      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: i, j, smallestIt
+!
+!      j = first
+!      do while (j /= last)
+!         smallestIt = j
+!         i = j
+!         call i%Inc()
+!         do while (i /= last)
+!            if (ftlIterCompare(i, smallestIt, comp)) smallestIt = i
+!            call i%Inc()
+!         enddo
+!         call ftlIterSwap(j, smallestIt)
+!         call j%Inc()
+!      enddo
+!
+!   end subroutine
    !
    subroutine InsertionSort(first, last, comp)
       type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last

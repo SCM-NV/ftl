@@ -7,10 +7,10 @@ subroutine sortVectorInt(n)
    integer, intent(in) :: n
 
    type(ftlVectorInt) :: v
-   integer :: i
    real :: start, finish
 
-   call v%New([ (RandomInt(), i=1,n) ])
+   call v%New(n)
+   call ftlGenerate(v%Begin(), v%End(), RandomInt)
 
    call cpu_time(start)
    call ftlSort(v)

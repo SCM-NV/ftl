@@ -68,4 +68,8 @@ contains
       i = floor(1e6*r)
    end function
 
+   integer function FortyTwo()
+      FortyTwo = 42
+   end function
+
 end module
