@@ -457,6 +457,7 @@ contains
 
    subroutine testSortVector
       type(ftlVectorInt) :: v
+      integer :: i, n
 
       call v%New([9,6,3,4,7])
 
@@ -475,6 +476,22 @@ contains
       ASSERT(v%back == 3)
       ASSERT(all(v%data == [9,7,6,4,3]))
       ASSERT(ftlIsSorted(v, Greater))
+
+      do n = 1, 100
+         call v%New([ (RandomInt(), i = 1, 100+mod(31*n,900)) ])
+         call ftlSort(v)
+         ASSERT(ftlIsSorted(v))
+         call ftlSort(v,Greater)
+         ASSERT(ftlIsSorted(v,Greater))
+      enddo
+
+      do n = 1, 100
+         call v%New([ (RandomInt(), i = 1, 100+mod(29*n,900)) ])
+         call ftlSort(v,Greater)
+         ASSERT(ftlIsSorted(v,Greater))
+         call ftlSort(v)
+         ASSERT(ftlIsSorted(v))
+      enddo
 
    end subroutine
 

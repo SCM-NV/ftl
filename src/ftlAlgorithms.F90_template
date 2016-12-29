@@ -857,8 +857,7 @@ contains
       if (last-first < 16) then
          call SelectionSort(first, last, comp)
       else
-         ! TODO: implement introsort
-         call HeapSort(first, last, comp)
+        call IntroSort(first, last, comp, 2*floor(log(float(last-first))/log(2.0)))
       endif
 #else /* ifdef FTL_CONTAINER_PROVIDES_BIDIRECTIONAL_ITERATOR || ifdef FTL_CONTAINER_PROVIDES_FORWARD_ITERATOR */
       ! TODO: implement an O(N*log(N)) algorithm
@@ -926,7 +925,65 @@ contains
       enddo
 
    end subroutine
+   !
+   recursive subroutine IntroSort(first, last, comp, depthLimit)
+      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
+#ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
+      procedure(Comparator)                                    , optional   :: comp
+#else
+      procedure(Comparator)                                                 :: comp
 #endif
+      integer                                                  , intent(in) :: depthLimit
+
+      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: middle, pivot, left, right
+
+      if (first == last) then
+         return
+      else if (last - first <= 8) then
+         call SelectionSort(first, last, comp)
+      else if (depthLimit == 0) then
+         call HeapSort(first, last, comp)
+      else
+         pivot = last - 1
+
+         ! median of 3 pivoting
+         middle = first + (last-first)/2
+         if (ftlIterCompare(middle,first,comp)) then
+            call ftlIterSwap(middle,first)
+         endif
+         if (ftlIterCompare(middle,pivot,comp)) then
+            call ftlIterSwap(middle,pivot)
+         else if (ftlIterCompare(pivot,first,comp)) then
+            call ftlIterSwap(pivot,first)
+         endif
+         ! first = smallest, middle = largest, pivot = last-1 = median
+
+         ! partitioning:
+         left = first
+         right = pivot-1
+         do while (left /= right)
+            if (ftlIterCompare(left,pivot,comp)) then
+               call left%Inc()
+            else
+               do while (left /= right)
+                  if (.not.ftlIterCompare(right,pivot,comp)) then
+                     call right%Dec()
+                  else
+                     exit
+                  endif
+               enddo
+               call ftlIterSwap(left,right)
+            endif
+         enddo
+
+         call ftlIterSwap(pivot, right) ! swap pivot to its correct place at right
+         call IntroSort(first, right, comp, depthLimit-1) ! introsort left subrange
+         call IntroSort(right+1, last, comp, depthLimit-1) ! ... and right subrange
+
+      endif
+
+   end subroutine
+#endif /* ifdef FTL_CONTAINER_PROVIDES_RANDOM_ACCESS_ITERATOR */
 
 
 
