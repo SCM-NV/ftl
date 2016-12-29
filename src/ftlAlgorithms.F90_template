@@ -935,7 +935,7 @@ contains
 #endif
       integer                                                  , intent(in) :: depthLimit
 
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: middle, pivot, left, right
+      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: pivot, it1, it2
 
       if (first == last) then
          return
@@ -946,6 +946,7 @@ contains
       else
          pivot = last - 1
 
+         associate (middle => it1)
          ! median of 3 pivoting
          middle = first + (last-first)/2
          if (ftlIterCompare(middle,first,comp)) then
@@ -957,6 +958,9 @@ contains
             call ftlIterSwap(pivot,first)
          endif
          ! first = smallest, middle = largest, pivot = last-1 = median
+         end associate
+
+         associate (left => it1, right => it2)
 
          ! partitioning:
          left = first
@@ -975,10 +979,13 @@ contains
                call ftlIterSwap(left,right)
             endif
          enddo
-
          call ftlIterSwap(pivot, right) ! swap pivot to its correct place at right
+
+         ! recursion:
          call IntroSort(first, right, comp, depthLimit-1) ! introsort left subrange
          call IntroSort(right+1, last, comp, depthLimit-1) ! ... and right subrange
+
+         end associate
 
       endif
 
