@@ -21,11 +21,11 @@ FLAGS += -DFTL_NO_FINALIZERS
 endif
 
 
-memcheck: $(BUILDDIR)/tests
-	valgrind --leak-check=yes ./$(BUILDDIR)/tests
-
 test: $(BUILDDIR)/tests
 	./$(BUILDDIR)/tests
+
+memcheck: $(BUILDDIR)/tests
+	valgrind --leak-check=yes ./$(BUILDDIR)/tests
 
 $(BUILDDIR):
 	mkdir $(BUILDDIR)
