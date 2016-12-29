@@ -853,15 +853,17 @@ contains
       procedure(Comparator)                                                 :: comp
 #endif
 
+      if (first == last) return
+
 #ifdef FTL_CONTAINER_PROVIDES_RANDOM_ACCESS_ITERATOR
       if (last-first < 16) then
-         call SelectionSort(first, last, comp)
+         call InsertionSort(first, last, comp)
       else
         call IntroSort(first, last, comp, 2*floor(log(float(last-first))/log(2.0)))
       endif
 #else /* ifdef FTL_CONTAINER_PROVIDES_BIDIRECTIONAL_ITERATOR || ifdef FTL_CONTAINER_PROVIDES_FORWARD_ITERATOR */
       ! TODO: implement an O(N*log(N)) algorithm
-      call SelectionSort(first, last, comp)
+      call InsertionSort(first, last, comp)
 #endif
    end subroutine
    !
@@ -906,6 +908,51 @@ contains
 
    end subroutine
    !
+   subroutine InsertionSort(first, last, comp)
+      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
+#ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
+      procedure(Comparator)                                    , optional   :: comp
+#else
+      procedure(Comparator)                                                 :: comp
+#endif
+
+      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: sortedUntil, insertAt, insertAtMinus1
+      FTL_TEMPLATE_TYPE :: value
+      logical :: shift
+
+      if (first == last) return
+
+      sortedUntil = ftlIsSortedUntil(first, last, comp)
+      do while (sortedUntil /= last)
+         value = sortedUntil%value
+         insertAt = sortedUntil
+         call insertAt%Dec()
+         sortedUntil%value = insertAt%value
+         do while (insertAt /= first) ! TODO: replace with ftlRotate ...
+            insertAtMinus1 = insertAt
+            call insertAtMinus1%Dec()
+#ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
+            if (present(comp)) then
+               shift = .not.comp(insertAtMinus1%value, value)
+            else
+               shift = .not.(insertAtMinus1%value < value)
+            endif
+#else
+            shift = .not.(insertAtMinus1%value < value)
+#endif
+            if (shift) then
+               insertAt%value = insertAtMinus1%value
+               call insertAt%Dec()
+            else
+               exit
+            endif
+         enddo
+         insertAt%value = value
+         sortedUntil = ftlIsSortedUntil(sortedUntil, last, comp)
+      enddo
+
+   end subroutine
+   !
 #ifdef FTL_CONTAINER_PROVIDES_RANDOM_ACCESS_ITERATOR
    subroutine HeapSort(first, last, comp)
       type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
@@ -917,12 +964,15 @@ contains
 
       type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: endOfHeap
 
+      if (first == last) return
+
       call ftlMakeHeap(first, last, comp)
       endOfHeap = last
-      do while (endOfHeap /= first)
+      do while (endOfHeap - first > 16)
          call ftlPopHeapIterators(first, endOfHeap, comp)
          call endOfHeap%Dec()
       enddo
+      call InsertionSort(first, last, comp)
 
    end subroutine
    !
@@ -939,8 +989,8 @@ contains
 
       if (first == last) then
          return
-      else if (last - first <= 8) then
-         call SelectionSort(first, last, comp)
+      else if (last - first <= 16) then
+         call InsertionSort(first, last, comp)
       else if (depthLimit == 0) then
          call HeapSort(first, last, comp)
       else
