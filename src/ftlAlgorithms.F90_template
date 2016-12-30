@@ -170,6 +170,7 @@ module CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,AlgorithmsModule)
 
    public :: ftlSort
    interface ftlSort
+      module procedure ftlSortIterators
       module procedure ftlSortContainer
    end interface
 
@@ -919,7 +920,7 @@ contains
       if (last-first < 128) then
          call InsertionSort(first, last, comp)
       else
-        call IntroSort(first, last, comp, 2*floor(log(float(last-first))/log(2.0)))
+         call IntroSort(first, last, comp, 2*floor(log(float(last-first))/log(2.0)))
       endif
 #else /* ifdef FTL_CONTAINER_PROVIDES_BIDIRECTIONAL_ITERATOR || ifdef FTL_CONTAINER_PROVIDES_FORWARD_ITERATOR */
       ! TODO: implement an O(N*log(N)) algorithm
@@ -943,30 +944,6 @@ contains
 
    ! Internally used sorting algorithms:
    !
-!   subroutine SelectionSort(first, last, comp)
-!      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
-!#ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
-!      procedure(Comparator)                                    , optional   :: comp
-!#else
-!      procedure(Comparator)                                                 :: comp
-!#endif
-!
-!      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: i, j, smallestIt
-!
-!      j = first
-!      do while (j /= last)
-!         smallestIt = j
-!         i = j
-!         call i%Inc()
-!         do while (i /= last)
-!            if (ftlIterCompare(i, smallestIt, comp)) smallestIt = i
-!            call i%Inc()
-!         enddo
-!         call ftlIterSwap(j, smallestIt)
-!         call j%Inc()
-!      enddo
-!
-!   end subroutine
    !
    subroutine InsertionSort(first, last, comp)
       type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
@@ -988,7 +965,7 @@ contains
          insertAt = sortedUntil
          call insertAt%Dec()
          sortedUntil%value = insertAt%value
-         do while (insertAt /= first) ! TODO: replace with ftlRotate ...
+         do while (insertAt /= first)
             insertAtMinus1 = insertAt
             call insertAtMinus1%Dec()
 #ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
