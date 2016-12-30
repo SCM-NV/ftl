@@ -5,6 +5,9 @@ module ftlAlgorithmsTestsModule
    use ftlTestToolsModule
    use ftlVectorIntModule
    use ftlVectorIntAlgorithmsModule
+   use Point2DModule
+   use ftlVectorPoint2DModule
+   use ftlVectorPoint2DAlgorithmsModule
    use ftlListIntModule
    use ftlListIntAlgorithmsModule
 
@@ -35,6 +38,7 @@ contains
 
       call testCount
       call testCountIf
+      call testCountIfDerivedType
 
       call testMismatch
       call testEqual
@@ -260,6 +264,29 @@ contains
 #endif
 
    end subroutine
+
+
+   subroutine testCountIfDerivedType
+      type(ftlVectorPoint2D) :: v
+
+      call v%New()
+
+      call v%PushBack(Point2D( 2.0, 0.5))
+      call v%PushBack(Point2D(-1.3, 3.5))
+      call v%PushBack(Point2D( 2.0,-0.9))
+      call v%PushBack(Point2D( 1.3, 2.5))
+      call v%PushBack(Point2D(-1.0,-0.5))
+      call v%PushBack(Point2D( 4.0,-5.3))
+      call v%PushBack(Point2D(-1.0, 0.5))
+      call v%PushBack(Point2D( 1.0,-0.9))
+
+      ASSERT(ftlCountIf(v,IsInFirstQuadrant) == 2)
+
+   end subroutine
+   pure logical function IsInFirstQuadrant(p)
+      type(Point2D), intent(in) :: p
+      IsInFirstQuadrant = (p%x > 0.0 .and. p%y > 0.0)
+   end function
 
 
    subroutine testIterSwap

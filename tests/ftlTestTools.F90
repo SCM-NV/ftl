@@ -68,6 +68,11 @@ contains
       i = floor(1e6*r)
    end function
 
+   real function RandomReal() result(r)
+      call random_number(r)
+      r = 20.0*r-10.0
+   end function
+
    integer function FortyTwo()
       FortyTwo = 42
    end function

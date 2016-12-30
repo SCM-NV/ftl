@@ -1,0 +1,7 @@
+#define FTL_TEMPLATE_TYPE Point2D
+#define FTL_TEMPLATE_TYPE_IS_DERIVED
+#define FTL_TEMPLATE_TYPE_MODULE Point2DModule
+#define FTL_TEMPLATE_TYPE_NAME Point2D
+#include "ftlVector.F90_template"
+#define FTL_INSTANTIATE_TEMPLATE
+#include "ftlAlgorithms.F90_template"
