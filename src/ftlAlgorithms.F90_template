@@ -905,37 +905,64 @@ contains
 
 
 
-   subroutine ftlSortIterators(first, last, comp)
+   subroutine ftlSortIterators(first, last, comp, simpleSortThreshold, useSelectionSort)
       type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
 #ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
       procedure(Comparator)                                    , optional   :: comp
 #else
       procedure(Comparator)                                                 :: comp
 #endif
+      integer                                        , optional, intent(in) :: simpleSortThreshold
+      logical                                        , optional, intent(in) :: useSelectionSort
+
+      integer :: thresh
+      logical :: useSelSort
 
       if (first == last) return
 
-#ifdef FTL_CONTAINER_PROVIDES_RANDOM_ACCESS_ITERATOR
-      if (last-first < 128) then
-         call InsertionSort(first, last, comp)
+      if (present(simpleSortThreshold)) then
+         thresh = max(4, simpleSortThreshold)
       else
-        call IntroSort(first, last, comp, 2*floor(log(float(last-first))/log(2.0)))
+         thresh = 128
+      endif
+
+      if (present(useSelectionSort)) then
+         useSelSort = useSelectionSort
+      else
+         useSelSort = .false.
+      endif
+
+#ifdef FTL_CONTAINER_PROVIDES_RANDOM_ACCESS_ITERATOR
+      if (last-first < thresh) then
+         if (useSelSort) then
+            call SelectionSort(first, last, comp)
+         else
+            call InsertionSort(first, last, comp)
+         endif
+      else
+         call IntroSort(first, last, comp, 2*floor(log(float(last-first))/log(2.0)), thresh, useSelSort)
       endif
 #else /* ifdef FTL_CONTAINER_PROVIDES_BIDIRECTIONAL_ITERATOR || ifdef FTL_CONTAINER_PROVIDES_FORWARD_ITERATOR */
       ! TODO: implement an O(N*log(N)) algorithm
-      call InsertionSort(first, last, comp)
+      if (useSelSort) then
+         call SelectionSort(first, last, comp)
+      else
+         call InsertionSort(first, last, comp)
+      endif
 #endif
    end subroutine
    !
-   subroutine ftlSortContainer(container, comp)
+   subroutine ftlSortContainer(container, comp, simpleSortThreshold, useSelectionSort)
       type(CAT(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: container
 #ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
       procedure(Comparator)                          , optional      :: comp
 #else
       procedure(Comparator)                                          :: comp
 #endif
+      integer                                 , optional, intent(in) :: simpleSortThreshold
+      logical                                 , optional, intent(in) :: useSelectionSort
 
-      call ftlSortIterators(container%Begin(), container%End(), comp)
+      call ftlSortIterators(container%Begin(), container%End(), comp, simpleSortThreshold, useSelectionSort)
 
    end subroutine
 
@@ -943,30 +970,30 @@ contains
 
    ! Internally used sorting algorithms:
    !
-!   subroutine SelectionSort(first, last, comp)
-!      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
-!#ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
-!      procedure(Comparator)                                    , optional   :: comp
-!#else
-!      procedure(Comparator)                                                 :: comp
-!#endif
-!
-!      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: i, j, smallestIt
-!
-!      j = first
-!      do while (j /= last)
-!         smallestIt = j
-!         i = j
-!         call i%Inc()
-!         do while (i /= last)
-!            if (ftlIterCompare(i, smallestIt, comp)) smallestIt = i
-!            call i%Inc()
-!         enddo
-!         call ftlIterSwap(j, smallestIt)
-!         call j%Inc()
-!      enddo
-!
-!   end subroutine
+   subroutine SelectionSort(first, last, comp)
+      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
+#ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
+      procedure(Comparator)                                    , optional   :: comp
+#else
+      procedure(Comparator)                                                 :: comp
+#endif
+
+      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: i, j, smallestIt
+
+      j = first
+      do while (j /= last)
+         smallestIt = j
+         i = j
+         call i%Inc()
+         do while (i /= last)
+            if (ftlIterCompare(i, smallestIt, comp)) smallestIt = i
+            call i%Inc()
+         enddo
+         call ftlIterSwap(j, smallestIt)
+         call j%Inc()
+      enddo
+
+   end subroutine
    !
    subroutine InsertionSort(first, last, comp)
       type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
@@ -1014,13 +1041,15 @@ contains
    end subroutine
    !
 #ifdef FTL_CONTAINER_PROVIDES_RANDOM_ACCESS_ITERATOR
-   subroutine HeapSort(first, last, comp)
+   subroutine HeapSort(first, last, comp, thresh, useSelSort)
       type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
 #ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
       procedure(Comparator)                                    , optional   :: comp
 #else
       procedure(Comparator)                                                 :: comp
 #endif
+      integer                                                  , intent(in) :: thresh
+      logical                                                  , intent(in) :: useSelSort
 
       type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: endOfHeap
 
@@ -1028,15 +1057,19 @@ contains
 
       call ftlMakeHeap(first, last, comp)
       endOfHeap = last
-      do while (endOfHeap - first > 128)
+      do while (endOfHeap - first > thresh)
          call ftlPopHeapIterators(first, endOfHeap, comp)
          call endOfHeap%Dec()
       enddo
-      call InsertionSort(first, last, comp)
+      if (useSelSort) then
+         call SelectionSort(first, last, comp)
+      else
+         call InsertionSort(first, last, comp)
+      endif
 
    end subroutine
    !
-   recursive subroutine IntroSort(first, last, comp, depthLimit)
+   recursive subroutine IntroSort(first, last, comp, depthLimit, thresh, useSelSort)
       type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
 #ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
       procedure(Comparator)                                    , optional   :: comp
@@ -1044,15 +1077,21 @@ contains
       procedure(Comparator)                                                 :: comp
 #endif
       integer                                                  , intent(in) :: depthLimit
+      integer                                                  , intent(in) :: thresh
+      logical                                                  , intent(in) :: useSelSort
 
       type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: pivot, it1, it2
 
       if (first == last) then
          return
       else if (last - first <= 128) then
-         call InsertionSort(first, last, comp)
+         if (useSelSort) then
+            call SelectionSort(first, last, comp)
+         else
+            call InsertionSort(first, last, comp)
+         endif
       else if (depthLimit == 0) then
-         call HeapSort(first, last, comp)
+         call HeapSort(first, last, comp, thresh, useSelSort)
       else
          pivot = last - 1
 
@@ -1092,8 +1131,8 @@ contains
          call ftlIterSwap(pivot, right) ! swap pivot to its correct place at right
 
          ! recursion:
-         call IntroSort(first, right, comp, depthLimit-1) ! introsort left subrange
-         call IntroSort(right+1, last, comp, depthLimit-1) ! ... and right subrange
+         call IntroSort(first, right, comp, depthLimit-1, thresh, useSelSort) ! introsort left subrange
+         call IntroSort(right+1, last, comp, depthLimit-1, thresh, useSelSort) ! ... and right subrange
 
          end associate
 
