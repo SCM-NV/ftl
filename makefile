@@ -46,9 +46,10 @@ test: $(BUILDDIR)/tests
 memcheck: $(BUILDDIR)/tests
 	valgrind --leak-check=yes ./$(BUILDDIR)/tests
 
-perftest: $(BUILDDIR)/perftest_sortVectorInt $(BUILDDIR)/perftest_sortVectorInt_ref
+perftest: $(BUILDDIR)/perftest_sortVectorInt $(BUILDDIR)/perftest_sortVectorInt_ref $(BUILDDIR)/perftest_sortVectorBigType
 	./$(BUILDDIR)/perftest_sortVectorInt
 	./$(BUILDDIR)/perftest_sortVectorInt_ref
+	./$(BUILDDIR)/perftest_sortVectorBigType
 
 $(BUILDDIR):
 	mkdir $(BUILDDIR)
@@ -81,12 +82,24 @@ $(BUILDDIR)/ftlVectorIntAlgorithms.o: instantiations/ftlVectorIntAlgorithms.F90 
 $(BUILDDIR)/ftlListIntAlgorithms.o: instantiations/ftlListIntAlgorithms.F90 src/ftlAlgorithms.F90_template $(BUILDDIR)/ftlListInt.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
 
+$(BUILDDIR)/BigType.o: instantiations/derived_types/BigType.F90 $(BUILDDIR)/BigType.o | $(BUILDDIR)
+	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
+
+$(BUILDDIR)/ftlVectorBigType.o: instantiations/ftlVectorBigType.F90 src/ftlVector.F90_template $(BUILDDIR)/BigType.o | $(BUILDDIR)
+	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
+
+$(BUILDDIR)/ftlVectorBigTypeAlgorithms.o: instantiations/ftlVectorBigTypeAlgorithms.F90 src/ftlAlgorithms.F90_template $(BUILDDIR)/ftlVectorBigType.o | $(BUILDDIR)
+	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
+
 
 $(BUILDDIR)/perftest_sortVectorInt: perftests/sortVectorInt.F90 $(BUILDDIR)/ftlTestTools.o $(BUILDDIR)/ftlVectorIntAlgorithms.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) $< $(BUILDDIR)/*.o -o $@
 
 $(BUILDDIR)/perftest_sortVectorInt_ref: perftests/sortVectorInt.cpp | $(BUILDDIR)
 	$(CXXCOMPILER) $(CXXFLAGS) $< -o $@
+
+$(BUILDDIR)/perftest_sortVectorBigType: perftests/sortVectorBigType.F90 $(BUILDDIR)/ftlTestTools.o $(BUILDDIR)/ftlVectorBigTypeAlgorithms.o | $(BUILDDIR)
+	$(COMPILER) $(FLAGS) $(INCLUDES) $< $(BUILDDIR)/*.o -o $@
 
 
 clean:

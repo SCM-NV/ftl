@@ -37,6 +37,12 @@
 
 #include "ftlMacros.inc"
 
+#ifdef FTL_TEMPLATE_TYPE_IS_DERIVED
+#define FTL_TEMPLATE_TYPE_WRAP type(FTL_TEMPLATE_TYPE)
+#else
+#define FTL_TEMPLATE_TYPE_WRAP FTL_TEMPLATE_TYPE
+#endif
+
 
 module CAT3(ftlVector,FTL_TEMPLATE_TYPE_NAME,Module)
 
@@ -52,11 +58,11 @@ module CAT3(ftlVector,FTL_TEMPLATE_TYPE_NAME,Module)
    type, public :: CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME)
       private
 
-      integer                                :: psize = 0
-      FTL_TEMPLATE_TYPE, allocatable         :: storage(:)
-      FTL_TEMPLATE_TYPE, pointer    , public :: data(:) => null()
-      FTL_TEMPLATE_TYPE, pointer    , public :: front => null()
-      FTL_TEMPLATE_TYPE, pointer    , public :: back => null()
+      integer                                     :: psize = 0
+      FTL_TEMPLATE_TYPE_WRAP, allocatable         :: storage(:)
+      FTL_TEMPLATE_TYPE_WRAP, pointer    , public :: data(:) => null()
+      FTL_TEMPLATE_TYPE_WRAP, pointer    , public :: front => null()
+      FTL_TEMPLATE_TYPE_WRAP, pointer    , public :: back => null()
 
    contains
       private
@@ -140,7 +146,7 @@ module CAT3(ftlVector,FTL_TEMPLATE_TYPE_NAME,Module)
 
       class(CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME)), pointer         :: vector => null()
       integer                                                       :: index = 0
-      FTL_TEMPLATE_TYPE                           , pointer, public :: value => null()
+      FTL_TEMPLATE_TYPE_WRAP                      , pointer, public :: value => null()
 
    contains
       private
@@ -230,7 +236,7 @@ contains
    subroutine NewFill(self, n, val)
       class(CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME)), intent(out)          :: self
       integer                                     , intent(in)           :: n
-      FTL_TEMPLATE_TYPE                           , intent(in), optional :: val
+      FTL_TEMPLATE_TYPE_WRAP                      , intent(in), optional :: val
 
       ! Constructs a container with n elements. Each element is a copy of val (if present).
 
@@ -243,7 +249,7 @@ contains
    !
    subroutine NewFromArray(self, array)
       class(CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME)), intent(out) :: self
-      FTL_TEMPLATE_TYPE                           , intent(in)  :: array(:)
+      FTL_TEMPLATE_TYPE_WRAP                      , intent(in)  :: array(:)
 
       ! Constructs a container with a copy of each of the elements in array, in the same order.
 
@@ -269,7 +275,7 @@ contains
    !
    subroutine AssignArray(self, array)
       class(CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
-      FTL_TEMPLATE_TYPE                           , intent(in)    :: array(:)
+      FTL_TEMPLATE_TYPE_WRAP                      , intent(in)    :: array(:)
 
       call self%Reserve(size(array))
       self%storage(1:size(array)) = array
@@ -367,7 +373,7 @@ contains
    subroutine Resize(self, n, val)
       class(CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME)), intent(inout)        :: self
       integer                                     , intent(in)           :: n
-      FTL_TEMPLATE_TYPE                           , intent(in), optional :: val
+      FTL_TEMPLATE_TYPE_WRAP                      , intent(in), optional :: val
 
       if (n == self%psize) return
 
@@ -463,7 +469,7 @@ contains
    !
    subroutine PushBack(self, val)
       class(CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
-      FTL_TEMPLATE_TYPE                           , intent(in)    :: val
+      FTL_TEMPLATE_TYPE_WRAP                      , intent(in)    :: val
 
       if (self%psize + 1 > self%Capacity()) call self%IncreaseCapacity()
       self%psize = self%psize + 1
@@ -478,7 +484,7 @@ contains
    !
    ! This destroys the removed element.
    !
-   FTL_TEMPLATE_TYPE function PopBack(self)
+   FTL_TEMPLATE_TYPE_WRAP function PopBack(self)
       class(CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
 
       PopBack = self%storage(self%psize)
@@ -503,7 +509,7 @@ contains
    subroutine InsertSingleAtIndex(self, position, val)
       class(CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
       integer                                     , intent(in)    :: position
-      FTL_TEMPLATE_TYPE                           , intent(in)    :: val
+      FTL_TEMPLATE_TYPE_WRAP                      , intent(in)    :: val
 
       call self%InsertArrayAtIndex(position, [val])
 
@@ -512,7 +518,7 @@ contains
    subroutine InsertSingle(self, position, val)
       class(CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME))         , intent(inout) :: self
       type(CAT3(ftlVector,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)    :: position
-      FTL_TEMPLATE_TYPE                                    , intent(in)    :: val
+      FTL_TEMPLATE_TYPE_WRAP                               , intent(in)    :: val
 
       call self%InsertArrayAtIndex(position%index, [val])
 
@@ -522,7 +528,7 @@ contains
       class(CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
       integer                                     , intent(in)    :: position
       integer                                     , intent(in)    :: n
-      FTL_TEMPLATE_TYPE                           , intent(in)    :: val
+      FTL_TEMPLATE_TYPE_WRAP                      , intent(in)    :: val
 
       integer :: i
 
@@ -534,7 +540,7 @@ contains
       class(CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME))         , intent(inout) :: self
       type(CAT3(ftlVector,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)    :: position
       integer                                              , intent(in)    :: n
-      FTL_TEMPLATE_TYPE                                    , intent(in)    :: val
+      FTL_TEMPLATE_TYPE_WRAP                               , intent(in)    :: val
 
       integer :: i
 
@@ -545,7 +551,7 @@ contains
    subroutine InsertArrayAtIndex(self, position, array)
       class(CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
       integer                                     , intent(in)    :: position
-      FTL_TEMPLATE_TYPE                           , intent(in)    :: array(:)
+      FTL_TEMPLATE_TYPE_WRAP                      , intent(in)    :: array(:)
 
       integer :: i
 
@@ -571,7 +577,7 @@ contains
    subroutine InsertArray(self, position, array)
       class(CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME))         , intent(inout) :: self
       type(CAT3(ftlVector,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)    :: position
-      FTL_TEMPLATE_TYPE                                    , intent(in)    :: array(:)
+      FTL_TEMPLATE_TYPE_WRAP                               , intent(in)    :: array(:)
 
       call self%InsertArrayAtIndex(position%index, array)
 
@@ -693,7 +699,7 @@ contains
       class(CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
       integer                                     , intent(in)    :: n
 
-      FTL_TEMPLATE_TYPE, allocatable :: newstorage(:)
+      FTL_TEMPLATE_TYPE_WRAP, allocatable :: newstorage(:)
       integer :: numretain
 
       if (n == self%Capacity()) return

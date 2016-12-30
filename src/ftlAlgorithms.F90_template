@@ -26,6 +26,12 @@
 
 #include "ftlMacros.inc"
 
+#ifdef FTL_TEMPLATE_TYPE_IS_DERIVED
+#define FTL_TEMPLATE_TYPE_WRAP type(FTL_TEMPLATE_TYPE)
+#else
+#define FTL_TEMPLATE_TYPE_WRAP FTL_TEMPLATE_TYPE
+#endif
+
 
 module CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,AlgorithmsModule)
 
@@ -238,20 +244,37 @@ module CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,AlgorithmsModule)
 
    abstract interface
 
+
       logical function UnaryPredicate(a)
-         FTL_TEMPLATE_TYPE, intent(in) :: a
+#ifdef FTL_TEMPLATE_TYPE_IS_DERIVED
+         import :: FTL_TEMPLATE_TYPE
+#endif
+         FTL_TEMPLATE_TYPE_WRAP, intent(in) :: a
       end function
+
 
       logical function Comparator(a, b)
-         FTL_TEMPLATE_TYPE, intent(in) :: a, b
+#ifdef FTL_TEMPLATE_TYPE_IS_DERIVED
+         import :: FTL_TEMPLATE_TYPE
+#endif
+         FTL_TEMPLATE_TYPE_WRAP, intent(in) :: a, b
       end function
+
 
       subroutine UnarySubroutine(a)
-         FTL_TEMPLATE_TYPE, intent(inout) :: a
+#ifdef FTL_TEMPLATE_TYPE_IS_DERIVED
+         import :: FTL_TEMPLATE_TYPE
+#endif
+         FTL_TEMPLATE_TYPE_WRAP, intent(inout) :: a
       end subroutine
 
-      FTL_TEMPLATE_TYPE function Generator()
+
+      FTL_TEMPLATE_TYPE_WRAP function Generator()
+#ifdef FTL_TEMPLATE_TYPE_IS_DERIVED
+         import :: FTL_TEMPLATE_TYPE
+#endif
       end function
+
 
    end interface
 
@@ -381,7 +404,7 @@ contains
    !
    function ftlFindIteratorPair(first, last, val) result(it)
       type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
-      FTL_TEMPLATE_TYPE                                        , intent(in) :: val
+      FTL_TEMPLATE_TYPE_WRAP                                   , intent(in) :: val
       type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator))             :: it
 
       it = first
@@ -394,7 +417,7 @@ contains
    !
    function ftlFindContainer(container, val) result(it)
       type(CAT(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME))          , intent(in) :: container
-      FTL_TEMPLATE_TYPE                                        , intent(in) :: val
+      FTL_TEMPLATE_TYPE_WRAP                                   , intent(in) :: val
       type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator))             :: it
 
       it = ftlFindIteratorPair(container%Begin(), container%End(), val)
@@ -507,7 +530,7 @@ contains
    !
    integer function ftlCountIteratorPair(first, last, val) result(num)
       type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
-      FTL_TEMPLATE_TYPE                                        , intent(in) :: val
+      FTL_TEMPLATE_TYPE_WRAP                                   , intent(in) :: val
 
       type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: it
 
@@ -522,7 +545,7 @@ contains
    !
    integer function ftlCountContainer(container, val) result(num)
       type(CAT(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: container
-      FTL_TEMPLATE_TYPE                              , intent(in) :: val
+      FTL_TEMPLATE_TYPE_WRAP                         , intent(in) :: val
 
       num = ftlCountIteratorPair(container%Begin(), container%End(), val)
 
@@ -575,7 +598,7 @@ contains
          if (present(comp)) then
             if (.not.comp(it(1)%value,it(2)%value)) exit
          else
-            if (it(1)%value /= it(2)%value) exit
+            if (.not.(it(1)%value == it(2)%value)) exit
          endif
          call it(1)%Inc()
          call it(2)%Inc()
@@ -715,7 +738,7 @@ contains
             if (present(comp)) then
                if (.not.comp(it1%value, it2%value)) exit
             else
-               if (it1%value /= it2%value) exit
+               if (.not.(it1%value == it2%value)) exit
             endif
             call it1%Inc()
             call it2%Inc()
@@ -754,7 +777,7 @@ contains
    subroutine ftlIterSwapPrivate(it1, it2)
       type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: it1, it2
 
-      FTL_TEMPLATE_TYPE :: tmp
+      FTL_TEMPLATE_TYPE_WRAP :: tmp
 
       tmp = it1%value
       it1%value = it2%value
@@ -954,7 +977,7 @@ contains
 #endif
 
       type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: sortedUntil, insertAt, insertAtMinus1
-      FTL_TEMPLATE_TYPE :: value
+      FTL_TEMPLATE_TYPE_WRAP :: value
       logical :: shift
 
       if (first == last) return
@@ -975,7 +998,7 @@ contains
                shift = .not.(insertAtMinus1%value < value)
             endif
 #else
-            shift = .not.(insertAtMinus1%value < value)
+            shift = .not.comp(insertAtMinus1%value, value)
 #endif
             if (shift) then
                insertAt%value = insertAtMinus1%value
