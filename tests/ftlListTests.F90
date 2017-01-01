@@ -504,7 +504,7 @@ contains
       l = [4,7,813,5]
       o = [5,9,6]
 
-      call Swap(l,o)
+      call ftlSwap(l,o)
 
       ASSERT(l%Size() == 3)
       ASSERT(l%front == 5)
