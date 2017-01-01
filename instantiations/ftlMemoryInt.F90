@@ -16,29 +16,7 @@
 ! with the Fortran Template Library.  If not, see <http://www.gnu.org/licenses/>.
 
 
-#include "ftlTestTools.inc"
-
-program tests
-
-   use ftlTestToolsModule
-   use ftlVectorTestsModule
-   use ftlListTestsModule
-   use ftlMemoryTestsModule
-   use ftlAlgorithmsTestsModule
-
-   ! dummy assertion to test that assertions themselves work ...
-   ASSERT(.false.)
-
-   call ftlVectorTests
-   call ftlListTests
-   call ftlMemoryTests
-   call ftlAlgorithmsTests
-
-   write (*,'(A,I0,A,I0)') 'Failed assertions: ',num_failed,'/',num_asserts
-   if (num_failed > 0) then
-      write (*,'(A)') 'TEST FAILED'
-   else
-      write (*,'(A)') 'TEST PASSED'
-   endif
-
-end program
+#define FTL_TEMPLATE_TYPE integer
+#define FTL_TEMPLATE_TYPE_NAME Int
+#define FTL_INSTANTIATE_TEMPLATE
+#include "ftlMemory.F90_template"
