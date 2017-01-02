@@ -23,6 +23,7 @@ program tests
    use ftlTestToolsModule
    use ftlVectorTestsModule
    use ftlListTestsModule
+   use ftlUnorderedMapTestsModule
    use ftlMemoryTestsModule
    use ftlAlgorithmsTestsModule
 
@@ -31,6 +32,7 @@ program tests
 
    call ftlVectorTests
    call ftlListTests
+   call ftlUnorderedMapTests
    call ftlMemoryTests
    call ftlAlgorithmsTests
 

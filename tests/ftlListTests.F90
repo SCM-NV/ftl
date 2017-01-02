@@ -34,8 +34,6 @@ contains
 
       write (*,'(A)') 'Running ftlList tests ...'
 
-      ! Tests of the ftlList container itself:
-
       call testNewDefault
       call testNewCopyOther
       call testNewFill

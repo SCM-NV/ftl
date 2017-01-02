@@ -16,19 +16,37 @@
 ! with the Fortran Template Library.  If not, see <http://www.gnu.org/licenses/>.
 
 
-#ifndef FTL_MACROS_INCLUDED
-#define FTL_MACROS_INCLUDED
+#include "ftlTestTools.inc"
 
-#ifdef __GFORTRAN__
-#define PASTE(a) a
-#define CAT(a,b) PASTE(a)b
-#define CAT3(a,b,c) CAT(a,b)c
-#define CAT4(a,b,c,d) CAT3(a,b,c)d
-#else
-#define PCAT(a,b,c,d) a ## b ## c ## d
-#define CAT(a,b) PCAT(a,b,,)
-#define CAT3(a,b,c) PCAT(a,b,c,)
-#define CAT4(a,b,c,d) PCAT(a,b,c,d)
-#endif
+module ftlUnorderedMapTestsModule
 
-#endif
+   use ftlTestToolsModule
+   use ftlUnorderedMapStrIntModule
+
+   implicit none
+   private
+   public :: ftlUnorderedMapTests
+
+contains
+
+
+   subroutine ftlUnorderedMapTests
+
+      write (*,'(A)') 'Running ftlUnorderedMap tests ...'
+
+      ! Tests of the ftlUnorderedMap container itself:
+
+      call testNewDefault
+
+   end subroutine
+
+
+   subroutine testNewDefault
+      type(ftlUnorderedMapStrInt) :: d
+
+      call d%New(100)
+
+   end subroutine
+
+
+end module
