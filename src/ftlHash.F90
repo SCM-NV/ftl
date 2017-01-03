@@ -47,10 +47,11 @@ contains
    pure integer function ftlHashInteger(i) result(hash)
       integer, intent(in) :: i
 
-      character(len=32) :: str
-
-      write (str,*) i
-      hash = ftlHashCharacterString(trim(str))
+      if (i >= 0) then
+         hash = i
+      else
+         hash = (huge(i) + i) + 1
+      endif
 
    end function
 

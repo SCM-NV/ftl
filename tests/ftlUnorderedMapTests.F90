@@ -38,13 +38,124 @@ contains
 
       call testNewDefault
 
+      call testSetAndGet
+
    end subroutine
 
 
    subroutine testNewDefault
-      type(ftlUnorderedMapStrInt) :: d
+      type(ftlUnorderedMapStrInt) :: um
 
-      call d%New(100)
+      call um%New(100)
+
+      ASSERT(um%IsEmpty())
+      ASSERT(um%Size() == 0)
+      ASSERT(size(um) == 0)
+      ASSERT(um%BucketCount() == 100)
+
+#ifdef FTL_NO_FINALIZERS
+      call um%Delete()
+#endif
+
+   end subroutine
+
+
+   subroutine testSetAndGet
+      type(ftlUnorderedMapStrInt) :: um
+      integer :: i
+      integer, pointer :: ptr
+
+      call um%New(10)
+
+      call um%Set('foo ', 42)
+
+      ASSERT(um%Size() == 1)
+      ASSERT(size(um) == 1)
+
+      ! add > 10 elements to have overfull buckets
+      call um%Set('bar ',  1)
+      call um%Set('test',  2)
+      call um%Set('blub',  3)
+      call um%Set('jipi',  4)
+      call um%Set('fort',  5)
+      call um%Set('ran ',  6)
+      call um%Set('is m',  7)
+      call um%Set('y fa',  8)
+      call um%Set('vour',  9)
+      call um%Set('ite ', 10)
+      call um%Set('lang', 11)
+      call um%Set('not ', 12)
+      call um%Set('rly!', 13)
+
+      ASSERT(um%Size() == 14)
+      ASSERT(size(um) == 14)
+
+      ! retrieve all entries again
+
+      ptr => um%Get('foo ')
+
+      ASSERT(associated(ptr))
+      ASSERT(ptr == 42)
+
+      ASSERT(um%Get('bar ') ==  1)
+      ASSERT(um%Get('test') ==  2)
+      ASSERT(um%Get('blub') ==  3)
+      ASSERT(um%Get('jipi') ==  4)
+      ASSERT(um%Get('fort') ==  5)
+      ASSERT(um%Get('ran ') ==  6)
+      ASSERT(um%Get('not ') == 12)
+      ASSERT(um%Get('vour') ==  9)
+      ASSERT(um%Get('is m') ==  7)
+      ASSERT(um%Get('ite ') == 10)
+      ASSERT(um%Get('y fa') ==  8)
+      ASSERT(um%Get('lang') == 11)
+      ASSERT(um%Get('rly!') == 13)
+
+      ! try writing to pointers we got from Get()
+
+      ptr = 82
+      ASSERT(um%Get('foo ') == 82)
+
+      ! try getting into a value type directly
+
+      i = um%Get('blub')
+      ASSERT(i == 3)
+      i = 1337
+      ASSERT(um%Get('blub') == 3)
+
+      ! try setting the value for a key that already exists
+
+      call um%Set('bar ',  -1)
+      call um%Set('test',  -2)
+      call um%Set('blub',  -3)
+      call um%Set('jipi',  -4)
+      call um%Set('fort',  -5)
+      call um%Set('ran ',  -6)
+      call um%Set('not ', -12)
+      call um%Set('vour',  -9)
+      call um%Set('is m',  -7)
+      call um%Set('y fa',  -8)
+      call um%Set('ite ', -10)
+      call um%Set('lang', -11)
+      call um%Set('rly!', -13)
+
+      ASSERT(um%Get('bar ') ==  -1)
+      ASSERT(um%Get('test') ==  -2)
+      ASSERT(um%Get('blub') ==  -3)
+      ASSERT(um%Get('jipi') ==  -4)
+      ASSERT(um%Get('fort') ==  -5)
+      ASSERT(um%Get('ran ') ==  -6)
+      ASSERT(um%Get('not ') == -12)
+      ASSERT(um%Get('vour') ==  -9)
+      ASSERT(um%Get('is m') ==  -7)
+      ASSERT(um%Get('y fa') ==  -8)
+      ASSERT(um%Get('ite ') == -10)
+      ASSERT(um%Get('lang') == -11)
+      ASSERT(um%Get('rly!') == -13)
+
+#ifdef FTL_NO_FINALIZERS
+      call um%Delete()
+#endif
 
    end subroutine
 

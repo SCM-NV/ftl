@@ -124,7 +124,7 @@ $(BUILDDIR)/ftlVectorPoint2D.o: instantiations/ftlVectorPoint2D.F90 src/ftlVecto
 $(BUILDDIR)/ftlListInt.o: instantiations/ftlListInt.F90 src/ftlList.F90_template | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
 
-$(BUILDDIR)/ftlUnorderedMapStrInt.o: instantiations/ftlUnorderedMapStrInt.F90 src/ftlUnorderedMap.F90_template | $(BUILDDIR)
+$(BUILDDIR)/ftlUnorderedMapStrInt.o: instantiations/ftlUnorderedMapStrInt.F90 src/ftlUnorderedMap.F90_template $(BUILDDIR)/ftlHash.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
 
 

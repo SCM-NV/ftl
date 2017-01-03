@@ -16,7 +16,7 @@
 ! with the Fortran Template Library.  If not, see <http://www.gnu.org/licenses/>.
 
 
-#define FTL_TEMPLATE_KEYTYPE character(len=64)
+#define FTL_TEMPLATE_KEYTYPE character(len=4)
 #define FTL_TEMPLATE_KEYTYPE_NAME Str
 #define FTL_TEMPLATE_TYPE integer
 #define FTL_TEMPLATE_TYPE_NAME Int
