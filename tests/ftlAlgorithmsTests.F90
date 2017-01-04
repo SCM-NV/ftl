@@ -21,11 +21,11 @@
 module ftlAlgorithmsTestsModule
 
    use ftlTestToolsModule
-   use ftlVectorIntModule
-   use ftlVectorIntAlgorithmsModule
+   use ftlDynArrayIntModule
+   use ftlDynArrayIntAlgorithmsModule
    use Point2DModule
-   use ftlVectorPoint2DModule
-   use ftlVectorPoint2DAlgorithmsModule
+   use ftlDynArrayPoint2DModule
+   use ftlDynArrayPoint2DAlgorithmsModule
    use ftlListIntModule
    use ftlListIntAlgorithmsModule
 
@@ -61,7 +61,7 @@ contains
       call testMismatch
       call testEqual
 
-      call testIsPermutationVector
+      call testIsPermutationDynArray
       call testIsPermutationList
 
       call testSearch
@@ -79,7 +79,7 @@ contains
 
       ! Sorting operations:
 
-      call testSortVector
+      call testSortDynArray
       call testSortList
       call testIsSorted
 
@@ -94,8 +94,8 @@ contains
 
 
    subroutine testAllOf
-      type(ftlVectorInt) :: v
-      type(ftlVectorIntIterator) :: it
+      type(ftlDynArrayInt) :: v
+      type(ftlDynArrayIntIterator) :: it
 
       call v%New()
       ASSERT(ftlAllOf(v,IsEven))
@@ -110,8 +110,8 @@ contains
 
 
    subroutine testAnyOf
-      type(ftlVectorInt) :: v
-      type(ftlVectorIntIterator) :: it
+      type(ftlDynArrayInt) :: v
+      type(ftlDynArrayIntIterator) :: it
 
       call v%New()
       ASSERT(.not.ftlAnyOf(v,IsEven))
@@ -148,8 +148,8 @@ contains
 
 
    subroutine testForEach
-      type(ftlVectorInt) :: v
-      type(ftlVectorIntIterator) :: it
+      type(ftlDynArrayInt) :: v
+      type(ftlDynArrayIntIterator) :: it
 
       call v%New([1,2,3,4,5])
       call ftlForEach(v, Square)
@@ -165,8 +165,8 @@ contains
 
 
    subroutine testFind
-      type(ftlVectorInt) :: v
-      type(ftlVectorIntIterator) :: it
+      type(ftlDynArrayInt) :: v
+      type(ftlDynArrayIntIterator) :: it
 
       call v%New([3,8,93,5,93,67])
       it = ftlFind(v, 93)
@@ -183,8 +183,8 @@ contains
 
 
    subroutine testFindIf
-      type(ftlVectorInt) :: v
-      type(ftlVectorIntIterator) :: it
+      type(ftlDynArrayInt) :: v
+      type(ftlDynArrayIntIterator) :: it
 
       call v%New([3,8,93,5,93,67])
       it = ftlFindIf(v, IsEven)
@@ -200,8 +200,8 @@ contains
 
 
    subroutine testFindIfNot
-      type(ftlVectorInt) :: v
-      type(ftlVectorIntIterator) :: it
+      type(ftlDynArrayInt) :: v
+      type(ftlDynArrayIntIterator) :: it
 
       call v%New([3,8,93,5,93,67])
       it = ftlFindIfNot(v, IsOdd)
@@ -239,8 +239,8 @@ contains
 
 
    subroutine testCount
-      type(ftlVectorInt) :: v
-      type(ftlVectorIntIterator) :: it
+      type(ftlDynArrayInt) :: v
+      type(ftlDynArrayIntIterator) :: it
 
       call v%New([6,2,895,6,3,6,43,2,6,3])
 
@@ -285,7 +285,7 @@ contains
 
 
    subroutine testCountIfDerivedType
-      type(ftlVectorPoint2D) :: v
+      type(ftlDynArrayPoint2D) :: v
 
       call v%New()
 
@@ -308,7 +308,7 @@ contains
 
 
    subroutine testIterSwap
-      type(ftlVectorInt) :: v
+      type(ftlDynArrayInt) :: v
 
       call v%New([2,1,3,4,5,6])
       call ftlIterSwap(v%Begin(), v%Begin()+1)
@@ -320,7 +320,7 @@ contains
 
 
    subroutine testGenerate
-      type(ftlVectorInt) :: v
+      type(ftlDynArrayInt) :: v
 
       call v%New(5)
       call ftlGenerate(v, FortyTwo)
@@ -333,8 +333,8 @@ contains
 
 
    subroutine testMismatch
-      type(ftlVectorInt) :: u, v
-      type(ftlVectorIntIterator) :: it(2)
+      type(ftlDynArrayInt) :: u, v
+      type(ftlDynArrayIntIterator) :: it(2)
 
       call u%New([9,6,3,6,1])
       call v%New([9,6,3,4,2])
@@ -382,8 +382,8 @@ contains
    end subroutine
 
 
-   subroutine testIsPermutationVector
-      type(ftlVectorInt) :: u, v
+   subroutine testIsPermutationDynArray
+      type(ftlDynArrayInt) :: u, v
 
       call u%New([12,7,5,9,4,6,0,99])
       call v%New([6,9,99,5,7,12,0,4])
@@ -410,7 +410,7 @@ contains
 
 
    subroutine testIsPermutationList
-      type(ftlVectorInt) :: k, l
+      type(ftlDynArrayInt) :: k, l
 
       call k%New([12,7,5,9,4,6,0,99])
       call l%New([6,9,99,5,7,12,0,4])
@@ -497,8 +497,8 @@ contains
 
 
    subroutine testPartition
-      type(ftlVectorInt) :: v
-      type(ftlVectorIntIterator) :: it
+      type(ftlDynArrayInt) :: v
+      type(ftlDynArrayIntIterator) :: it
       integer :: n, i
 
       do n = 1, 100
@@ -515,8 +515,8 @@ contains
    end subroutine
 
 
-   subroutine testSortVector
-      type(ftlVectorInt) :: v
+   subroutine testSortDynArray
+      type(ftlDynArrayInt) :: v
       integer :: i, n
 
       call v%New([9,6,3,4,7])
@@ -610,7 +610,7 @@ contains
 
 
    subroutine testIsSorted
-      type(ftlVectorInt) :: v
+      type(ftlDynArrayInt) :: v
 
       call v%New()
 
@@ -633,7 +633,7 @@ contains
 
 
    subroutine testMakeHeap
-      type(ftlVectorInt) :: v
+      type(ftlDynArrayInt) :: v
       integer :: n, i
 
       do n = 1, 100
@@ -652,7 +652,7 @@ contains
 
 
    subroutine testPushHeap
-      type(ftlVectorInt) :: v
+      type(ftlDynArrayInt) :: v
       integer :: i
 
       call v%New([ (RandomInt(), i = 1, 10) ])
@@ -676,8 +676,8 @@ contains
 
 
    subroutine testPopHeap
-      type(ftlVectorInt) :: v
-      type(ftlVectorIntIterator) :: endOfHeap
+      type(ftlDynArrayInt) :: v
+      type(ftlDynArrayIntIterator) :: endOfHeap
       integer :: i, root
 
       call v%New([ (RandomInt(), i = 1, 100) ])
@@ -708,8 +708,8 @@ contains
 
 
    subroutine testIsHeap
-      type(ftlVectorInt) :: v
-      type(ftlVectorIntIterator) :: it
+      type(ftlDynArrayInt) :: v
+      type(ftlDynArrayIntIterator) :: it
 
       call v%New()
 

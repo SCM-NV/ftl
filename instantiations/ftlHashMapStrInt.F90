@@ -16,9 +16,9 @@
 ! with the Fortran Template Library.  If not, see <http://www.gnu.org/licenses/>.
 
 
-#define FTL_TEMPLATE_TYPE Point2D
-#define FTL_TEMPLATE_TYPE_IS_DERIVED
-#define FTL_TEMPLATE_TYPE_MODULE Point2DModule
-#define FTL_TEMPLATE_TYPE_NAME Point2D
+#define FTL_TEMPLATE_KEYTYPE character(len=4)
+#define FTL_TEMPLATE_KEYTYPE_NAME Str
+#define FTL_TEMPLATE_TYPE integer
+#define FTL_TEMPLATE_TYPE_NAME Int
 #define FTL_INSTANTIATE_TEMPLATE
-#include "ftlVector.F90_template"
+#include <ftlHashMap.F90_template>

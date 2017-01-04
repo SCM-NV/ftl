@@ -21,18 +21,18 @@
 program tests
 
    use ftlTestToolsModule
-   use ftlVectorTestsModule
+   use ftlDynArrayTestsModule
    use ftlListTestsModule
-   use ftlUnorderedMapTestsModule
+   use ftlHashMapTestsModule
    use ftlMemoryTestsModule
    use ftlAlgorithmsTestsModule
 
    ! dummy assertion to test that assertions themselves work ...
    ASSERT(.false.)
 
-   call ftlVectorTests
+   call ftlDynArrayTests
    call ftlListTests
-   call ftlUnorderedMapTests
+   call ftlHashMapTests
    call ftlMemoryTests
    call ftlAlgorithmsTests
 

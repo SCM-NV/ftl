@@ -18,5 +18,7 @@
 
 #define FTL_TEMPLATE_TYPE integer
 #define FTL_TEMPLATE_TYPE_NAME Int
+#define FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
+#include "ftlDynArray.F90_template"
 #define FTL_INSTANTIATE_TEMPLATE
-#include "ftlVector.F90_template"
+#include "ftlAlgorithms.F90_template"

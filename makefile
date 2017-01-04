@@ -21,7 +21,7 @@ MAKEFLAGS += --no-builtin-rules
 .SUFFIXES:
 
 PLATFORM ?= gnu
-BUILD    ?= debug
+BUILD ?= debug
 BUILDDIR = build.$(PLATFORM).$(BUILD)
 
 ifeq ($(PLATFORM), gnu)
@@ -66,9 +66,9 @@ test: $(BUILDDIR)/tests
 memcheck: $(BUILDDIR)/tests
 	valgrind --leak-check=yes ./$(BUILDDIR)/tests
 
-perftest: $(BUILDDIR)/perftest_sortVectorInt $(BUILDDIR)/perftest_sortVectorInt_ref
-	./$(BUILDDIR)/perftest_sortVectorInt
-	./$(BUILDDIR)/perftest_sortVectorInt_ref
+perftest: $(BUILDDIR)/perftest_sortDynArrayInt $(BUILDDIR)/perftest_sortDynArrayInt_ref
+	./$(BUILDDIR)/perftest_sortDynArrayInt
+	./$(BUILDDIR)/perftest_sortDynArrayInt_ref
 
 $(BUILDDIR):
 	mkdir $(BUILDDIR)
@@ -82,22 +82,22 @@ cleanall:
 
 # Unit tests:
 
-$(BUILDDIR)/tests: tests/tests.F90 $(BUILDDIR)/ftlTestTools.o $(BUILDDIR)/ftlVectorTests.o $(BUILDDIR)/ftlListTests.o $(BUILDDIR)/ftlUnorderedMapTests.o $(BUILDDIR)/ftlAlgorithmsTests.o $(BUILDDIR)/ftlMemoryTests.o | $(BUILDDIR)
+$(BUILDDIR)/tests: tests/tests.F90 $(BUILDDIR)/ftlTestTools.o $(BUILDDIR)/ftlDynArrayTests.o $(BUILDDIR)/ftlListTests.o $(BUILDDIR)/ftlHashMapTests.o $(BUILDDIR)/ftlAlgorithmsTests.o $(BUILDDIR)/ftlMemoryTests.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) $< $(BUILDDIR)/*.o -o $@
 
 $(BUILDDIR)/ftlTestTools.o: tests/ftlTestTools.F90 tests/ftlTestTools.inc | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
 
-$(BUILDDIR)/ftlVectorTests.o: tests/ftlVectorTests.F90 $(BUILDDIR)/ftlVectorInt.o $(BUILDDIR)/ftlVectorPoint2D.o | $(BUILDDIR)
+$(BUILDDIR)/ftlDynArrayTests.o: tests/ftlDynArrayTests.F90 $(BUILDDIR)/ftlDynArrayInt.o $(BUILDDIR)/ftlDynArrayPoint2D.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
 
 $(BUILDDIR)/ftlListTests.o: tests/ftlListTests.F90 $(BUILDDIR)/ftlListInt.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
 
-$(BUILDDIR)/ftlUnorderedMapTests.o: tests/ftlUnorderedMapTests.F90 $(BUILDDIR)/ftlUnorderedMapStrInt.o | $(BUILDDIR)
+$(BUILDDIR)/ftlHashMapTests.o: tests/ftlHashMapTests.F90 $(BUILDDIR)/ftlHashMapStrInt.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
 
-$(BUILDDIR)/ftlAlgorithmsTests.o: tests/ftlAlgorithmsTests.F90 $(BUILDDIR)/ftlVectorIntAlgorithms.o $(BUILDDIR)/ftlVectorPoint2DAlgorithms.o $(BUILDDIR)/ftlListIntAlgorithms.o | $(BUILDDIR)
+$(BUILDDIR)/ftlAlgorithmsTests.o: tests/ftlAlgorithmsTests.F90 $(BUILDDIR)/ftlDynArrayIntAlgorithms.o $(BUILDDIR)/ftlDynArrayPoint2DAlgorithms.o $(BUILDDIR)/ftlListIntAlgorithms.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
 
 $(BUILDDIR)/ftlMemoryTests.o: tests/ftlMemoryTests.F90 $(BUILDDIR)/ftlMemoryInt.o | $(BUILDDIR)
@@ -106,34 +106,34 @@ $(BUILDDIR)/ftlMemoryTests.o: tests/ftlMemoryTests.F90 $(BUILDDIR)/ftlMemoryInt.
 
 # Individual performance tests:
 
-$(BUILDDIR)/perftest_sortVectorInt: perftests/sortVectorInt.F90 $(BUILDDIR)/ftlTestTools.o $(BUILDDIR)/ftlVectorIntAlgorithms.o | $(BUILDDIR)
+$(BUILDDIR)/perftest_sortDynArrayInt: perftests/sortDynArrayInt.F90 $(BUILDDIR)/ftlTestTools.o $(BUILDDIR)/ftlDynArrayIntAlgorithms.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) $< $(BUILDDIR)/*.o -o $@
 
-$(BUILDDIR)/perftest_sortVectorInt_ref: perftests/sortVectorInt.cpp | $(BUILDDIR)
+$(BUILDDIR)/perftest_sortDynArrayInt_ref: perftests/sortDynArrayInt.cpp | $(BUILDDIR)
 	$(CXXCOMPILER) $(CXXFLAGS) $< -o $@
 
 
 # Container instantiations:
 
-$(BUILDDIR)/ftlVectorInt.o: instantiations/ftlVectorInt.F90 src/ftlVector.F90_template | $(BUILDDIR)
+$(BUILDDIR)/ftlDynArrayInt.o: instantiations/ftlDynArrayInt.F90 src/ftlDynArray.F90_template | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
 
-$(BUILDDIR)/ftlVectorPoint2D.o: instantiations/ftlVectorPoint2D.F90 src/ftlVector.F90_template $(BUILDDIR)/Point2D.o | $(BUILDDIR)
+$(BUILDDIR)/ftlDynArrayPoint2D.o: instantiations/ftlDynArrayPoint2D.F90 src/ftlDynArray.F90_template $(BUILDDIR)/Point2D.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
 
 $(BUILDDIR)/ftlListInt.o: instantiations/ftlListInt.F90 src/ftlList.F90_template | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
 
-$(BUILDDIR)/ftlUnorderedMapStrInt.o: instantiations/ftlUnorderedMapStrInt.F90 src/ftlUnorderedMap.F90_template $(BUILDDIR)/ftlHash.o | $(BUILDDIR)
+$(BUILDDIR)/ftlHashMapStrInt.o: instantiations/ftlHashMapStrInt.F90 src/ftlHashMap.F90_template $(BUILDDIR)/ftlHash.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
 
 
 # ftlAlgorithms instantiations:
 
-$(BUILDDIR)/ftlVectorIntAlgorithms.o: instantiations/ftlVectorIntAlgorithms.F90 src/ftlAlgorithms.F90_template $(BUILDDIR)/ftlVectorInt.o | $(BUILDDIR)
+$(BUILDDIR)/ftlDynArrayIntAlgorithms.o: instantiations/ftlDynArrayIntAlgorithms.F90 src/ftlAlgorithms.F90_template $(BUILDDIR)/ftlDynArrayInt.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
 
-$(BUILDDIR)/ftlVectorPoint2DAlgorithms.o: instantiations/ftlVectorPoint2DAlgorithms.F90 src/ftlAlgorithms.F90_template $(BUILDDIR)/ftlVectorPoint2D.o | $(BUILDDIR)
+$(BUILDDIR)/ftlDynArrayPoint2DAlgorithms.o: instantiations/ftlDynArrayPoint2DAlgorithms.F90 src/ftlAlgorithms.F90_template $(BUILDDIR)/ftlDynArrayPoint2D.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
 
 $(BUILDDIR)/ftlListIntAlgorithms.o: instantiations/ftlListIntAlgorithms.F90 src/ftlAlgorithms.F90_template $(BUILDDIR)/ftlListInt.o | $(BUILDDIR)

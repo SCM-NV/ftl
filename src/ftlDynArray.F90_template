@@ -16,44 +16,44 @@
 ! with the Fortran Template Library.  If not, see <http://www.gnu.org/licenses/>.
 
 
-!   ftlVector
+!   ftlDynArray
 !   =========
 !
-! Vectors are sequence containers representing arrays that can change in size.
+! DynArrays are sequence containers representing arrays that can change in size.
 !
-! Just like arrays, vectors use contiguous storage locations for their elements, which means that their elements can
+! Just like arrays, dynArrays use contiguous storage locations for their elements, which means that their elements can
 ! also be accessed using offsets on regular pointers to its elements, and just as efficiently as in arrays. But unlike
 ! arrays, their size can change dynamically, with their storage being handled automatically by the container.
 !
-! Internally, vectors use a dynamically allocated array to store their elements. This array may need to be reallocated
+! Internally, dynArrays use a dynamically allocated array to store their elements. This array may need to be reallocated
 ! in order to grow in size when new elements are inserted, which implies allocating a new array and moving all elements
-! to it. This is a relatively expensive task in terms of processing time, and thus, vectors do not reallocate each time
+! to it. This is a relatively expensive task in terms of processing time, and thus, dynArrays do not reallocate each time
 ! an element is added to the container.
 !
-! Instead, vector containers may allocate some extra storage to accommodate for possible growth, and thus the container
+! Instead, dynArray containers may allocate some extra storage to accommodate for possible growth, and thus the container
 ! may have an actual capacity greater than the storage strictly needed to contain its elements (i.e., its size).
 ! Libraries can implement different strategies for growth to balance between memory usage and reallocations, but in any
 ! case, reallocations should only happen at logarithmically growing intervals of size so that the insertion of
-! individual elements at the end of the vector can be provided with amortized constant time complexity (see push_back).
+! individual elements at the end of the dynArray can be provided with amortized constant time complexity (see push_back).
 !
-! Therefore, compared to arrays, vectors consume more memory in exchange for the ability to manage storage and grow
+! Therefore, compared to arrays, dynArrays consume more memory in exchange for the ability to manage storage and grow
 ! dynamically in an efficient way.
 !
-! Compared to the other dynamic sequence containers (deques, lists and forward_lists), vectors are very efficient
+! Compared to the other dynamic sequence containers (deques, lists and forward_lists), dynArrays are very efficient
 ! accessing its elements (just like arrays) and relatively efficient adding or removing elements from its end. For
 ! operations that involve inserting or removing elements at positions other than the end, they perform worse than the
 ! others, and have less consistent iterators and references than lists and forward_lists.
 
-#define FTL_CONTAINER ftlVector
+#define FTL_CONTAINER ftlDynArray
 #define FTL_CONTAINER_PROVIDES_RANDOM_ACCESS_ITERATOR
 
 #ifdef FTL_INSTANTIATE_TEMPLATE
 
 #if !defined(FTL_TEMPLATE_TYPE)
-#error FTL_TEMPLATE_TYPE must be defined when instantiating ftlVector
+#error FTL_TEMPLATE_TYPE must be defined when instantiating ftlDynArray
 #endif
 #if !defined(FTL_TEMPLATE_TYPE_NAME)
-#error FTL_TEMPLATE_TYPE_NAME must be defined when instantiating ftlVector
+#error FTL_TEMPLATE_TYPE_NAME must be defined when instantiating ftlDynArray
 #endif
 
 #include "ftlMacros.inc"
@@ -65,7 +65,7 @@
 #endif
 
 
-module CAT3(ftlVector,FTL_TEMPLATE_TYPE_NAME,Module)
+module CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Module)
 
 #ifdef FTL_TEMPLATE_TYPE_MODULE
    use FTL_TEMPLATE_TYPE_MODULE
@@ -74,9 +74,9 @@ module CAT3(ftlVector,FTL_TEMPLATE_TYPE_NAME,Module)
    implicit none
    private
 
-! ====== Type of the ftlVector container itself ==================================================================================
+! ====== Type of the ftlDynArray container itself ==================================================================================
 
-   type, public :: CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME)
+   type, public :: CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)
       private
 
       integer                                     :: psize = 0
@@ -96,13 +96,13 @@ module CAT3(ftlVector,FTL_TEMPLATE_TYPE_NAME,Module)
 
       procedure, public :: Delete
 
-      procedure         :: BeginVector
-      generic  , public :: Begin => BeginVector
-      procedure         :: EndVector
-      generic  , public :: End => EndVector
+      procedure         :: BeginDynArray
+      generic  , public :: Begin => BeginDynArray
+      procedure         :: EndDynArray
+      generic  , public :: End => EndDynArray
 
-      procedure         :: SizeVector
-      generic  , public :: Size => SizeVector
+      procedure         :: SizeDynArray
+      generic  , public :: Size => SizeDynArray
 
       procedure, public :: Resize
       procedure, public :: Capacity
@@ -141,17 +141,17 @@ module CAT3(ftlVector,FTL_TEMPLATE_TYPE_NAME,Module)
 
    public :: Begin
    interface Begin
-      module procedure BeginVector
+      module procedure BeginDynArray
    end interface
 
    public :: End
    interface End
-      module procedure EndVector
+      module procedure EndDynArray
    end interface
 
    public :: Size
    interface Size
-      module procedure SizeVector
+      module procedure SizeDynArray
    end interface
 
    public :: assignment(=)
@@ -160,14 +160,14 @@ module CAT3(ftlVector,FTL_TEMPLATE_TYPE_NAME,Module)
    end interface
 
 
-! ====== Type of an iterator over a ftlVector container ==========================================================================
+! ====== Type of an iterator over a ftlDynArray container ==========================================================================
 
-   type, public :: CAT3(ftlVector,FTL_TEMPLATE_TYPE_NAME,Iterator)
+   type, public :: CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)
       private
 
-      class(CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME)), pointer         :: vector => null()
-      integer                                                       :: index = 0
-      FTL_TEMPLATE_TYPE_WRAP                      , pointer, public :: value => null()
+      class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), pointer         :: dynArray => null()
+      integer                                                         :: index = 0
+      FTL_TEMPLATE_TYPE_WRAP                        , pointer, public :: value => null()
 
    contains
       private
@@ -226,15 +226,15 @@ contains
 
 
 
-! ====== Implementation of ftlVector methods =====================================================================================
+! ====== Implementation of ftlDynArray methods =====================================================================================
 
 
-   ! Constructs a vector, initializing its contents depending on the constructor version used:
+   ! Constructs a dynArray, initializing its contents depending on the constructor version used:
    !
    subroutine NewDefault(self)
-      class(CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME)), intent(out) :: self
+      class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(out) :: self
 
-      ! Constructs an empty vector, with no elements.
+      ! Constructs an empty dynArray, with no elements.
 
       allocate(self%storage(0))
       call self%FixValuePtrs()
@@ -242,10 +242,10 @@ contains
    end subroutine
    !
    subroutine NewCopyOther(self, other)
-      class(CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME)), intent(out) :: self
-      class(CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME)), intent(in)  :: other
+      class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(out) :: self
+      class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(in)  :: other
 
-      ! Constructs a vector as a copy of another vector.
+      ! Constructs a dynArray as a copy of another dynArray.
 
       allocate(self%storage(other%psize))
       self%storage = other%storage(1:other%psize)
@@ -255,9 +255,9 @@ contains
    end subroutine
    !
    subroutine NewFill(self, n, val)
-      class(CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME)), intent(out)          :: self
-      integer                                     , intent(in)           :: n
-      FTL_TEMPLATE_TYPE_WRAP                      , intent(in), optional :: val
+      class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(out)          :: self
+      integer                                       , intent(in)           :: n
+      FTL_TEMPLATE_TYPE_WRAP                        , intent(in), optional :: val
 
       ! Constructs a container with n elements. Each element is a copy of val (if present).
 
@@ -269,7 +269,7 @@ contains
    end subroutine
    !
    subroutine NewFromArray(self, array)
-      class(CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME)), intent(out) :: self
+      class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(out) :: self
       FTL_TEMPLATE_TYPE_WRAP                      , intent(in)  :: array(:)
 
       ! Constructs a container with a copy of each of the elements in array, in the same order.
@@ -284,7 +284,7 @@ contains
 
 
    subroutine Delete(self)
-      class(CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME)), intent(out) :: self
+      class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(out) :: self
 
       ! Nothing to do here: intent(out) will deallocate self%storage and reset self%psize and self%data
 
@@ -295,8 +295,8 @@ contains
    ! Assigns new contents to the container, replacing its current contents, and modifying its size accordingly.
    !
    subroutine AssignArray(self, array)
-      class(CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
-      FTL_TEMPLATE_TYPE_WRAP                      , intent(in)    :: array(:)
+      class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
+      FTL_TEMPLATE_TYPE_WRAP                        , intent(in)    :: array(:)
 
       call self%Reserve(size(array))
       self%storage(1:size(array)) = array
@@ -306,8 +306,8 @@ contains
    end subroutine
    !
    subroutine AssignOther(self, other)
-      class(CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
-      class(CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME)), intent(in)    :: other
+      class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
+      class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(in)    :: other
 
       call self%Reserve(size(other))
       self%storage(1:size(other)) = other%data
@@ -322,17 +322,17 @@ contains
 
 
 
-   ! Returns an iterator pointing to the first element in the vector.
+   ! Returns an iterator pointing to the first element in the dynArray.
    !
-   ! Notice that, unlike member vector%front, which returns a reference to the first element, this function returns a random
+   ! Notice that, unlike member dynArray%front, which returns a reference to the first element, this function returns a random
    ! access iterator pointing to it.
    !
    ! If the container is empty, the returned iterator value shall not be dereferenced.
    !
-   type(CAT3(ftlVector,FTL_TEMPLATE_TYPE_NAME,Iterator)) function BeginVector(self) result(Begin)
-      class(CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME)), intent(in), target :: self
+   type(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)) function BeginDynArray(self) result(Begin)
+      class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(in), target :: self
 
-      Begin%vector => self
+      Begin%dynArray => self
       Begin%index = 1
       if (self%psize /= 0) Begin%value => self%storage(1)
 
@@ -340,21 +340,21 @@ contains
 
 
 
-   ! Returns an iterator referring to the past-the-end element in the vector container.
+   ! Returns an iterator referring to the past-the-end element in the dynArray container.
    !
-   ! The past-the-end element is the theoretical element that would follow the last element in the vector. It does not point
+   ! The past-the-end element is the theoretical element that would follow the last element in the dynArray. It does not point
    ! to any element, and thus shall not be dereferenced.
    !
    ! Because the ranges used by functions of the standard library do not include the element pointed by their closing
-   ! iterator, this function is often used in combination with vector%begin to specify a range including all the elements in
+   ! iterator, this function is often used in combination with dynArray%begin to specify a range including all the elements in
    ! the container.
    !
-   ! If the container is empty, this function returns the same as vector%begin.
+   ! If the container is empty, this function returns the same as dynArray%begin.
    !
-   type(CAT3(ftlVector,FTL_TEMPLATE_TYPE_NAME,Iterator)) function EndVector(self) result(End)
-      class(CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME)), intent(in), target :: self
+   type(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)) function EndDynArray(self) result(End)
+      class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(in), target :: self
 
-      End%vector => self
+      End%dynArray => self
       End%index = self%psize + 1
 
    end function
@@ -365,12 +365,12 @@ contains
 
 
 
-   ! Returns the number of elements in the vector.
+   ! Returns the number of elements in the dynArray.
    !
-   ! This is the number of actual objects held in the vector, which is not necessarily equal to its storage capacity.
+   ! This is the number of actual objects held in the dynArray, which is not necessarily equal to its storage capacity.
    !
-   pure integer function SizeVector(self) result(Size)
-      class(CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: self
+   pure integer function SizeDynArray(self) result(Size)
+      class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: self
 
       Size = self%psize
 
@@ -392,9 +392,9 @@ contains
    ! Notice that this function changes the actual content of the container by inserting or erasing elements from it.
    !
    subroutine Resize(self, n, val)
-      class(CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME)), intent(inout)        :: self
-      integer                                     , intent(in)           :: n
-      FTL_TEMPLATE_TYPE_WRAP                      , intent(in), optional :: val
+      class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(inout)        :: self
+      integer                                       , intent(in)           :: n
+      FTL_TEMPLATE_TYPE_WRAP                        , intent(in), optional :: val
 
       if (n == self%psize) return
 
@@ -407,18 +407,18 @@ contains
 
 
 
-   ! Returns the size of the storage space currently allocated for the vector, expressed in terms of elements.
+   ! Returns the size of the storage space currently allocated for the dynArray, expressed in terms of elements.
    !
-   ! This capacity is not necessarily equal to the vector size. It can be equal or greater, with the extra space allowing to
+   ! This capacity is not necessarily equal to the dynArray size. It can be equal or greater, with the extra space allowing to
    ! accommodate for growth without the need to reallocate on each insertion.
    !
-   ! Notice that this capacity does not suppose a limit on the size of the vector. When this capacity is exhausted and more is
+   ! Notice that this capacity does not suppose a limit on the size of the dynArray. When this capacity is exhausted and more is
    ! needed, it is automatically expanded by the container (reallocating it storage space).
    !
-   ! The capacity of a vector can be explicitly altered by calling member ftlVector%reserve.
+   ! The capacity of a dynArray can be explicitly altered by calling member ftlDynArray%reserve.
    !
    pure integer function Capacity(self)
-      class(CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: self
+      class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: self
 
       if (allocated(self%storage)) then
          Capacity = size(self%storage)
@@ -430,12 +430,12 @@ contains
 
 
 
-   ! Returns whether the vector is empty (i.e. whether its size is 0).
+   ! Returns whether the dynArray is empty (i.e. whether its size is 0).
    !
-   ! This function does not modify the container in any way. To clear the content of a vector, see ftlVector%clear.
+   ! This function does not modify the container in any way. To clear the content of a dynArray, see ftlDynArray%clear.
    !
    pure logical function Empty(self)
-      class(CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: self
+      class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: self
 
       Empty = (self%psize == 0)
 
@@ -443,18 +443,18 @@ contains
 
 
 
-   ! Requests that the vector capacity be at least enough to contain n elements.
+   ! Requests that the dynArray capacity be at least enough to contain n elements.
    !
-   ! If n is greater than the current vector capacity, the function causes the container to reallocate its storage increasing
+   ! If n is greater than the current dynArray capacity, the function causes the container to reallocate its storage increasing
    ! its capacity to n (or greater).
    !
-   ! In all other cases, the function call does not cause a reallocation and the vector capacity is not affected.
+   ! In all other cases, the function call does not cause a reallocation and the dynArray capacity is not affected.
    !
-   ! This function has no effect on the vector size and cannot alter its elements.
+   ! This function has no effect on the dynArray size and cannot alter its elements.
    !
    subroutine Reserve(self, n)
-      class(CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
-      integer                                     , intent(in)    :: n
+      class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
+      integer                                       , intent(in)    :: n
 
       if (n > self%Capacity()) call self%ChangeCapacity(n)
 
@@ -464,13 +464,13 @@ contains
 
    ! Requests the container to reduce its capacity to fit its size.
    !
-   ! The request is non-binding, and the container implementation is free to optimize otherwise and leave the vector with a
+   ! The request is non-binding, and the container implementation is free to optimize otherwise and leave the dynArray with a
    ! capacity greater than its size.
    !
-   ! This may cause a reallocation, but has no effect on the vector size and cannot alter its elements.
+   ! This may cause a reallocation, but has no effect on the dynArray size and cannot alter its elements.
    !
    subroutine ShrinkToFit(self)
-      class(CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
+      class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
 
       call self%ChangeCapacity(self%psize)
 
@@ -482,15 +482,15 @@ contains
 
 
 
-   ! Adds a new element at the end of the vector, after its current last element. The content of val is copied to
+   ! Adds a new element at the end of the dynArray, after its current last element. The content of val is copied to
    ! the new element.
    !
    ! This effectively increases the container size by one, which causes an automatic reallocation of the allocated storage
-   ! space if -and only if- the new vector size surpasses the current vector capacity.
+   ! space if -and only if- the new dynArray size surpasses the current dynArray capacity.
    !
    subroutine PushBack(self, val)
-      class(CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
-      FTL_TEMPLATE_TYPE_WRAP                      , intent(in)    :: val
+      class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
+      FTL_TEMPLATE_TYPE_WRAP                        , intent(in)    :: val
 
       if (self%psize + 1 > self%Capacity()) call self%IncreaseCapacity()
       self%psize = self%psize + 1
@@ -501,12 +501,12 @@ contains
 
 
 
-   ! Removes the last element in the vector, effectively reducing the container size by one.
+   ! Removes the last element in the dynArray, effectively reducing the container size by one.
    !
    ! This destroys the removed element.
    !
    FTL_TEMPLATE_TYPE_WRAP function PopBack(self)
-      class(CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
+      class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
 
       PopBack = self%storage(self%psize)
       self%psize = self%psize - 1
@@ -516,11 +516,11 @@ contains
 
 
 
-   ! The vector is extended by inserting new elements before the element at the specified position, effectively increasing
+   ! The dynArray is extended by inserting new elements before the element at the specified position, effectively increasing
    ! the container size by the number of elements inserted.  This causes an automatic reallocation of the allocated storage
-   ! space if -and only if- the new vector size surpasses the current vector capacity.
+   ! space if -and only if- the new dynArray size surpasses the current dynArray capacity.
    !
-   ! Because vectors use an array as their underlying storage, inserting elements in positions other than the vector end
+   ! Because dynArrays use an array as their underlying storage, inserting elements in positions other than the dynArray end
    ! causes the container to relocate all the elements that were after position to their new positions. This is generally an
    ! inefficient operation compared to the one performed for the same operation by other kinds of sequence containers (such
    ! as list or forward_list).
@@ -528,28 +528,28 @@ contains
    ! The parameters determine how many elements are inserted and to which values they are initialized:
    !
    subroutine InsertSingleAtIndex(self, position, val)
-      class(CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
-      integer                                     , intent(in)    :: position
-      FTL_TEMPLATE_TYPE_WRAP                      , intent(in)    :: val
+      class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
+      integer                                       , intent(in)    :: position
+      FTL_TEMPLATE_TYPE_WRAP                        , intent(in)    :: val
 
       call self%InsertArrayAtIndex(position, [val])
 
    end subroutine
    !
    subroutine InsertSingle(self, position, val)
-      class(CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME))         , intent(inout) :: self
-      type(CAT3(ftlVector,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)    :: position
-      FTL_TEMPLATE_TYPE_WRAP                               , intent(in)    :: val
+      class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME))         , intent(inout) :: self
+      type(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)    :: position
+      FTL_TEMPLATE_TYPE_WRAP                                 , intent(in)    :: val
 
       call self%InsertArrayAtIndex(position%index, [val])
 
    end subroutine
    !
    subroutine InsertFillAtIndex(self, position, n, val)
-      class(CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
-      integer                                     , intent(in)    :: position
-      integer                                     , intent(in)    :: n
-      FTL_TEMPLATE_TYPE_WRAP                      , intent(in)    :: val
+      class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
+      integer                                       , intent(in)    :: position
+      integer                                       , intent(in)    :: n
+      FTL_TEMPLATE_TYPE_WRAP                        , intent(in)    :: val
 
       integer :: i
 
@@ -558,10 +558,10 @@ contains
    end subroutine
    !
    subroutine InsertFill(self, position, n, val)
-      class(CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME))         , intent(inout) :: self
-      type(CAT3(ftlVector,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)    :: position
-      integer                                              , intent(in)    :: n
-      FTL_TEMPLATE_TYPE_WRAP                               , intent(in)    :: val
+      class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME))         , intent(inout) :: self
+      type(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)    :: position
+      integer                                                , intent(in)    :: n
+      FTL_TEMPLATE_TYPE_WRAP                                 , intent(in)    :: val
 
       integer :: i
 
@@ -570,9 +570,9 @@ contains
    end subroutine
    !
    subroutine InsertArrayAtIndex(self, position, array)
-      class(CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
-      integer                                     , intent(in)    :: position
-      FTL_TEMPLATE_TYPE_WRAP                      , intent(in)    :: array(:)
+      class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
+      integer                                       , intent(in)    :: position
+      FTL_TEMPLATE_TYPE_WRAP                        , intent(in)    :: array(:)
 
       integer :: i
 
@@ -596,65 +596,65 @@ contains
    end subroutine
    !
    subroutine InsertArray(self, position, array)
-      class(CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME))         , intent(inout) :: self
-      type(CAT3(ftlVector,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)    :: position
-      FTL_TEMPLATE_TYPE_WRAP                               , intent(in)    :: array(:)
+      class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME))         , intent(inout) :: self
+      type(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)    :: position
+      FTL_TEMPLATE_TYPE_WRAP                                 , intent(in)    :: array(:)
 
       call self%InsertArrayAtIndex(position%index, array)
 
    end subroutine
    !
    subroutine InsertIteratorPairAtIndex(self, position, first, last)
-      class(CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME))         , intent(inout) :: self
-      integer                                              , intent(in)    :: position
-      type(CAT3(ftlVector,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)    :: first
-      type(CAT3(ftlVector,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)    :: last
+      class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME))         , intent(inout) :: self
+      integer                                                , intent(in)    :: position
+      type(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)    :: first
+      type(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)    :: last
 
-      call self%InsertArrayAtIndex(position, first%vector%data(first%index:last%index-1))
+      call self%InsertArrayAtIndex(position, first%dynArray%data(first%index:last%index-1))
 
    end subroutine
    !
    subroutine InsertIteratorPair(self, position, first, last)
-      class(CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME))         , intent(inout) :: self
-      type(CAT3(ftlVector,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)    :: position
-      type(CAT3(ftlVector,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)    :: first
-      type(CAT3(ftlVector,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)    :: last
+      class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME))         , intent(inout) :: self
+      type(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)    :: position
+      type(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)    :: first
+      type(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)    :: last
 
-      call self%InsertArrayAtIndex(position%index, first%vector%data(first%index:last%index-1))
+      call self%InsertArrayAtIndex(position%index, first%dynArray%data(first%index:last%index-1))
 
    end subroutine
 
 
 
-   ! Removes from the vector either a single element (position) or a range of elements [first,last).
+   ! Removes from the dynArray either a single element (position) or a range of elements [first,last).
    !
    ! This effectively reduces the container size by the number of elements removed, which are destroyed.
    !
-   ! Because vectors use an array as their underlying storage, erasing elements in positions other than the vector end causes
+   ! Because dynArrays use an array as their underlying storage, erasing elements in positions other than the dynArray end causes
    ! the container to relocate all the elements after the segment erased to their new positions. This is generally an
    ! inefficient operation compared to the one performed for the same operation by other kinds of sequence containers (such
    ! as list or forward_list).
    !
    subroutine EraseSingle(self, position)
-      class(CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME))         , intent(inout) :: self
-      type(CAT3(ftlVector,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)    :: position
+      class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME))         , intent(inout) :: self
+      type(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)    :: position
 
       call self%EraseIndexPair(position%index, position%index+1)
 
    end subroutine
    !
    subroutine EraseSingleIndex(self, position)
-      class(CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
-      integer                                     , intent(in)    :: position
+      class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
+      integer                                       , intent(in)    :: position
 
       call self%EraseIndexPair(position, position+1)
 
    end subroutine
    !
    subroutine EraseIndexPair(self, first, last)
-      class(CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
-      integer                                     , intent(in)    :: first
-      integer                                     , intent(in)    :: last
+      class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
+      integer                                       , intent(in)    :: first
+      integer                                       , intent(in)    :: last
 
       integer :: i, numerased
 
@@ -672,9 +672,9 @@ contains
    end subroutine
    !
    subroutine EraseIteratorPair(self, first, last)
-      class(CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME))         , intent(inout) :: self
-      type(CAT3(ftlVector,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)    :: first
-      type(CAT3(ftlVector,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)    :: last
+      class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME))         , intent(inout) :: self
+      type(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)    :: first
+      type(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)    :: last
 
       call self%EraseIndexPair(first%index, last%index)
 
@@ -682,13 +682,13 @@ contains
 
 
 
-   ! Removes all elements from the vector (which are destroyed), leaving the container with a size of 0.
+   ! Removes all elements from the dynArray (which are destroyed), leaving the container with a size of 0.
    !
-   ! A reallocation is not guaranteed to happen, and the vector capacity is not guaranteed to change due to calling this
+   ! A reallocation is not guaranteed to happen, and the dynArray capacity is not guaranteed to change due to calling this
    ! function.
    !
    subroutine Clear(self)
-      class(CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
+      class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
 
       call self%EraseIndexPair(1, self%psize+1)
 
@@ -701,11 +701,11 @@ contains
 
 
    subroutine FixValuePtrs(self)
-      class(CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME)), intent(inout), target :: self
+      class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(inout), target :: self
 
       self%data => self%storage(1:self%psize)
       if (self%psize == 0) then
-         ! not strictly necessary, because it will always crash if someone accesses front/back on an empty vector ...
+         ! not strictly necessary, because it will always crash if someone accesses front/back on an empty dynArray ...
          nullify(self%front, self%back)
       else
          self%front => self%storage(1)
@@ -717,8 +717,8 @@ contains
 
 
    subroutine ChangeCapacity(self, n)
-      class(CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
-      integer                                     , intent(in)    :: n
+      class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
+      integer                                       , intent(in)    :: n
 
       FTL_TEMPLATE_TYPE_WRAP, allocatable :: newstorage(:)
       integer :: numretain
@@ -737,7 +737,7 @@ contains
 
 
    subroutine IncreaseCapacity(self)
-      class(CAT(ftlVector,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
+      class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
 
       call self%changeCapacity(max(2 * self%Capacity(), 1))
 
@@ -745,24 +745,24 @@ contains
 
 
 
-! ====== Implementation of ftlVectorIterator methods =============================================================================
+! ====== Implementation of ftlDynArrayIterator methods =============================================================================
 
 
 
    subroutine NewItDefault(self)
-      class(CAT3(ftlVector,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(out) :: self
+      class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(out) :: self
 
       ! Nothing to do here: intent(out) already resets everything
 
    end subroutine
    !
    subroutine NewItCopyOther(self, other)
-      class(CAT3(ftlVector,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(out) :: self
-      class(CAT3(ftlVector,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)  :: other
+      class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(out) :: self
+      class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)  :: other
 
-      self%vector => other%vector
+      self%dynArray => other%dynArray
       self%index = other%index
-      if (self%vector%psize > 0 .and. self%index <= self%vector%psize) self%value => self%vector%storage(self%index)
+      if (self%dynArray%psize > 0 .and. self%index <= self%dynArray%psize) self%value => self%dynArray%storage(self%index)
 
    end subroutine
 
@@ -773,11 +773,11 @@ contains
 
 
    subroutine Inc(self)
-      class(CAT3(ftlVector,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(inout) :: self
+      class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(inout) :: self
 
       self%index =  self%index + 1
-      if (self%index <= self%vector%psize) then
-         self%value => self%vector%storage(self%index)
+      if (self%index <= self%dynArray%psize) then
+         self%value => self%dynArray%storage(self%index)
       else
          nullify(self%value)
       endif
@@ -785,11 +785,11 @@ contains
    end subroutine
    !
    subroutine Dec(self)
-      class(CAT3(ftlVector,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(inout) :: self
+      class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(inout) :: self
 
       self%index =  self%index - 1
       if (self%index > 0) then
-         self%value => self%vector%storage(self%index)
+         self%value => self%dynArray%storage(self%index)
       else
          nullify(self%value)
       endif
@@ -798,28 +798,28 @@ contains
 
 
 
-   type(CAT3(ftlVector,FTL_TEMPLATE_TYPE_NAME,Iterator)) function AdvanceN(self, n)
-      class(CAT3(ftlVector,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: self
-      integer                                               , intent(in) :: n
+   type(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)) function AdvanceN(self, n)
+      class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: self
+      integer                                                 , intent(in) :: n
 
       call AdvanceN%New(self)
       AdvanceN%index =  AdvanceN%index + n
-      if (AdvanceN%index <= AdvanceN%vector%psize) then
-         AdvanceN%value => AdvanceN%vector%storage(AdvanceN%index)
+      if (AdvanceN%index <= AdvanceN%dynArray%psize) then
+         AdvanceN%value => AdvanceN%dynArray%storage(AdvanceN%index)
       else
          nullify(AdvanceN%value)
       endif
 
    end function
    !
-   type(CAT3(ftlVector,FTL_TEMPLATE_TYPE_NAME,Iterator)) function ReverseN(self, n)
-      class(CAT3(ftlVector,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: self
-      integer                                               , intent(in) :: n
+   type(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)) function ReverseN(self, n)
+      class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: self
+      integer                                                 , intent(in) :: n
 
       call ReverseN%New(self)
       ReverseN%index =  ReverseN%index - n
       if (ReverseN%index > 0) then
-         ReverseN%value => ReverseN%vector%storage(ReverseN%index)
+         ReverseN%value => ReverseN%dynArray%storage(ReverseN%index)
       else
          nullify(ReverseN%value)
       endif
@@ -829,10 +829,10 @@ contains
 
 
    pure integer function DiffOther(self, other)
-      class(CAT3(ftlVector,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: self
-      class(CAT3(ftlVector,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: other
+      class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: self
+      class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: other
 
-      if (associated(self%vector,other%vector)) then
+      if (associated(self%dynArray,other%dynArray)) then
          DiffOther = self%index - other%index
       else
          DiffOther = huge(0)
@@ -847,50 +847,50 @@ contains
 
 
    pure logical function EqualOther(self, other)
-      class(CAT3(ftlVector,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: self
-      class(CAT3(ftlVector,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: other
+      class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: self
+      class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: other
 
-      EqualOther = associated(self%vector,other%vector) .and. (self%index == other%index)
+      EqualOther = associated(self%dynArray,other%dynArray) .and. (self%index == other%index)
 
    end function
    !
    pure logical function UnequalOther(self, other)
-      class(CAT3(ftlVector,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: self
-      class(CAT3(ftlVector,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: other
+      class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: self
+      class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: other
 
-      UnequalOther = .not.associated(self%vector,other%vector) .or. (self%index /= other%index)
+      UnequalOther = .not.associated(self%dynArray,other%dynArray) .or. (self%index /= other%index)
 
    end function
    !
    pure logical function SmallerOther(self, other)
-      class(CAT3(ftlVector,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: self
-      class(CAT3(ftlVector,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: other
+      class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: self
+      class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: other
 
-      SmallerOther = associated(self%vector,other%vector) .and. (self%index < other%index)
+      SmallerOther = associated(self%dynArray,other%dynArray) .and. (self%index < other%index)
 
    end function
    !
    pure logical function SmallerEqualOther(self, other)
-      class(CAT3(ftlVector,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: self
-      class(CAT3(ftlVector,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: other
+      class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: self
+      class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: other
 
-      SmallerEqualOther = associated(self%vector,other%vector) .and. (self%index <= other%index)
+      SmallerEqualOther = associated(self%dynArray,other%dynArray) .and. (self%index <= other%index)
 
    end function
    !
    pure logical function GreaterOther(self, other)
-      class(CAT3(ftlVector,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: self
-      class(CAT3(ftlVector,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: other
+      class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: self
+      class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: other
 
-      GreaterOther = associated(self%vector,other%vector) .and. (self%index > other%index)
+      GreaterOther = associated(self%dynArray,other%dynArray) .and. (self%index > other%index)
 
    end function
    !
    pure logical function GreaterEqualOther(self, other)
-      class(CAT3(ftlVector,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: self
-      class(CAT3(ftlVector,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: other
+      class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: self
+      class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: other
 
-      GreaterEqualOther = associated(self%vector,other%vector) .and. (self%index >= other%index)
+      GreaterEqualOther = associated(self%dynArray,other%dynArray) .and. (self%index >= other%index)
 
    end function
 
