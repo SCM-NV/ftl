@@ -32,8 +32,6 @@
 ! ftlHashMap containers are faster than map containers to access individual elements by their key, although they are
 ! generally less efficient for range iteration through a subset of their elements.
 !
-! Unordered maps implement the direct access operator (operator[]) which allows for direct access of the mapped value
-! using its key value as argument.
 !
 ! Iterators in the container are at least forward iterators.
 
@@ -100,6 +98,7 @@ module CAT4(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME,Module)
       private
 
       integer                      :: psize = 0
+      real                         :: maxLoadFactor = 1.0
       type(BaseEntry), allocatable :: buckets(:)
 
    contains
@@ -127,6 +126,12 @@ module CAT4(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME,Module)
       procedure, public :: BucketCount
       procedure, public :: BucketSize
       procedure, public :: Bucket
+
+      procedure, public :: LoadFactor
+      procedure, public :: SetMaxLoadFactor
+      procedure, public :: GetMaxLoadFactor
+      procedure, public :: Rehash
+      procedure, public :: Reserve
 
    end type
 
@@ -262,6 +267,8 @@ contains
          entr%value = value
       end select
 
+      if (self%LoadFactor() > self%maxLoadFactor) call self%Rehash(2 * self%BucketCount())
+
    end subroutine
 
 
@@ -376,7 +383,7 @@ contains
    !
    ! The number of buckets influences directly the load factor of the container's hash table (and thus the probability of
    ! collision). The container automatically increases the number of buckets to keep the load factor below a specific
-   ! threshold (its max_load_factor), causing a rehash each time the number of buckets needs to be increased.
+   ! threshold (its maxLoadFactor), causing a rehash each time the number of buckets needs to be increased.
    !
    pure integer function BucketCount(self)
       class(CAT3(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: self
@@ -394,7 +401,7 @@ contains
    !
    ! The number of elements in a bucket influences the time it takes to access a particular element in the bucket. The
    ! container automatically increases the number of buckets to keep the load factor (which is the average bucket size)
-   ! below its max_load_factor.
+   ! below its maxLoadFactor.
    !
    integer function BucketSize(self, n)
       class(CAT3(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME)), intent(in), target :: self
@@ -429,6 +436,93 @@ contains
 
    end function
 
+
+
+   ! =============> Hash policy:
+
+
+
+   ! Returns the current load factor in the ftlHashMap container.
+   !
+   ! The load factor is the ratio between the number of elements in the container (its size) and the number of buckets:
+   !
+   ! loadFactor = size / bucketCount
+   !
+   ! The load factor influences the probability of collision in the hash table (i.e., the probability of two elements
+   ! being located in the same bucket). The container automatically increases the number of buckets to keep the load
+   ! factor below a specific threshold (its maxLoadFactor), causing a rehash each time an expansion is needed.
+   !
+   ! To retrieve or change this threshold, use member functions GetMaxLoadFactor and SetMaxLoadFactor.
+   !
+   pure real function LoadFactor(self)
+      class(CAT3(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: self
+
+      LoadFactor = self%psize / self%BucketCount()
+
+   end function
+   !
+   pure real function GetMaxLoadFactor(self)
+      class(CAT3(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: self
+
+      GetMaxLoadFactor = self%maxLoadFactor
+
+   end function
+   !
+   subroutine SetMaxLoadFactor(self, maxLoadFactor)
+      class(CAT3(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
+      real                                                                    , intent(in)    :: maxLoadFactor
+
+      if (maxLoadFactor > 0.0) then
+         self%maxLoadFactor = maxLoadFactor
+         if (self%LoadFactor() > self%maxLoadFactor) call self%Rehash(2 * self%BucketCount())
+      endif
+
+   end subroutine
+
+
+
+   ! Sets the number of buckets in the container to n or more.
+   !
+   ! If n is greater than the current number of buckets in the container (bucketCount), a rehash is forced. The new
+   ! bucket count can either be equal or greater than n.
+   !
+   ! If n is lower than the current number of buckets in the container (bucketCount), the function may have no effect
+   ! on the bucket count and may not force a rehash.
+   !
+   ! A rehash is the reconstruction of the hash table: All the elements in the container are rearranged according to
+   ! their hash value into the new set of buckets. This may alter the order of iteration of elements within the
+   ! container.
+   !
+   ! Rehashes are automatically performed by the container whenever its load factor is going to surpass its
+   ! maxLoadFactor in an operation.
+   !
+   ! Notice that this function expects the number of buckets as argument. A similar function exists,
+   ! ftlHashMap%Reserve(), that expects the number of elements in the container as argument.
+   !
+   subroutine Rehash(self, n)
+      class(CAT3(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
+      integer                                                                 , intent(in)    :: n
+
+      ! TODO
+
+   end subroutine
+
+
+
+   ! Sets the number of buckets in the container (bucketCount) to the most appropriate to contain at least n elements.
+   !
+   ! If n is greater than the current bucketCount multiplied by the maxLoadFactor, the container's bucketCount is
+   ! increased and a rehash is forced.
+   !
+   ! If n is lower than that, the function may have no effect.
+   !
+   subroutine Reserve(self, n)
+      class(CAT3(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
+      integer                                                                 , intent(in)    :: n
+
+      if (n > self%BucketCount() * self%maxLoadFactor) call self%Rehash(2 * self%BucketCount())
+
+   end subroutine
 
 
 end module
