@@ -39,6 +39,7 @@ contains
       call testNewDefault
       call testSetAndGet
       call testErase
+      call testRehash
 
    end subroutine
 
@@ -228,6 +229,41 @@ contains
 #ifdef FTL_NO_FINALIZERS
       call um%Delete()
 #endif
+
+   end subroutine
+
+
+   subroutine testRehash
+      type(ftlHashMapStrInt) :: um
+
+      call um%New(10)
+      call um%SetMaxLoadFactor(1.0)
+
+      ASSERT(um%BucketCount() == 10)
+
+      call um%Set('foo ',  0)
+      call um%Set('bar ',  1)
+      call um%Set('test',  2)
+      call um%Set('blub',  3)
+      call um%Set('jipi',  4)
+      call um%Set('fort',  5)
+      call um%Set('ran ',  6)
+      call um%Set('is m',  7)
+      call um%Set('y fa',  8)
+      call um%Set('vour',  9)
+      call um%Set('ite ', 10)
+      call um%Set('lang', 11)
+      call um%Set('not ', 12)
+      call um%Set('rly!', 13)
+
+      ASSERT(size(um) == 14)
+      ASSERT(um%LoadFactor() < 1.0)
+      ASSERT(um%BucketCount() > 10)
+
+      call um%Rehash(5)
+
+      ASSERT(size(um) == 14)
+      ASSERT(um%BucketCount() == 5)
 
    end subroutine
 

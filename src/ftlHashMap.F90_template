@@ -457,7 +457,7 @@ contains
    pure real function LoadFactor(self)
       class(CAT3(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: self
 
-      LoadFactor = self%psize / self%BucketCount()
+      LoadFactor = real(self%psize) / real(self%BucketCount())
 
    end function
    !
@@ -500,10 +500,40 @@ contains
    ! ftlHashMap%Reserve(), that expects the number of elements in the container as argument.
    !
    subroutine Rehash(self, n)
-      class(CAT3(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
-      integer                                                                 , intent(in)    :: n
+      class(CAT3(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME)), intent(inout), target :: self
+      integer                                                                 , intent(in)            :: n
 
-      ! TODO
+      type(BaseEntry), allocatable, target :: newbuckets(:)
+      class(BaseEntry), pointer :: eorg, enew
+      integer :: borg
+
+
+      if (n <= 0) return
+
+      allocate(newbuckets(n))
+
+      do borg = 1, size(self%buckets)
+         eorg => self%buckets(borg)
+         do while (associated(eorg))
+            select type (eorg)
+            type is (DataEntry)
+               enew => newbuckets(mod(ftlHash(eorg%key), n) + 1)
+               do while (associated(enew%next))
+                  enew => enew%next
+               enddo
+               allocate(DataEntry::enew%next)
+               enew => enew%next
+               select type (enew)
+               type is (DataEntry)
+                  enew%key = eorg%key
+                  enew%value = eorg%value
+               end select
+            end select
+            eorg => eorg%next
+         enddo
+      enddo
+
+      call move_alloc(newbuckets, self%buckets)
 
    end subroutine
 
