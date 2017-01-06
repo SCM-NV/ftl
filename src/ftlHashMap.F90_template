@@ -620,10 +620,7 @@ contains
             end select
             edel => eorg
             eorg => eorg%next
-            select type (edel)
-            type is (DataEntry)
-               deallocate(edel)
-            end select
+            if (.not.associated(edel, self%buckets(borg))) deallocate(edel)
          enddo
       enddo
 
