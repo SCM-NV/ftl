@@ -17,7 +17,7 @@
 
 
 !   ftlHashMap
-!   ===============
+!   ==========
 !
 ! Unordered maps are associative containers that store elements formed by the combination of a key value and a mapped
 ! value, and which allows for fast retrieval of individual elements based on their keys.
@@ -112,6 +112,11 @@ module CAT4(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME,Module)
       final             :: Finalizer
 #endif
 
+      procedure         :: BeginHashMap
+      generic  , public :: Begin => BeginHashMap
+      procedure         :: EndHashMap
+      generic  , public :: End => EndHashMap
+
       procedure, public :: Empty
       procedure         :: SizeHashMap
       generic  , public :: Size => SizeHashMap
@@ -141,11 +146,45 @@ module CAT4(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME,Module)
    end interface
 
 
+! ====== Type of an iterator over a ftlHashMap container =========================================================================
+
+   type, public :: CAT4(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME,Iterator)
+      private
+
+      type(BaseEntry)          , pointer         :: buckets(:) => null()
+      integer                                    :: bIdx = 0
+      class(BaseEntry)         , pointer         :: entr => null()
+      FTL_TEMPLATE_TYPE_WRAP   , pointer, public :: value => null()
+
+   contains
+      private
+
+      procedure         :: NewItDefault
+      procedure         :: NewItCopyOther
+      generic  , public :: New => NewItDefault, NewItCopyOther
+
+      procedure, public :: Key
+
+      procedure, public :: Inc
+
+   end type
+
+   public :: operator(==)
+   interface operator(==)
+      module procedure EqualOther
+   end interface
+
+   public :: operator(/=)
+   interface operator(/=)
+      module procedure UnequalOther
+   end interface
+
+
 contains
 
 
 
-! ====== Implementation of ftlHashMap methods ===============================================================================
+! ====== Implementation of ftlHashMap methods ====================================================================================
 
 
    ! Constructs an unordered_map container object, initializing its contents depending on the constructor version used:
@@ -196,6 +235,56 @@ contains
       call self%Delete()
    end subroutine
 #endif
+
+
+
+   ! =============> Iterators:
+
+
+
+   ! Returns an iterator pointing to the first element in the ftlHashMap container.
+   !
+   ! Notice that an ftlHashMap object makes no guarantees on which specific element is considered its first element.
+   ! But, in any case, the range that goes from its begin to its end covers all the elements in the container.
+   !
+   type(CAT4(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME,Iterator)) function BeginHashMap(self) result(Begin)
+      class(CAT3(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME)), intent(in), target :: self
+
+      Begin%buckets => self%buckets
+      Begin%bIdx = 1
+
+      do while (Begin%bIdx <= size(Begin%buckets))
+         if (associated(Begin%buckets(Begin%bIdx)%next)) then
+            Begin%entr => Begin%buckets(Begin%bIdx)%next
+            select type (entr => Begin%entr)
+            type is (DataEntry) ! always true
+               Begin%value => entr%value
+            end select
+            return
+         endif
+         Begin%bIdx = Begin%bIdx + 1
+      enddo
+
+   end function
+
+
+
+   ! Returns an iterator pointing to the past-the-end element in the ftlHashMap container.
+   !
+   ! The iterator returned by end does not point to any element, but to the position that follows the last element in
+   ! the ftlHashMap container (its past-the-end position). Thus, the value returned shall not be dereferenced - it is
+   ! generally used to describe the open-end of a range, such as [begin,end).
+   !
+   ! Notice that an ftlHashMap object makes no guarantees on which order its elements follow. But, in any case, the
+   ! range that goes from its begin to its end covers all the elements in the container.
+   !
+   type(CAT4(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME,Iterator)) function EndHashMap(self) result(End)
+      class(CAT3(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME)), intent(in), target :: self
+
+      End%buckets => self%buckets
+      End%bIdx = size(self%buckets) + 1
+
+   end function
 
 
 
@@ -504,7 +593,7 @@ contains
       integer                                                                 , intent(in)            :: n
 
       type(BaseEntry), allocatable, target :: newbuckets(:)
-      class(BaseEntry), pointer :: eorg, enew
+      class(BaseEntry), pointer :: eorg, edel, enew
       integer :: borg
 
 
@@ -529,7 +618,12 @@ contains
                   enew%value = eorg%value
                end select
             end select
+            edel => eorg
             eorg => eorg%next
+            select type (edel)
+            type is (DataEntry)
+               deallocate(edel)
+            end select
          enddo
       enddo
 
@@ -553,6 +647,113 @@ contains
       if (n > self%BucketCount() * self%maxLoadFactor) call self%Rehash(2 * self%BucketCount())
 
    end subroutine
+
+
+
+! ====== Implementation of ftlHashMapIterator methods ============================================================================
+
+
+
+   subroutine NewItDefault(self)
+      class(CAT4(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(out) :: self
+
+      ! Nothing to do here: intent(out) already resets everything
+
+   end subroutine
+   !
+   subroutine NewItCopyOther(self, other)
+      class(CAT4(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(out) :: self
+      class(CAT4(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)  :: other
+
+      self%buckets => other%buckets
+      self%bIdx = other%bIdx
+      self%entr => other%entr
+
+      if (associated(self%entr)) then
+         select type (entr => self%entr)
+         type is (DataEntry)
+            self%value => entr%value
+         end select
+      endif
+
+   end subroutine
+
+
+
+   ! Getter method for the key of the entry an interator is pointing to. We have to make this a method so that the
+   ! key can not be changed through the iterator. This would seriously mess up the hash map ...
+   !
+   pure FTL_TEMPLATE_KEYTYPE_WRAP function Key(self)
+      class(CAT4(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: self
+
+      if (associated(self%entr)) then
+         select type (entr => self%entr)
+         type is (DataEntry)
+            key = entr%key
+         end select
+      endif
+
+   end function
+
+
+
+   ! =============> Arithmetic operations:
+
+
+
+   subroutine Inc(self)
+      class(CAT4(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(inout) :: self
+
+      if (associated(self%entr%next)) then
+         self%entr => self%entr%next
+         select type (entr => self%entr)
+         type is (DataEntry) ! always true
+            self%value => entr%value
+         end select
+      else
+         do while (.true.)
+            self%bIdx = self%bIdx + 1
+            if (self%bIdx > size(self%buckets)) then
+               nullify(self%entr)
+               nullify(self%value)
+               return
+            endif
+            if (associated(self%buckets(self%bIdx)%next)) then
+               self%entr => self%buckets(self%bIdx)%next
+               select type (entr => self%entr)
+               type is (DataEntry) ! always true
+                  self%value => entr%value
+               end select
+               return
+            endif
+         enddo
+      endif
+
+   end subroutine
+
+
+
+   ! =============> Logical operations:
+
+
+
+   pure logical function EqualOther(self, other)
+      class(CAT4(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: self
+      class(CAT4(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: other
+
+      EqualOther = &
+          associated(self%entr, other%entr) .or. &
+         (associated(self%buckets, other%buckets) .and. (self%bIdx == size(self%buckets) + 1) .and. (self%bIdx == other%bIdx) )
+
+   end function
+   !
+   pure logical function UnequalOther(self, other)
+      class(CAT4(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: self
+      class(CAT4(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: other
+
+      UnequalOther = .not.EqualOther(self, other)
+
+   end function
 
 
 end module

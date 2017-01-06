@@ -40,6 +40,7 @@ contains
       call testSetAndGet
       call testErase
       call testRehash
+      call testIterators
 
    end subroutine
 
@@ -264,6 +265,54 @@ contains
 
       ASSERT(size(um) == 14)
       ASSERT(um%BucketCount() == 5)
+
+#ifdef FTL_NO_FINALIZERS
+      call um%Delete()
+#endif
+
+   end subroutine
+
+
+   subroutine testIterators
+      type(ftlHashMapStrInt) :: um
+      type(ftlHashMapStrIntIterator) :: it
+      integer :: i
+
+      call um%New(10)
+
+      call um%Set('test',  0)
+      call um%Set('blub',  1)
+      call um%Set('jipi',  2)
+      call um%Set('fort',  3)
+      call um%Set('ran ',  4)
+      call um%Set('is m',  5)
+      call um%Set('y fa',  6)
+      call um%Set('vour',  7)
+      call um%Set('ite ',  8)
+      call um%Set('lang',  9)
+      call um%Set('not ', 10)
+      call um%Set('rly!', 11)
+
+      call um%Rehash(10) ! make sure we have overfull buckets
+
+      ASSERT(size(um) == 12)
+      ASSERT(um%LoadFactor() > 1.0)
+      ASSERT(um%BucketCount() == 10)
+
+      it = um%Begin()
+      do i = 1, 12
+         ASSERT(it /= um%End())
+         ASSERT(um%Has(it%key()))
+         ASSERT(associated(um%Get(it%key())))
+         ASSERT(um%Get(it%key()) == it%value)
+         call it%Inc()
+      enddo
+
+      ASSERT(it == um%End())
+
+#ifdef FTL_NO_FINALIZERS
+      call um%Delete()
+#endif
 
    end subroutine
 
