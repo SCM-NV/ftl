@@ -80,7 +80,7 @@ contains
 
       hash = 1299709
       do i = 1, len(str)
-         hash = 101 * hash + ichar(str(i:i))
+         hash = -101 * hash + ichar(str(i:i))
       enddo
       hash = abs(hash)
 
