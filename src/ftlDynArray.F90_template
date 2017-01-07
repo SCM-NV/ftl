@@ -17,7 +17,7 @@
 
 
 !   ftlDynArray
-!   =========
+!   ===========
 !
 ! DynArrays are sequence containers representing arrays that can change in size.
 !
@@ -225,7 +225,7 @@ contains
 
 
 
-! ====== Implementation of ftlDynArray methods =====================================================================================
+! ====== Implementation of ftlDynArray methods ===================================================================================
 
 
    ! Constructs a dynArray, initializing its contents depending on the constructor version used:
@@ -744,7 +744,7 @@ contains
 
 
 
-! ====== Implementation of ftlDynArrayIterator methods =============================================================================
+! ====== Implementation of ftlDynArrayIterator methods ===========================================================================
 
 
 

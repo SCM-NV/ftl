@@ -82,7 +82,7 @@ cleanall:
 
 # Unit tests:
 
-$(BUILDDIR)/tests: tests/tests.F90 $(BUILDDIR)/ftlTestTools.o $(BUILDDIR)/ftlDynArrayTests.o $(BUILDDIR)/ftlListTests.o $(BUILDDIR)/ftlHashMapTests.o $(BUILDDIR)/ftlAlgorithmsTests.o $(BUILDDIR)/ftlMemoryTests.o | $(BUILDDIR)
+$(BUILDDIR)/tests: tests/tests.F90 $(BUILDDIR)/ftlTestTools.o $(BUILDDIR)/ftlDynArrayTests.o $(BUILDDIR)/ftlListTests.o $(BUILDDIR)/ftlHashMapTests.o $(BUILDDIR)/ftlAlgorithmsTests.o $(BUILDDIR)/ftlMemoryTests.o $(BUILDDIR)/ftlStringTests.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) $< $(BUILDDIR)/*.o -o $@
 
 $(BUILDDIR)/ftlTestTools.o: tests/ftlTestTools.F90 tests/ftlTestTools.inc | $(BUILDDIR)
@@ -101,6 +101,9 @@ $(BUILDDIR)/ftlAlgorithmsTests.o: tests/ftlAlgorithmsTests.F90 $(BUILDDIR)/ftlDy
 	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
 
 $(BUILDDIR)/ftlMemoryTests.o: tests/ftlMemoryTests.F90 $(BUILDDIR)/ftlMemoryInt.o | $(BUILDDIR)
+	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
+
+$(BUILDDIR)/ftlStringTests.o: tests/ftlStringTests.F90 $(BUILDDIR)/ftlString.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
 
 
@@ -149,6 +152,9 @@ $(BUILDDIR)/ftlMemoryInt.o: instantiations/ftlMemoryInt.F90 src/ftlMemory.F90_te
 # Non-template FTL modules:
 
 $(BUILDDIR)/ftlHash.o: src/ftlHash.F90 | $(BUILDDIR)
+	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
+
+$(BUILDDIR)/ftlString.o: src/ftlString.F90 $(BUILDDIR)/ftlHash.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
 
 

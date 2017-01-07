@@ -21,6 +21,7 @@
 program tests
 
    use ftlTestToolsModule
+   use ftlStringTestsModule
    use ftlDynArrayTestsModule
    use ftlListTestsModule
    use ftlHashMapTestsModule
@@ -30,6 +31,7 @@ program tests
    ! dummy assertion to test that assertions themselves work ...
    ASSERT(.false.)
 
+   call ftlStringTests
    call ftlDynArrayTests
    call ftlListTests
    call ftlHashMapTests
