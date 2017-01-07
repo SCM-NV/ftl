@@ -83,6 +83,8 @@ module CAT3(ftlMemory,FTL_TEMPLATE_TYPE_NAME,Module)
       procedure         :: NewFromOther
       generic  , public :: New => NewDefault, NewFromRawPtr, NewFromOther
 
+      generic  , public :: assignment(=) => NewFromOther
+
       procedure, public :: Delete
       procedure, public :: Reset => Delete
 #ifndef FTL_NO_FINALIZERS
@@ -94,11 +96,6 @@ module CAT3(ftlMemory,FTL_TEMPLATE_TYPE_NAME,Module)
       procedure, public :: Unique
 
    end type
-
-   public :: assignment(=)
-   interface assignment(=)
-      module procedure NewFromOther
-   end interface
 
    public :: associated
    interface associated
