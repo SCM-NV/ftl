@@ -38,11 +38,17 @@ contains
       call testAssignFStr
       call testAssignOther
 
-      call testFortranStandardMethods
-
       call testIteratorWriting
 
       call testHash
+
+      call testFortranStandardMethods
+
+      ! Python string methods:
+      call testSplit
+
+      ! Other string methods:
+      call testCountWords
 
    end subroutine
 
@@ -84,6 +90,44 @@ contains
    end subroutine
 
 
+   subroutine testIteratorWriting
+      type(ftlString) :: s
+      type(ftlStringIterator) :: it
+
+      s = 'TEfT'
+      it = Begin(s)
+
+      ASSERT(it%value == 'T')
+
+      call it%Inc()
+
+      ASSERT(it%value == 'E')
+
+      call it%Inc()
+
+      ASSERT(it%value == 'f')
+
+      it%value = 'S'
+
+      ASSERT(it%value == 'S')
+      ASSERT(s == 'TEST')
+
+   end subroutine
+
+
+   subroutine testHash
+
+      use ftlHashModule
+
+      ASSERT(ftlHash(ftlString('testhash')) == ftlHash('testhash'))
+      ASSERT(ftlHash(ftlString('another test')) == ftlHash('another test'))
+      ASSERT(ftlHash(ftlString('and another')) == ftlHash('and another'))
+      ASSERT(ftlHash(ftlString('number 4')) == ftlHash('number 4'))
+      ASSERT(ftlHash(ftlString('the last')) == ftlHash('the last'))
+
+   end subroutine
+
+
    subroutine testFortranStandardMethods
       type(ftlString) :: s1, s2
 
@@ -121,40 +165,54 @@ contains
    end subroutine
 
 
-   subroutine testIteratorWriting
+   subroutine testSplit
       type(ftlString) :: s
-      type(ftlStringIterator) :: it
+      type(ftlString), allocatable :: words(:)
 
-      s = 'TEfT'
-      it = Begin(s)
+      s = 'This is a simple sentence.'
+      words = s%Split()
 
-      ASSERT(it%value == 'T')
+      ASSERT(size(words) == 5)
+      ASSERT(words(1) == 'This')
+      ASSERT(words(2) == 'is')
+      ASSERT(words(3) == 'a')
+      ASSERT(words(4) == 'simple')
+      ASSERT(words(5) == 'sentence.')
 
-      call it%Inc()
+      s = '	  This is a   simple sentence with weird whitespacing    issues.  	'
+      words = s%Split()
 
-      ASSERT(it%value == 'E')
-
-      call it%Inc()
-
-      ASSERT(it%value == 'f')
-
-      it%value = 'S'
-
-      ASSERT(it%value == 'S')
-      ASSERT(s == 'TEST')
+      ASSERT(size(words) == 9)
+      ASSERT(words(1) == 'This')
+      ASSERT(words(2) == 'is')
+      ASSERT(words(3) == 'a')
+      ASSERT(words(4) == 'simple')
+      ASSERT(words(5) == 'sentence')
+      ASSERT(words(6) == 'with')
+      ASSERT(words(7) == 'weird')
+      ASSERT(words(8) == 'whitespacing')
+      ASSERT(words(9) == 'issues.')
 
    end subroutine
 
 
-   subroutine testHash
+   subroutine testCountWords
+      type(ftlString) :: s
 
-      use ftlHashModule
+      s = 'this is a test'
+      ASSERT(s%CountWords() == 4)
 
-      ASSERT(ftlHash(ftlString('testhash')) == ftlHash('testhash'))
-      ASSERT(ftlHash(ftlString('another test')) == ftlHash('another test'))
-      ASSERT(ftlHash(ftlString('and another')) == ftlHash('and another'))
-      ASSERT(ftlHash(ftlString('number 4')) == ftlHash('number 4'))
-      ASSERT(ftlHash(ftlString('the last')) == ftlHash('the last'))
+      s = 'this is a test with trailing spaces   '
+      ASSERT(s%CountWords() == 7)
+
+      s = '   this is a test with leading spaces   '
+      ASSERT(s%CountWords() == 7)
+
+      s = '   this is a test with leading and trailing spaces   '
+      ASSERT(s%CountWords() == 9)
+
+      s = '	test containing 	tabs	'
+      ASSERT(s%CountWords() == 3)
 
    end subroutine
 

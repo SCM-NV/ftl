@@ -54,10 +54,23 @@ module ftlStringModule
 
       procedure, public :: Delete
 
+      procedure         :: CharString
+      generic  , public :: Char => CharString
+
       procedure         :: BeginString
       generic  , public :: Begin => BeginString
       procedure         :: EndString
       generic  , public :: End => EndString
+
+#ifdef FTL_ENABLE_DERIVED_TYPE_IO
+      generic  , public :: write(unformatted) => WriteUnformatted
+#endif
+
+      ! Python string methods:
+      procedure, public :: Split
+
+      ! Other string methods:
+      procedure, public :: CountWords
 
    end type
 
@@ -152,7 +165,7 @@ module ftlStringModule
    end interface
 
 
-! ====== Type of an iterator over a ftlList container ============================================================================
+! ====== Type of an iterator over a ftlString container ==========================================================================
 
    type, public :: ftlStringIterator
       private
@@ -244,6 +257,21 @@ contains
 
 
 
+   ! =============> Character wise access:
+
+
+
+   function CharString(self, idx) result(Char)
+      class(ftlString), intent(in), target :: self
+      integer         , intent(in)         :: idx
+      character, pointer                   :: Char
+
+      Char => self%fstr(idx:idx)
+
+   end function
+
+
+
    ! =============> Iterators:
 
 
@@ -279,6 +307,23 @@ contains
 
    end function
 
+
+
+#ifdef FTL_ENABLE_DERIVED_TYPE_IO
+   ! =============> Derived-type IO:
+
+
+
+   subroutine WriteUnformatted(self, unit, iostat, iomsg)
+      class(ftlString), intent(in)    :: self
+      integer         , intent(in)    :: unit
+      integer         , intent(out)   :: iostat
+      character(len=*), intent(inout) :: iomsg
+
+      write (unit, '(A)', iostat=iostat, iomsg=iomsg) self%fstr
+
+   end subroutine
+#endif
 
 
    ! =============> Fortran standard methods:
@@ -431,6 +476,88 @@ contains
 
 
 
+   ! =============> Python string methods:
+
+
+
+   ! Return a list of the words in the string, using sep as the delimiter string. If maxsplit is present, at most
+   ! maxsplit splits are done (thus, the list will have at most maxsplit+1 elements). If maxsplit is not specified or
+   ! -1, then there is no limit on the number of splits (all possible splits are made).
+   !
+   function Split(self, sep, maxsplit) result(words)
+      class(ftlString), intent(in)           :: self
+      character(len=*), intent(in), optional :: sep
+      integer         , intent(in), optional :: maxsplit
+      type(ftlString) , allocatable          :: words(:)
+
+      integer :: idx, wordbegin, wordidx
+
+      if (present(maxsplit)) stop 'TODO'
+
+      if (present(sep)) then
+
+         ! If sep is present, consecutive delimiters are not grouped together and are deemed to delimit empty strings
+         ! (for example, '1,,2'%split(',') returns ['1', '', '2']). The sep argument may consist of multiple characters
+         ! (for example, '1<>2<>3'%split('<>') returns ['1', '2', '3']). Splitting an empty string with a specified
+         ! separator returns [''].
+
+         stop 'TODO'
+
+      else
+
+         ! If sep is not present, a different splitting algorithm is applied: runs of consecutive whitespace are
+         ! regarded as a single separator, and the result will contain no empty strings at the start or end if the
+         ! string has leading or trailing whitespace.  Consequently, splitting an empty string or a string consisting of
+         ! just whitespace without a separator returns [].
+
+         allocate(words(self%CountWords()))
+
+         idx = 1
+         do wordidx = 1, size(words)
+            do while (CharIsWhitespace(self%Char(idx)))
+               idx = idx + 1
+            enddo
+            wordbegin = idx
+            do while (idx <= len(self))
+               if (CharIsWhitespace(self%Char(idx))) exit
+               idx = idx + 1
+            enddo
+            words(wordidx) = self%fstr(wordbegin:idx-1)
+         enddo
+
+      endif
+
+   end function
+
+
+
+   ! =============> Other string methods:
+
+
+
+   ! Count the number of words separater by whitespace (spaces or tabs). Ignores leading and trailing whitespace.
+   !
+   integer function CountWords(self)
+      class(ftlString), intent(in) :: self
+
+      integer :: idx
+
+      if (CharIsWhitespace(self%fstr(1:1))) then
+         CountWords = 0
+      else
+         CountWords = 1
+      endif
+      idx = 1
+      do idx = 2, len(self%fstr)
+         if (CharIsWhitespace(self%Char(idx-1)) .and. .not.CharIsWhitespace(self%Char(idx))) then
+            CountWords = CountWords + 1
+         endif
+      enddo
+
+   end function
+
+
+
    ! =============> FTL methods:
 
 
@@ -496,6 +623,16 @@ contains
       endif
 
    end subroutine
+
+
+
+! ====== Auxilliary methods working on single characters =========================================================================
+
+
+   pure logical function CharIsWhitespace(c)
+      character, intent(in) :: c
+      CharIsWhitespace = (c == ' ' .or. iachar(c) == 9)
+   end function
 
 
 end module
