@@ -774,7 +774,7 @@ contains
    subroutine Inc(self)
       class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(inout) :: self
 
-      self%index =  self%index + 1
+      self%index = self%index + 1
       if (self%index <= self%dynArray%psize) then
          self%value => self%dynArray%storage(self%index)
       else
@@ -786,7 +786,7 @@ contains
    subroutine Dec(self)
       class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(inout) :: self
 
-      self%index =  self%index - 1
+      self%index = self%index - 1
       if (self%index > 0) then
          self%value => self%dynArray%storage(self%index)
       else

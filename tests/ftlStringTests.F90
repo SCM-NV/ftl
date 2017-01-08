@@ -40,6 +40,8 @@ contains
 
       call testFortranStandardMethods
 
+      call testIteratorWriting
+
       call testHash
 
    end subroutine
@@ -94,6 +96,52 @@ contains
 
       ASSERT(len(s1) == 60)
       ASSERT(len_trim(s1) == 60)
+
+      s1 = '   TEST '
+
+      ASSERT(adjustl(s1) == 'TEST    ')
+      ASSERT(len(adjustl(s1)) == 8)
+      ASSERT(adjustr(s1) == '    TEST')
+      ASSERT(len(adjustl(s1)) == 8)
+
+      s1 = 'ABC'
+
+      ASSERT(repeat(s1,3) == 'ABCABCABC')
+      ASSERT(len(repeat(s1,3)) == 9)
+
+      s2 = 'ABC1234ABC567ABC890'
+
+      ASSERT(index(s2,s1,.true.) == 14)
+      ASSERT(index(s2,s1) == 1)
+      ASSERT(scan(s2,s1,.true.) == 16)
+      ASSERT(scan(s2,s1) == 1)
+      ASSERT(verify(s2,s1,.true.) == 19)
+      ASSERT(verify(s2,s1) == 4)
+
+   end subroutine
+
+
+   subroutine testIteratorWriting
+      type(ftlString) :: s
+      type(ftlStringIterator) :: it
+
+      s = 'TEfT'
+      it = Begin(s)
+
+      ASSERT(it%value == 'T')
+
+      call it%Inc()
+
+      ASSERT(it%value == 'E')
+
+      call it%Inc()
+
+      ASSERT(it%value == 'f')
+
+      it%value = 'S'
+
+      ASSERT(it%value == 'S')
+      ASSERT(s == 'TEST')
 
    end subroutine
 
