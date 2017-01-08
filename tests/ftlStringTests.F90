@@ -46,6 +46,7 @@ contains
 
       ! Python string methods:
       call testSplit
+      call testStartsWith
 
       ! Other string methods:
       call testCountWords
@@ -192,6 +193,25 @@ contains
       ASSERT(words(7) == 'weird')
       ASSERT(words(8) == 'whitespacing')
       ASSERT(words(9) == 'issues.')
+
+   end subroutine
+
+
+   subroutine testStartsWith
+      type(ftlString) :: s
+
+      s = 'Teststartswith'
+      ASSERT(s%StartsWith('Test'))
+
+      s = 'Teststartswith'
+      ASSERT(.not.s%StartsWith('Teststartswith but is toolong'))
+
+      s = '  Teststartswith'
+      ASSERT(.not.s%StartsWith('Test'))
+
+      s = 'another test of startsWith'
+      ASSERT(s%StartsWith([ftlString('Test'),ftlString('anot')]))
+      ASSERT(.not.s%StartsWith([ftlString('Test'),ftlString('not there')]))
 
    end subroutine
 

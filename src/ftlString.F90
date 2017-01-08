@@ -68,6 +68,10 @@ module ftlStringModule
 
       ! Python string methods:
       procedure, public :: Split
+      procedure         :: StartsWithFString
+      procedure         :: StartsWithOther
+      procedure         :: StartsWithArray
+      generic, public   :: StartsWith => StartsWithFString, StartsWithOther, StartsWithArray
 
       ! Other string methods:
       procedure, public :: CountWords
@@ -526,6 +530,44 @@ contains
          enddo
 
       endif
+
+   end function
+
+
+
+   pure logical function StartsWithFString(self, prefix)
+      class(ftlString), intent(in) :: self
+      character(len=*), intent(in) :: prefix
+
+      if (len(self) >= len(prefix)) then
+         StartsWithFString = (self%fstr(1:len(prefix)) == prefix)
+      else
+         StartsWithFString = .false.
+      endif
+
+   end function
+   !
+   pure logical function StartsWithOther(self, prefix)
+      class(ftlString), intent(in) :: self
+      class(ftlString), intent(in) :: prefix
+
+      StartsWithOther = StartsWithFString(self, prefix%fstr)
+
+   end function
+   !
+   logical function StartsWithArray(self, prefixes)
+      class(ftlString), intent(in) :: self
+      type(ftlString) , intent(in) :: prefixes(:) ! TODO: figure out why this has to be type() not class() ...
+
+      integer :: i
+
+      StartsWithArray = .false.
+      do i = 1, size(prefixes)
+         if (self%StartsWithFString(prefixes(i)%fstr)) then
+            StartsWithArray = .true.
+            return
+         endif
+      enddo
 
    end function
 
