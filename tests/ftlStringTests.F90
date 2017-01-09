@@ -42,6 +42,8 @@ contains
 
       call testHash
 
+      call testConversionToNumeric
+
       call testFortranStandardMethods
 
       ! Python string methods:
@@ -125,6 +127,51 @@ contains
       ASSERT(ftlHash(ftlString('and another')) == ftlHash('and another'))
       ASSERT(ftlHash(ftlString('number 4')) == ftlHash('number 4'))
       ASSERT(ftlHash(ftlString('the last')) == ftlHash('the last'))
+
+   end subroutine
+
+
+   subroutine testConversionToNumeric
+      type(ftlString) :: s
+
+      s = '25'
+      ASSERT(s%IsInt())
+      ASSERT(int(s) == 25)
+
+      s = '-12'
+      ASSERT(s%IsInt())
+      ASSERT(int(s) == -12)
+
+      s = '   -12'
+      ASSERT(s%IsInt())
+      ASSERT(int(s) == -12)
+
+      s = 'not a number'
+      ASSERT(.not.s%IsInt())
+      ASSERT(int(s) == -huge(1))
+
+      s = '1e6'
+      ASSERT(.not.s%IsInt()) ! not sure if this should work ...
+
+      s = '1.0'
+      ASSERT(s%IsReal())
+      ASSERT(real(s) == 1.0)
+
+      s = '-1.e6'
+      ASSERT(s%IsReal())
+      ASSERT(real(s) == -1.0e6)
+
+      s = '1'
+      ASSERT(s%IsReal())
+      ASSERT(real(s) == 1.0)
+
+      s = 'not a number'
+      ASSERT(.not.s%IsReal())
+      ASSERT(real(s) /= real(s))
+
+      s = '(0.0,1.0)'
+      ASSERT(s%IsComplex())
+      ASSERT(complex(s) == (0.0,1.0))
 
    end subroutine
 

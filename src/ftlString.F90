@@ -66,17 +66,38 @@ module ftlStringModule
       generic  , public :: write(unformatted) => WriteUnformatted
 #endif
 
+      ! Conversion to numeric types:
+      procedure, public :: IsNumber
+      procedure, public :: IsInt
+      procedure, public :: ToInt
+      procedure, public :: IsReal
+      procedure, public :: ToReal
+      procedure, public :: IsComplex
+      procedure, public :: ToComplex
+
       ! Python string methods:
       procedure, public :: Split
       procedure         :: StartsWithFString
       procedure         :: StartsWithOther
       procedure         :: StartsWithArray
-      generic, public   :: StartsWith => StartsWithFString, StartsWithOther, StartsWithArray
+      generic  , public :: StartsWith => StartsWithFString, StartsWithOther, StartsWithArray
 
       ! Other string methods:
       procedure, public :: CountWords
 
    end type
+
+
+   ! Cunstructor functions:
+
+   interface ftlString
+      module procedure NewDefaultConstr
+      module procedure NewCopyOtherConstr
+      module procedure NewFromFStringConstr
+   end interface
+
+
+   ! Free versions of some type-bound procedures:
 
    public :: Begin
    interface Begin
@@ -88,18 +109,27 @@ module ftlStringModule
       module procedure EndString
    end interface
 
-   public :: Size
-   interface Size
+   public :: size
+   interface size
       module procedure ftlLen
    end interface
 
 
-   ! Cunstructor functions:
+   ! Conversion to numeric types:
 
-   interface ftlString
-      module procedure NewDefaultConstr
-      module procedure NewCopyOtherConstr
-      module procedure NewFromFStringConstr
+   public :: int
+   interface int
+      module procedure ToInt
+   end interface
+
+   public :: real
+   interface real
+      module procedure ToReal
+   end interface
+
+   public :: complex
+   interface complex
+      module procedure ToComplex
    end interface
 
 
@@ -313,23 +343,6 @@ contains
 
 
 
-#ifdef FTL_ENABLE_DERIVED_TYPE_IO
-   ! =============> Derived-type IO:
-
-
-
-   subroutine WriteUnformatted(self, unit, iostat, iomsg)
-      class(ftlString), intent(in)    :: self
-      integer         , intent(in)    :: unit
-      integer         , intent(out)   :: iostat
-      character(len=*), intent(inout) :: iomsg
-
-      write (unit, '(A)', iostat=iostat, iomsg=iomsg) self%fstr
-
-   end subroutine
-#endif
-
-
    ! =============> Fortran standard methods:
 
 
@@ -475,6 +488,95 @@ contains
       character(len=*), intent(in) :: fstr
 
       UnequalFString = (self%fstr /= fstr)
+
+   end function
+
+
+
+   ! =============> Conversion to numeric types:
+
+
+
+   pure logical function IsNumber(self)
+      class(ftlString), intent(in) :: self
+
+      IsNumber = self%IsInt() .or. self%IsReal() .or. self%IsComplex()
+
+   end function
+
+
+
+   pure logical function IsInt(self)
+      class(ftlString), intent(in) :: self
+
+      integer :: tester, stat
+
+      read(self%fstr,*,iostat=stat) tester
+      IsInt = (stat == 0)
+
+   end function
+   !
+   pure integer function ToInt(self)
+      class(ftlString), intent(in) :: self
+
+      integer :: stat
+
+      read(self%fstr,*,iostat=stat) ToInt
+      if (stat /= 0) ToInt = -huge(ToInt)
+
+      ! TODO: handle strings like '1e3'
+
+   end function
+
+
+
+   pure logical function IsReal(self)
+      class(ftlString), intent(in) :: self
+
+      integer :: stat
+      real :: tester
+
+      read(self%fstr,*,iostat=stat) tester
+      IsReal = (stat == 0)
+
+   end function
+   !
+   pure real function ToReal(self)
+      class(ftlString), intent(in) :: self
+
+      integer :: stat
+
+      read(self%fstr,*,iostat=stat) ToReal
+      if (stat /= 0) then
+         ToReal = 0.0
+         ToReal = ToReal/ToReal ! results in NaN
+      endif
+
+   end function
+
+
+
+   pure logical function IsComplex(self)
+      class(ftlString), intent(in) :: self
+
+      integer :: stat
+      complex :: tester
+
+      read(self%fstr,*,iostat=stat) tester
+      IsComplex = (stat == 0)
+
+   end function
+   !
+   pure complex function ToComplex(self)
+      class(ftlString), intent(in) :: self
+
+      integer :: stat
+
+      read(self%fstr,*,iostat=stat) ToComplex
+      if (stat /= 0) then
+         ToComplex = (0.0,0.0)
+         ToComplex = ToComplex/ToComplex ! results in NaN
+      endif
 
    end function
 
