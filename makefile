@@ -31,7 +31,7 @@ ifeq ($(PLATFORM), gnu)
 	CXXFLAGS = -std=c++11 -Ofast -march=native
 else ifeq ($(PLATFORM), intel)
 	COMPILER = ifort
-	FLAGS = -stand f03 -warn -diag-disable=5268 -module $(BUILDDIR)
+	FLAGS = -stand f03 -assume realloc_lhs -warn -diag-disable=5268 -module $(BUILDDIR)
 	CXXCOMPILER = icpc
 	CXXFLAGS = -std=c++11 -fast -xHost
 else

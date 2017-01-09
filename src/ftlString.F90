@@ -627,8 +627,8 @@ contains
    end subroutine
    !
    subroutine NewItCopyOther(self, other)
-      class(ftlStringIterator), intent(out) :: self
-      class(ftlStringIterator), intent(in)  :: other
+      class(ftlStringIterator), intent(out), target :: self
+      class(ftlStringIterator), intent(in)          :: other
 
       self%str => other%str
       self%index = other%index
@@ -643,7 +643,7 @@ contains
 
 
    subroutine Inc(self)
-      class(ftlStringIterator), intent(inout) :: self
+      class(ftlStringIterator), intent(inout), target :: self
 
       self%index = self%index + 1
       if (self%index <= len(self%str)) then
@@ -655,7 +655,7 @@ contains
    end subroutine
    !
    subroutine Dec(self)
-      class(ftlStringIterator), intent(inout) :: self
+      class(ftlStringIterator), intent(inout), target :: self
 
       self%index = self%index - 1
       if (self%index > 0) then

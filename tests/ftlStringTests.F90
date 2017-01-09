@@ -180,7 +180,7 @@ contains
       ASSERT(words(4) == 'simple')
       ASSERT(words(5) == 'sentence.')
 
-      s = '	  This is a   simple sentence with weird whitespacing    issues.  	'
+      s = achar(9)//'This is a   simple sentence with weird whitespacing    issues.  '//achar(9)//' '
       words = s%Split()
 
       ASSERT(size(words) == 9)
@@ -231,7 +231,7 @@ contains
       s = '   this is a test with leading and trailing spaces   '
       ASSERT(s%CountWords() == 9)
 
-      s = '	test containing 	tabs	'
+      s = achar(9)//'test containing '//achar(9)//'tabs'//achar(9)
       ASSERT(s%CountWords() == 3)
 
    end subroutine
