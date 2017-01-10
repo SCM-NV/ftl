@@ -58,6 +58,17 @@ contains
       ! Other string methods:
       call testCountWords
 
+      ! Tests of ftlString iterators:
+
+      call testNewItDefault
+      call testNewItCopyOther
+
+      call testInc
+      call testDec
+
+      call testAdvanceReverseDiff
+      call testLogicalOperations
+
    end subroutine
 
 
@@ -356,6 +367,150 @@ contains
 
       s = achar(9)//'test containing '//achar(9)//'tabs'//achar(9)
       ASSERT(s%CountWords() == 3)
+
+   end subroutine
+
+
+   subroutine testNewItDefault
+      type(ftlStringIterator) :: it
+
+      call it%New()
+      ASSERT(.not.associated(it%value))
+
+   end subroutine
+
+
+   subroutine testNewItCopyOther
+      type(ftlString) :: s
+      type(ftlStringIterator) :: it1, it2
+
+      call s%New('howdy, lets test!')
+      it1 = s%Begin()
+      call it2%New(it1)
+
+      ASSERT(associated(it1%value,it2%value))
+      ASSERT(it2%value == 'h')
+
+   end subroutine
+
+
+   subroutine testInc
+      type(ftlString) :: s
+      type(ftlStringIterator) :: it
+
+      call s%New('still testing')
+      it = s%Begin()
+
+      ASSERT(associated(it%value,s%At(1)))
+      ASSERT(it%value == 's')
+
+      call it%Inc()
+
+      ASSERT(associated(it%value,s%At(2)))
+      ASSERT(it%value == 't')
+
+   end subroutine
+
+
+   subroutine testDec
+      type(ftlString) :: s
+      type(ftlStringIterator) :: it
+
+      call s%New('and still testing')
+      it = s%End()
+      call it%Dec()
+
+      ASSERT(associated(it%value,s%At(17)))
+      ASSERT(it%value == 'g')
+
+      call it%Dec()
+
+      ASSERT(associated(it%value,s%At(16)))
+      ASSERT(it%value == 'n')
+
+   end subroutine
+
+
+   subroutine testAdvanceReverseDiff
+      type(ftlString) :: s
+      type(ftlStringIterator) :: it1, it2
+
+      call s%New('... still testing!')
+      it1 = s%Begin()
+      it2 = it1 + 4
+
+      ASSERT(it2 - it1 == 4)
+      ASSERT(associated(it2%value,s%At(5)))
+      ASSERT(it2%value == 's')
+
+      it2 = it2 - 2
+      ASSERT(it2 - it1 == 2)
+      ASSERT(associated(it2%value,s%At(3)))
+      ASSERT(it2%value == '.')
+
+   end subroutine
+
+
+   subroutine testLogicalOperations
+      type(ftlString) :: s
+      type(ftlStringIterator) :: it1, it2
+
+      call s%New('howdy')
+      it1 = s%Begin() + 2
+      ASSERT(it1%value == 'w')
+      it2 = s%Begin()
+
+      ASSERT(it2%value == 'h')
+      ASSERT(.not.(it2 == it1))
+      ASSERT(     (it2 /= it1))
+      ASSERT(     (it2 <  it1))
+      ASSERT(     (it2 <= it1))
+      ASSERT(.not.(it2 >  it1))
+      ASSERT(.not.(it2 >= it1))
+
+      call it2%Inc()
+
+      ASSERT(it2%value == 'o')
+      ASSERT(.not.(it2 == it1))
+      ASSERT(     (it2 /= it1))
+      ASSERT(     (it2 <  it1))
+      ASSERT(     (it2 <= it1))
+      ASSERT(.not.(it2 >  it1))
+      ASSERT(.not.(it2 >= it1))
+
+      call it2%Inc()
+
+      ASSERT(it2%value == 'w')
+      ASSERT(     (it2 == it1))
+      ASSERT(.not.(it2 /= it1))
+      ASSERT(.not.(it2 <  it1))
+      ASSERT(     (it2 <= it1))
+      ASSERT(.not.(it2 >  it1))
+      ASSERT(     (it2 >= it1))
+
+      call it2%Inc()
+
+      ASSERT(it2%value == 'd')
+      ASSERT(.not.(it2 == it1))
+      ASSERT(     (it2 /= it1))
+      ASSERT(.not.(it2 <  it1))
+      ASSERT(.not.(it2 <= it1))
+      ASSERT(     (it2 >  it1))
+      ASSERT(     (it2 >= it1))
+
+      call it2%Inc()
+
+      ASSERT(it2%value == 'y')
+      ASSERT(.not.(it2 == it1))
+      ASSERT(     (it2 /= it1))
+      ASSERT(.not.(it2 <  it1))
+      ASSERT(.not.(it2 <= it1))
+      ASSERT(     (it2 >  it1))
+      ASSERT(     (it2 >= it1))
+
+      call it2%Inc()
+
+      ASSERT(it2 == s%End())
 
    end subroutine
 

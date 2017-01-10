@@ -241,6 +241,46 @@ module ftlStringModule
 
    end type
 
+   public :: operator(+)
+   interface operator(+)
+      module procedure AdvanceN
+   end interface
+
+   public :: operator(-)
+   interface operator(-)
+      module procedure ReverseN, DiffOther
+   end interface
+
+   public :: operator(==)
+   interface operator(==)
+      module procedure EqualOther
+   end interface
+
+   public :: operator(/=)
+   interface operator(/=)
+      module procedure UnequalOther
+   end interface
+
+   public :: operator(<)
+   interface operator(<)
+      module procedure SmallerOther
+   end interface
+
+   public :: operator(<=)
+   interface operator(<=)
+      module procedure SmallerEqualOther
+   end interface
+
+   public :: operator(>)
+   interface operator(>)
+      module procedure GreaterOther
+   end interface
+
+   public :: operator(>=)
+   interface operator(>=)
+      module procedure GreaterEqualOther
+   end interface
+
 
 contains
 
@@ -931,6 +971,104 @@ contains
       endif
 
    end subroutine
+
+
+
+   type(ftlStringIterator) function AdvanceN(self, n)
+      type(ftlStringIterator), intent(in) :: self
+      integer                , intent(in) :: n
+
+      call AdvanceN%New(self)
+      AdvanceN%index = AdvanceN%index + n
+      if (AdvanceN%index <= len(AdvanceN%str%raw)) then
+         AdvanceN%value => AdvanceN%str%raw(AdvanceN%index:AdvanceN%index)
+      else
+         nullify(AdvanceN%value)
+      endif
+
+   end function
+   !
+   type(ftlStringIterator) function ReverseN(self, n)
+      type(ftlStringIterator), intent(in) :: self
+      integer                , intent(in) :: n
+
+      call ReverseN%New(self)
+      ReverseN%index = ReverseN%index - n
+      if (ReverseN%index > 0) then
+         ReverseN%value => ReverseN%str%raw(ReverseN%index:ReverseN%index)
+      else
+         nullify(ReverseN%value)
+      endif
+
+   end function
+
+
+
+   pure integer function DiffOther(self, other)
+      class(ftlStringIterator), intent(in) :: self
+      class(ftlStringIterator), intent(in) :: other
+
+      if (associated(self%str,other%str)) then
+         DiffOther = self%index - other%index
+      else
+         DiffOther = huge(0)
+      endif
+
+   end function
+
+
+
+   ! =============> Logical operations:
+
+
+
+   pure logical function EqualOther(self, other)
+      type(ftlStringIterator), intent(in) :: self
+      type(ftlStringIterator), intent(in) :: other
+
+      EqualOther = associated(self%str,other%str) .and. (self%index == other%index)
+
+   end function
+   !
+   pure logical function UnequalOther(self, other)
+      type(ftlStringIterator), intent(in) :: self
+      type(ftlStringIterator), intent(in) :: other
+
+      UnequalOther = .not.associated(self%str,other%str) .or. (self%index /= other%index)
+
+   end function
+   !
+   pure logical function SmallerOther(self, other)
+      type(ftlStringIterator), intent(in) :: self
+      type(ftlStringIterator), intent(in) :: other
+
+      SmallerOther = associated(self%str,other%str) .and. (self%index < other%index)
+
+   end function
+   !
+   pure logical function SmallerEqualOther(self, other)
+      type(ftlStringIterator), intent(in) :: self
+      type(ftlStringIterator), intent(in) :: other
+
+      SmallerEqualOther = associated(self%str,other%str) .and. (self%index <= other%index)
+
+   end function
+   !
+   pure logical function GreaterOther(self, other)
+      type(ftlStringIterator), intent(in) :: self
+      type(ftlStringIterator), intent(in) :: other
+
+      GreaterOther = associated(self%str,other%str) .and. (self%index > other%index)
+
+   end function
+   !
+   pure logical function GreaterEqualOther(self, other)
+      type(ftlStringIterator), intent(in) :: self
+      type(ftlStringIterator), intent(in) :: other
+
+      GreaterEqualOther = associated(self%str,other%str) .and. (self%index >= other%index)
+
+   end function
 
 
 

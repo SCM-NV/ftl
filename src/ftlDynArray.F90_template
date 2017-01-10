@@ -802,7 +802,7 @@ contains
       integer                                                 , intent(in) :: n
 
       call AdvanceN%New(self)
-      AdvanceN%index =  AdvanceN%index + n
+      AdvanceN%index = AdvanceN%index + n
       if (AdvanceN%index <= AdvanceN%dynArray%psize) then
          AdvanceN%value => AdvanceN%dynArray%storage(AdvanceN%index)
       else
@@ -816,7 +816,7 @@ contains
       integer                                                 , intent(in) :: n
 
       call ReverseN%New(self)
-      ReverseN%index =  ReverseN%index - n
+      ReverseN%index = ReverseN%index - n
       if (ReverseN%index > 0) then
          ReverseN%value => ReverseN%dynArray%storage(ReverseN%index)
       else
