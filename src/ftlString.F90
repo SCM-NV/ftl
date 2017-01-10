@@ -28,6 +28,7 @@
 #define FTL_CONTAINER ftlString
 #define FTL_CONTAINER_PROVIDES_RANDOM_ACCESS_ITERATOR
 
+#ifndef FTL_SKIP_IMPLEMENTATION
 
 module ftlStringModule
 
@@ -51,6 +52,8 @@ module ftlStringModule
       generic  , public :: New => NewDefault, NewCopyOther, NewFromRaw
 
       procedure, public :: Delete
+
+      procedure, public :: Size => ftlLen
 
       procedure         :: AtString
       generic  , public :: At => AtString
@@ -1082,3 +1085,4 @@ contains
 
 
 end module
+#endif

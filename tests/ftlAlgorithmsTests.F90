@@ -28,6 +28,8 @@ module ftlAlgorithmsTestsModule
    use ftlDynArrayPoint2DAlgorithmsModule
    use ftlListIntModule
    use ftlListIntAlgorithmsModule
+   use ftlStringModule
+   use ftlStringAlgorithmsModule
 
    implicit none
    private
@@ -81,6 +83,7 @@ contains
 
       call testSortDynArray
       call testSortList
+      call testSortString
       call testIsSorted
 
       ! Heap:
@@ -605,6 +608,17 @@ contains
 #ifdef FTL_NO_FINALIZERS
       call l%Delete()
 #endif
+
+   end subroutine
+
+
+   subroutine testSortString
+      type(ftlString) :: s
+
+      s = 'zxymmlk'
+      call ftlSort(s)
+
+      ASSERT(s == 'klmmxyz')
 
    end subroutine
 
