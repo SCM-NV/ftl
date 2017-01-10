@@ -22,6 +22,8 @@ module ftlHashMapTestsModule
 
    use ftlTestToolsModule
    use ftlHashMapStrIntModule
+   use ftlStringModule
+   use ftlHashMapFtlStrIntModule
 
    implicit none
    private
@@ -43,6 +45,8 @@ contains
       call testFind
       call testEraseKey
       call testEraseIterators
+
+      call testFtlStringSpecialization
 
    end subroutine
 
@@ -406,6 +410,32 @@ contains
 #ifdef FTL_NO_FINALIZERS
       call um%Delete()
 #endif
+
+   end subroutine
+
+
+   subroutine testFtlStringSpecialization
+      type(ftlHashMapFtlStrInt) :: um
+
+      call um%New(10)
+
+      call um%Set('this', 1)
+      call um%Set('is', 12)
+      call um%Set('a', 21)
+      call um%Set('test', 114)
+      call um%Set('with', 1)
+      call um%Set('variable', 145)
+      call um%Set('length', 7)
+      call um%Set('keys!', 9)
+
+      ASSERT(um%Get('this') == 1)
+      ASSERT(um%Get('is') == 12)
+      ASSERT(um%Get('a') == 21)
+      ASSERT(um%Get('test') == 114)
+      ASSERT(um%Get('with') == 1)
+      ASSERT(um%Get('variable') == 145)
+      ASSERT(um%Get('length') == 7)
+      ASSERT(um%Get('keys!') == 9)
 
    end subroutine
 
