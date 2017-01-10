@@ -75,6 +75,9 @@ module ftlStringModule
       procedure         :: StartsWithOther
       procedure         :: StartsWithArray
       generic  , public :: StartsWith => StartsWithRaw, StartsWithOther, StartsWithArray
+      procedure         :: FindRaw
+      procedure         :: FindOther
+      generic  , public :: Find => FindRaw, FindOther
 
       ! Other string methods:
       procedure, public :: CountWords
@@ -82,6 +85,18 @@ module ftlStringModule
       ! Overloaded operators:
 
       generic  , public :: assignment(=) => NewCopyOther, NewFromRaw
+
+      ! == comparison like for raw strings
+      procedure, pass(lhs) :: StringEqualString
+      procedure, pass(lhs) :: StringEqualChar
+      procedure, pass(rhs) :: CharEqualString
+      generic  , public    :: operator(==) => StringEqualString, StringEqualChar, CharEqualString
+
+      ! /= comparison like for raw strings
+      procedure, pass(lhs) :: StringUnequalString
+      procedure, pass(lhs) :: StringUnequalChar
+      procedure, pass(rhs) :: CharUnequalString
+      generic  , public    :: operator(/=) => StringUnequalString, StringUnequalChar, CharUnequalString
 
       ! // operator with raw Fortran string output
       procedure, pass(lhs) :: StringCatString
@@ -94,6 +109,12 @@ module ftlStringModule
       procedure, pass(lhs) :: StringCatOpChar
       procedure, pass(rhs) :: CharCatOpString
       generic  , public    :: operator(.cat.) => StringCatOpString, StringCatOpChar, CharCatOpString
+
+      ! Python style .in. operator
+      procedure, pass(lhs) :: StringInString
+      procedure, pass(lhs) :: StringInChar
+      procedure, pass(rhs) :: CharInString
+      generic  , public    :: operator(.in.) => StringInString, StringInChar, CharInString
 
    end type
 
@@ -188,16 +209,6 @@ module ftlStringModule
    public :: verify
    interface verify
       module procedure ftlVerifyOther, ftlVerifyRaw
-   end interface
-
-   public :: operator(==)
-   interface operator(==)
-      module procedure EqualOther, EqualRaw
-   end interface
-
-   public :: operator(/=)
-   interface operator(/=)
-      module procedure UnequalOther, UnequalRaw
    end interface
 
 
@@ -319,6 +330,63 @@ contains
    ! =============> Overloaded operators:
 
 
+
+   ! /= comparison like for raw strings
+   !
+   pure logical function StringEqualString(lhs, rhs) result(equal)
+      class(ftlString), intent(in) :: lhs
+       type(ftlString), intent(in) :: rhs
+
+      equal = (lhs%raw == rhs%raw)
+
+   end function
+   !
+   pure logical function StringEqualChar(lhs, rhs) result(equal)
+      class(ftlString), intent(in) :: lhs
+      character(len=*), intent(in) :: rhs
+
+      equal = (lhs%raw == rhs)
+
+   end function
+   !
+   pure logical function CharEqualString(lhs, rhs) result(equal)
+      character(len=*), intent(in) :: lhs
+      class(ftlString), intent(in) :: rhs
+
+      equal = (lhs == rhs%raw)
+
+   end function
+
+
+
+   ! /= comparison like for raw strings
+   !
+   pure logical function StringUnequalString(lhs, rhs) result(unequal)
+      class(ftlString), intent(in) :: lhs
+       type(ftlString), intent(in) :: rhs
+
+      unequal = (lhs%raw /= rhs%raw)
+
+   end function
+   !
+   pure logical function StringUnequalChar(lhs, rhs) result(unequal)
+      class(ftlString), intent(in) :: lhs
+      character(len=*), intent(in) :: rhs
+
+      unequal = (lhs%raw /= rhs)
+
+   end function
+   !
+   pure logical function CharUnequalString(lhs, rhs) result(unequal)
+      character(len=*), intent(in) :: lhs
+      class(ftlString), intent(in) :: rhs
+
+      unequal = (lhs /= rhs%raw)
+
+   end function
+
+
+
    ! // operator with raw Fortran string output
    !
    pure function StringCatString(lhs, rhs) result(concat)
@@ -349,6 +417,7 @@ contains
    endfunction
 
 
+
    ! .cat. operator with ftlString output
    !
    elemental function StringCatOpString(lhs, rhs) result(concat)
@@ -365,7 +434,7 @@ contains
       character(len=*), intent(in) :: rhs
        type(ftlString)             :: concat
 
-       concat%raw = lhs%raw//rhs
+      concat%raw = lhs%raw//rhs
 
    endfunction
    !
@@ -374,7 +443,35 @@ contains
       class(ftlString), intent(in)  :: rhs
        type(ftlString)              :: concat
 
-        concat%raw = lhs//rhs%raw
+      concat%raw = lhs//rhs%raw
+
+   endfunction
+
+
+
+   ! Python style .in. operator
+   !
+   elemental logical function StringInString(lhs, rhs) result(in)
+      class(ftlString), intent(in) :: lhs
+       type(ftlString), intent(in) :: rhs
+
+       in = (index(rhs%raw, lhs%raw) /= 0)
+
+   endfunction
+   !
+   elemental logical function StringInChar(lhs, rhs) result(in)
+      class(ftlString), intent(in) :: lhs
+      character(len=*), intent(in) :: rhs
+
+      in = (index(rhs, lhs%raw) /= 0)
+
+   endfunction
+   !
+   elemental logical function CharInString(lhs, rhs) result(in)
+      character(len=*), intent(in) :: lhs
+      class(ftlString), intent(in) :: rhs
+
+      in = (index(rhs%raw, lhs) /= 0)
 
    endfunction
 
@@ -531,40 +628,6 @@ contains
       logical         , intent(in), optional :: back
 
       ftlVerifyRaw = verify(str%raw, raw, back)
-
-   end function
-
-
-
-   pure logical function EqualOther(self, other)
-      class(ftlString), intent(in) :: self, other
-
-      EqualOther = (self%raw == other%raw)
-
-   end function
-   !
-   pure logical function EqualRaw(self, raw)
-      class(ftlString), intent(in) :: self
-      character(len=*), intent(in) :: raw
-
-      EqualRaw = (self%raw == raw)
-
-   end function
-
-
-
-   pure logical function UnequalOther(self, other)
-      class(ftlString), intent(in) :: self, other
-
-      UnequalOther = (self%raw /= other%raw)
-
-   end function
-   !
-   pure logical function UnequalRaw(self, raw)
-      class(ftlString), intent(in) :: self
-      character(len=*), intent(in) :: raw
-
-      UnequalRaw = (self%raw /= raw)
 
    end function
 
@@ -728,7 +791,7 @@ contains
    !
    pure logical function StartsWithOther(self, prefix)
       class(ftlString), intent(in) :: self
-      class(ftlString), intent(in) :: prefix
+       type(ftlString), intent(in) :: prefix
 
       StartsWithOther = StartsWithRaw(self, prefix%raw)
 
@@ -749,6 +812,30 @@ contains
       enddo
 
    end function
+
+
+
+   ! Return the lowest index in the string where substring sub is found within the slice s[start:end]. Optional
+   ! arguments start and end are interpreted as in slice notation. Return -1 if sub is not found.
+   !
+   pure integer function FindOther(self, sub) result(idx)
+      class(ftlString), intent(in) :: self
+       type(ftlString), intent(in) :: sub
+
+      idx = index(self, sub)
+      if (idx == 0) idx = -1
+
+   end function
+   !
+   pure integer function FindRaw(self, sub) result(idx)
+      class(ftlString), intent(in) :: self
+      character(len=*), intent(in) :: sub
+
+      idx = index(self, sub)
+      if (idx == 0) idx = -1
+
+   end function
+
 
 
 

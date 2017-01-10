@@ -44,7 +44,10 @@ contains
 
       call testConversionToNumeric
 
+      ! Overloaded operators:
+      call testComparison
       call testConcat
+      call testIn
 
       call testFortranStandardMethods
 
@@ -182,6 +185,21 @@ contains
    end subroutine
 
 
+   subroutine testComparison
+      type(ftlString) :: s1, s2
+
+      s1 = 'test'
+      s2 = 'foobar'
+
+      ASSERT(s1 == 'test')
+      ASSERT('test' == s1)
+      ASSERT(.not.(s1 == s2))
+      ASSERT(s1 /= s2)
+      ASSERT('bar' /= s1)
+
+   end subroutine
+
+
    subroutine testConcat
       type(ftlString)               :: s1, s2, s3, s4
       character(len=:), allocatable :: c
@@ -197,11 +215,31 @@ contains
       c = 'woho '//s1//' '//s2//' '//s3
       ASSERT(c == 'woho this is testing')
 
+      s4 = 'woho '//s1//' '//s2//' '//s3
+      ASSERT(s4 == 'woho this is testing')
+
       s4 = s1.cat.' '.cat.s2.cat.' '.cat.s3
       ASSERT(s4 == 'this is testing')
 
       s4 = 'woho '.cat.s1.cat.' '.cat.s2.cat.' '.cat.s3
       ASSERT(s4 == 'woho this is testing')
+
+   end subroutine
+
+
+   subroutine testIn
+      type(ftlString) :: s1, s2, s3
+
+      s1 = 'this is a string containing the word string'
+      s2 = 'string'
+
+      ASSERT(s2 .in. s1)
+      ASSERT('word' .in. s1)
+      ASSERT(s2 .in. 'this is a string test!')
+
+      s3 = 'this is a ... not containing the particular word'
+
+      ASSERT(.not.(s2 .in. s3))
 
    end subroutine
 
@@ -239,6 +277,13 @@ contains
       ASSERT(scan(s2,s1) == 1)
       ASSERT(verify(s2,s1,.true.) == 19)
       ASSERT(verify(s2,s1) == 4)
+
+      ASSERT(index(s2,s1%raw,.true.) == 14)
+      ASSERT(index(s2,s1%raw) == 1)
+      ASSERT(scan(s2,s1%raw,.true.) == 16)
+      ASSERT(scan(s2,s1%raw) == 1)
+      ASSERT(verify(s2,s1%raw,.true.) == 19)
+      ASSERT(verify(s2,s1%raw) == 4)
 
    end subroutine
 
