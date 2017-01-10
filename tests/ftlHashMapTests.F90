@@ -428,6 +428,16 @@ contains
       call um%Set('length', 7)
       call um%Set('keys!', 9)
 
+      ASSERT(um%Has('this'))
+      ASSERT(um%Has('is'))
+      ASSERT(um%Has('a'))
+      ASSERT(um%Has('test'))
+      ASSERT(um%Has('with'))
+      ASSERT(um%Has('variable'))
+      ASSERT(um%Has('length'))
+      ASSERT(um%Has('keys!'))
+      ASSERT(.not.um%Has('not there'))
+
       ASSERT(um%Get('this') == 1)
       ASSERT(um%Get('is') == 12)
       ASSERT(um%Get('a') == 21)
@@ -436,6 +446,10 @@ contains
       ASSERT(um%Get('variable') == 145)
       ASSERT(um%Get('length') == 7)
       ASSERT(um%Get('keys!') == 9)
+
+      ASSERT(um%Find('with') /= um%End())
+      call um%Erase('with')
+      ASSERT(um%Find('with') == um%End())
 
    end subroutine
 
