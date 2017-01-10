@@ -151,7 +151,11 @@ contains
       ASSERT(int(s) == -huge(1))
 
       s = '1e6'
-      ASSERT(.not.s%IsInt()) ! not sure if this should work ...
+#ifdef __GFORTRAN__
+      ASSERT(.not.s%IsInt())
+#else
+      ASSERT(s%IsInt())
+#endif
 
       s = '1.0'
       ASSERT(s%IsReal())
@@ -257,6 +261,7 @@ contains
       ASSERT(.not.s%StartsWith('Test'))
 
       s = 'another test of startsWith'
+      ASSERT(s%StartsWith(ftlString('another')))
       ASSERT(s%StartsWith([ftlString('Test'),ftlString('anot')]))
       ASSERT(.not.s%StartsWith([ftlString('Test'),ftlString('not there')]))
 

@@ -524,7 +524,7 @@ contains
       read(self%fstr,*,iostat=stat) ToInt
       if (stat /= 0) ToInt = -huge(ToInt)
 
-      ! TODO: handle strings like '1e3'
+      ! TODO: handle strings like '1e3' in gfortran
 
    end function
 
