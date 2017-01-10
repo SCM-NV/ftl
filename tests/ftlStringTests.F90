@@ -44,6 +44,8 @@ contains
 
       call testConversionToNumeric
 
+      call testConcat
+
       call testFortranStandardMethods
 
       ! Python string methods:
@@ -176,6 +178,30 @@ contains
       s = '(0.0,1.0)'
       ASSERT(s%IsComplex())
       ASSERT(complex(s) == (0.0,1.0))
+
+   end subroutine
+
+
+   subroutine testConcat
+      type(ftlString)               :: s1, s2, s3, s4
+      character(len=:), allocatable :: c
+
+      s1 = 'this'
+      s2 = 'is'
+      s3 = 'testing'
+      c = 'some old value' ! produces a bogus warning with gfortran, see: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=56670
+
+      c = s1//' '//s2//' '//s3
+      ASSERT(c == 'this is testing')
+
+      c = 'woho '//s1//' '//s2//' '//s3
+      ASSERT(c == 'woho this is testing')
+
+      s4 = s1.cat.' '.cat.s2.cat.' '.cat.s3
+      ASSERT(s4 == 'this is testing')
+
+      s4 = 'woho '.cat.s1.cat.' '.cat.s2.cat.' '.cat.s3
+      ASSERT(s4 == 'woho this is testing')
 
    end subroutine
 

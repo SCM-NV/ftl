@@ -50,8 +50,6 @@ module ftlStringModule
       procedure         :: NewFromRaw
       generic  , public :: New => NewDefault, NewCopyOther, NewFromRaw
 
-      generic  , public :: assignment(=) => NewCopyOther, NewFromRaw
-
       procedure, public :: Delete
 
       procedure         :: AtString
@@ -81,10 +79,26 @@ module ftlStringModule
       ! Other string methods:
       procedure, public :: CountWords
 
+      ! Overloaded operators:
+
+      generic  , public :: assignment(=) => NewCopyOther, NewFromRaw
+
+      ! // operator with raw Fortran string output
+      procedure, pass(lhs) :: StringCatString
+      procedure, pass(lhs) :: StringCatChar
+      procedure, pass(rhs) :: CharCatString
+      generic  , public    :: operator(//) => StringCatString, StringCatChar, CharCatString
+
+      ! .cat. operator with ftlString output
+      procedure, pass(lhs) :: StringCatOpString
+      procedure, pass(lhs) :: StringCatOpChar
+      procedure, pass(rhs) :: CharCatOpString
+      generic  , public    :: operator(.cat.) => StringCatOpString, StringCatOpChar, CharCatOpString
+
    end type
 
 
-   ! Cunstructor functions:
+   ! Constructor functions:
 
    interface ftlString
       module procedure NewDefaultConstr
@@ -237,7 +251,7 @@ contains
    !
    subroutine NewCopyOther(self, other)
       class(ftlString), intent(out) :: self
-      class(ftlString), intent(in)  :: other
+       type(ftlString), intent(in)  :: other
 
       ! Constructs a copy of other.
 
@@ -299,6 +313,70 @@ contains
       At => self%raw(idx:idx)
 
    end function
+
+
+
+   ! =============> Overloaded operators:
+
+
+   ! // operator with raw Fortran string output
+   !
+   pure function StringCatString(lhs, rhs) result(concat)
+      class(ftlString), intent(in)  :: lhs
+       type(ftlString), intent(in)  :: rhs
+      character(len=:), allocatable :: concat
+
+      concat = lhs%raw//rhs%raw
+
+   endfunction
+   !
+   pure function StringCatChar(lhs, rhs) result(concat)
+      class(ftlString), intent(in)  :: lhs
+      character(len=*), intent(in)  :: rhs
+      character(len=:), allocatable :: concat
+
+      concat = lhs%raw//rhs
+
+   endfunction
+   !
+   pure function CharCatString(lhs, rhs) result(concat)
+      character(len=*), intent(in)  :: lhs
+      class(ftlString), intent(in)  :: rhs
+      character(len=:), allocatable :: concat
+
+      concat = lhs//rhs%raw
+
+   endfunction
+
+
+   ! .cat. operator with ftlString output
+   !
+   elemental function StringCatOpString(lhs, rhs) result(concat)
+      class(ftlString), intent(in) :: lhs
+       type(ftlString), intent(in) :: rhs
+       type(ftlString)             :: concat
+
+      concat%raw = lhs%raw//rhs%raw
+
+   endfunction
+   !
+   elemental function StringCatOpChar(lhs, rhs) result(concat)
+      class(ftlString), intent(in) :: lhs
+      character(len=*), intent(in) :: rhs
+       type(ftlString)             :: concat
+
+       concat%raw = lhs%raw//rhs
+
+   endfunction
+   !
+   elemental function CharCatOpString(lhs, rhs) result(concat)
+      character(len=*), intent(in)  :: lhs
+      class(ftlString), intent(in)  :: rhs
+       type(ftlString)              :: concat
+
+        concat%raw = lhs//rhs%raw
+
+   endfunction
 
 
 
@@ -399,7 +477,8 @@ contains
 
 
    pure integer function ftlIndexOther(str1, str2, back)
-      class(ftlString), intent(in)           :: str1, str2
+      class(ftlString), intent(in)           :: str1
+       type(ftlString), intent(in)           :: str2
       logical         , intent(in), optional :: back
 
       ftlIndexOther = index(str1%raw, str2%raw, back)
@@ -418,7 +497,8 @@ contains
 
 
    pure integer function ftlScanOther(str1, str2, back)
-      class(ftlString), intent(in)           :: str1, str2
+      class(ftlString), intent(in)           :: str1
+       type(ftlString), intent(in)           :: str2
       logical         , intent(in), optional :: back
 
       ftlScanOther = scan(str1%raw, str2%raw, back)
@@ -437,7 +517,8 @@ contains
 
 
    pure integer function ftlVerifyOther(str1, str2, back)
-      class(ftlString), intent(in)           :: str1, str2
+      class(ftlString), intent(in)           :: str1
+       type(ftlString), intent(in)           :: str2
       logical         , intent(in), optional :: back
 
       ftlVerifyOther = verify(str1%raw, str2%raw, back)
@@ -655,7 +736,7 @@ contains
    !
    logical function StartsWithArray(self, prefixes)
       class(ftlString), intent(in) :: self
-      type(ftlString) , intent(in) :: prefixes(:) ! TODO: figure out why this has to be type() not class() ...
+       type(ftlString), intent(in) :: prefixes(:)
 
       integer :: i
 
