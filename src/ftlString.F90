@@ -40,31 +40,27 @@ module ftlStringModule
    type, public :: ftlString
       private
 
-      character(len=:), allocatable, public :: fstr
+      character(len=:), allocatable, public :: raw
 
    contains
       private
 
       procedure         :: NewDefault
       procedure         :: NewCopyOther
-      procedure         :: NewFromFString
-      generic  , public :: New => NewDefault, NewCopyOther, NewFromFString
+      procedure         :: NewFromRaw
+      generic  , public :: New => NewDefault, NewCopyOther, NewFromRaw
 
-      generic  , public :: assignment(=) => NewCopyOther, NewFromFString
+      generic  , public :: assignment(=) => NewCopyOther, NewFromRaw
 
       procedure, public :: Delete
 
-      procedure         :: CharString
-      generic  , public :: Char => CharString
+      procedure         :: AtString
+      generic  , public :: At => AtString
 
       procedure         :: BeginString
       generic  , public :: Begin => BeginString
       procedure         :: EndString
       generic  , public :: End => EndString
-
-#ifdef FTL_ENABLE_DERIVED_TYPE_IO
-      generic  , public :: write(unformatted) => WriteUnformatted
-#endif
 
       ! Conversion to numeric types:
       procedure, public :: IsNumber
@@ -77,10 +73,10 @@ module ftlStringModule
 
       ! Python string methods:
       procedure, public :: Split
-      procedure         :: StartsWithFString
+      procedure         :: StartsWithRaw
       procedure         :: StartsWithOther
       procedure         :: StartsWithArray
-      generic  , public :: StartsWith => StartsWithFString, StartsWithOther, StartsWithArray
+      generic  , public :: StartsWith => StartsWithRaw, StartsWithOther, StartsWithArray
 
       ! Other string methods:
       procedure, public :: CountWords
@@ -93,7 +89,7 @@ module ftlStringModule
    interface ftlString
       module procedure NewDefaultConstr
       module procedure NewCopyOtherConstr
-      module procedure NewFromFStringConstr
+      module procedure NewFromRawConstr
    end interface
 
 
@@ -167,27 +163,27 @@ module ftlStringModule
 
    public :: index
    interface index
-      module procedure ftlIndexOther, ftlIndexFString
+      module procedure ftlIndexOther, ftlIndexRaw
    end interface
 
    public :: scan
    interface scan
-      module procedure ftlScanOther, ftlScanFString
+      module procedure ftlScanOther, ftlScanRaw
    end interface
 
    public :: verify
    interface verify
-      module procedure ftlVerifyOther, ftlVerifyFString
+      module procedure ftlVerifyOther, ftlVerifyRaw
    end interface
 
    public :: operator(==)
    interface operator(==)
-      module procedure EqualOther, EqualFString
+      module procedure EqualOther, EqualRaw
    end interface
 
    public :: operator(/=)
    interface operator(/=)
-      module procedure UnequalOther, UnequalFString
+      module procedure UnequalOther, UnequalRaw
    end interface
 
 
@@ -235,7 +231,7 @@ contains
 
       ! Constructs an empty string, with a length of zero characters.
 
-      self%fstr = ''
+      self%raw = ''
 
    end subroutine
    !
@@ -245,17 +241,17 @@ contains
 
       ! Constructs a copy of other.
 
-      self%fstr = other%fstr
+      self%raw = other%raw
 
    end subroutine
    !
-   subroutine NewFromFString(self, fstr)
+   subroutine NewFromRaw(self, raw)
       class(ftlString), intent(out) :: self
-      character(len=*), intent(in)  :: fstr
+      character(len=*), intent(in)  :: raw
 
-      ! Constructs an ftlString from a normal Fortran string
+      ! Constructs an ftlString from a raw Fortran string
 
-      self%fstr = fstr
+      self%raw = raw
 
    end subroutine
 
@@ -272,9 +268,9 @@ contains
       call str%NewCopyOther(other)
    end function
    !
-   type(ftlString) function NewFromFStringConstr(fstr) result(str)
-      character(len=*), intent(in) :: fstr
-      call str%NewFromFString(fstr)
+   type(ftlString) function NewFromRawConstr(raw) result(str)
+      character(len=*), intent(in) :: raw
+      call str%NewFromRaw(raw)
    end function
 
 
@@ -285,7 +281,7 @@ contains
    subroutine Delete(self)
       class(ftlString), intent(out) :: self
 
-      ! Nothing to do here: intent(out) will deallocate self%fstr
+      ! Nothing to do here: intent(out) will deallocate self%raw
 
    end subroutine
 
@@ -295,12 +291,12 @@ contains
 
 
 
-   function CharString(self, idx) result(Char)
+   function AtString(self, idx) result(At)
       class(ftlString), intent(in), target :: self
       integer         , intent(in)         :: idx
-      character, pointer                   :: Char
+      character, pointer                   :: At
 
-      Char => self%fstr(idx:idx)
+      At => self%raw(idx:idx)
 
    end function
 
@@ -317,7 +313,7 @@ contains
 
       Begin%str => self
       Begin%index = 1
-      if (len(self) /= 0) Begin%value => self%fstr(1:1)
+      if (len(self) /= 0) Begin%value => self%raw(1:1)
 
    end function
 
@@ -350,7 +346,7 @@ contains
    pure integer function ftlLen(self)
       class(ftlString), intent(in) :: self
 
-      ftlLen = len(self%fstr)
+      ftlLen = len(self%raw)
 
    end function
 
@@ -359,7 +355,7 @@ contains
    pure integer function ftlLenTrim(self)
       class(ftlString), intent(in) :: self
 
-      ftlLenTrim = len_trim(self%fstr)
+      ftlLenTrim = len_trim(self%raw)
 
    end function
 
@@ -368,7 +364,7 @@ contains
    pure type(ftlString) function ftlTrim(str)
       class(ftlString), intent(in) :: str
 
-      ftlTrim%fstr = trim(str%fstr)
+      ftlTrim%raw = trim(str%raw)
 
    end function
 
@@ -377,7 +373,7 @@ contains
    pure type(ftlString) function ftlAdjustl(str)
       class(ftlString), intent(in) :: str
 
-      ftlAdjustl%fstr = adjustl(str%fstr)
+      ftlAdjustl%raw = adjustl(str%raw)
 
    end function
 
@@ -386,7 +382,7 @@ contains
    pure type(ftlString) function ftlAdjustr(str)
       class(ftlString), intent(in) :: str
 
-      ftlAdjustr%fstr = adjustr(str%fstr)
+      ftlAdjustr%raw = adjustr(str%raw)
 
    end function
 
@@ -396,7 +392,7 @@ contains
       class(ftlString), intent(in) :: str
       integer         , intent(in) :: i
 
-      ftlRepeat%fstr = repeat(str%fstr,i)
+      ftlRepeat%raw = repeat(str%raw,i)
 
    end function
 
@@ -406,16 +402,16 @@ contains
       class(ftlString), intent(in)           :: str1, str2
       logical         , intent(in), optional :: back
 
-      ftlIndexOther = index(str1%fstr, str2%fstr, back)
+      ftlIndexOther = index(str1%raw, str2%raw, back)
 
    end function
    !
-   pure integer function ftlIndexFString(str, fstr, back)
+   pure integer function ftlIndexRaw(str, raw, back)
       class(ftlString), intent(in)           :: str
-      character(len=*), intent(in)           :: fstr
+      character(len=*), intent(in)           :: raw
       logical         , intent(in), optional :: back
 
-      ftlIndexFString = index(str%fstr, fstr, back)
+      ftlIndexRaw = index(str%raw, raw, back)
 
    end function
 
@@ -425,16 +421,16 @@ contains
       class(ftlString), intent(in)           :: str1, str2
       logical         , intent(in), optional :: back
 
-      ftlScanOther = scan(str1%fstr, str2%fstr, back)
+      ftlScanOther = scan(str1%raw, str2%raw, back)
 
    end function
    !
-   pure integer function ftlScanFString(str, fstr, back)
+   pure integer function ftlScanRaw(str, raw, back)
       class(ftlString), intent(in)           :: str
-      character(len=*), intent(in)           :: fstr
+      character(len=*), intent(in)           :: raw
       logical         , intent(in), optional :: back
 
-      ftlScanFString = scan(str%fstr, fstr, back)
+      ftlScanRaw = scan(str%raw, raw, back)
 
    end function
 
@@ -444,16 +440,16 @@ contains
       class(ftlString), intent(in)           :: str1, str2
       logical         , intent(in), optional :: back
 
-      ftlVerifyOther = verify(str1%fstr, str2%fstr, back)
+      ftlVerifyOther = verify(str1%raw, str2%raw, back)
 
    end function
    !
-   pure integer function ftlVerifyFString(str, fstr, back)
+   pure integer function ftlVerifyRaw(str, raw, back)
       class(ftlString), intent(in)           :: str
-      character(len=*), intent(in)           :: fstr
+      character(len=*), intent(in)           :: raw
       logical         , intent(in), optional :: back
 
-      ftlVerifyFString = verify(str%fstr, fstr, back)
+      ftlVerifyRaw = verify(str%raw, raw, back)
 
    end function
 
@@ -462,15 +458,15 @@ contains
    pure logical function EqualOther(self, other)
       class(ftlString), intent(in) :: self, other
 
-      EqualOther = (self%fstr == other%fstr)
+      EqualOther = (self%raw == other%raw)
 
    end function
    !
-   pure logical function EqualFString(self, fstr)
+   pure logical function EqualRaw(self, raw)
       class(ftlString), intent(in) :: self
-      character(len=*), intent(in) :: fstr
+      character(len=*), intent(in) :: raw
 
-      EqualFstring = (self%fstr == fstr)
+      EqualRaw = (self%raw == raw)
 
    end function
 
@@ -479,15 +475,15 @@ contains
    pure logical function UnequalOther(self, other)
       class(ftlString), intent(in) :: self, other
 
-      UnequalOther = (self%fstr /= other%fstr)
+      UnequalOther = (self%raw /= other%raw)
 
    end function
    !
-   pure logical function UnequalFString(self, fstr)
+   pure logical function UnequalRaw(self, raw)
       class(ftlString), intent(in) :: self
-      character(len=*), intent(in) :: fstr
+      character(len=*), intent(in) :: raw
 
-      UnequalFString = (self%fstr /= fstr)
+      UnequalRaw = (self%raw /= raw)
 
    end function
 
@@ -511,7 +507,7 @@ contains
 
       integer :: tester, stat
 
-      read(self%fstr,*,iostat=stat) tester
+      read(self%raw,*,iostat=stat) tester
       IsInt = (stat == 0)
 
    end function
@@ -521,7 +517,7 @@ contains
 
       integer :: stat
 
-      read(self%fstr,*,iostat=stat) ToInt
+      read(self%raw,*,iostat=stat) ToInt
       if (stat /= 0) ToInt = -huge(ToInt)
 
       ! TODO: handle strings like '1e3' in gfortran
@@ -536,7 +532,7 @@ contains
       integer :: stat
       real :: tester
 
-      read(self%fstr,*,iostat=stat) tester
+      read(self%raw,*,iostat=stat) tester
       IsReal = (stat == 0)
 
    end function
@@ -546,7 +542,7 @@ contains
 
       integer :: stat
 
-      read(self%fstr,*,iostat=stat) ToReal
+      read(self%raw,*,iostat=stat) ToReal
       if (stat /= 0) then
          ToReal = 0.0
          ToReal = ToReal/ToReal ! results in NaN
@@ -562,7 +558,7 @@ contains
       integer :: stat
       complex :: tester
 
-      read(self%fstr,*,iostat=stat) tester
+      read(self%raw,*,iostat=stat) tester
       IsComplex = (stat == 0)
 
    end function
@@ -572,7 +568,7 @@ contains
 
       integer :: stat
 
-      read(self%fstr,*,iostat=stat) ToComplex
+      read(self%raw,*,iostat=stat) ToComplex
       if (stat /= 0) then
          ToComplex = (0.0,0.0)
          ToComplex = ToComplex/ToComplex ! results in NaN
@@ -620,15 +616,15 @@ contains
 
          idx = 1
          do wordidx = 1, size(words)
-            do while (CharIsWhitespace(self%Char(idx)))
+            do while (CharIsWhitespace(self%At(idx)))
                idx = idx + 1
             enddo
             wordbegin = idx
             do while (idx <= len(self))
-               if (CharIsWhitespace(self%Char(idx))) exit
+               if (CharIsWhitespace(self%At(idx))) exit
                idx = idx + 1
             enddo
-            words(wordidx) = self%fstr(wordbegin:idx-1)
+            words(wordidx) = self%raw(wordbegin:idx-1)
          enddo
 
       endif
@@ -637,14 +633,14 @@ contains
 
 
 
-   pure logical function StartsWithFString(self, prefix)
+   pure logical function StartsWithRaw(self, prefix)
       class(ftlString), intent(in) :: self
       character(len=*), intent(in) :: prefix
 
       if (len(self) >= len(prefix)) then
-         StartsWithFString = (self%fstr(1:len(prefix)) == prefix)
+         StartsWithRaw = (self%raw(1:len(prefix)) == prefix)
       else
-         StartsWithFString = .false.
+         StartsWithRaw = .false.
       endif
 
    end function
@@ -653,7 +649,7 @@ contains
       class(ftlString), intent(in) :: self
       class(ftlString), intent(in) :: prefix
 
-      StartsWithOther = StartsWithFString(self, prefix%fstr)
+      StartsWithOther = StartsWithRaw(self, prefix%raw)
 
    end function
    !
@@ -665,7 +661,7 @@ contains
 
       StartsWithArray = .false.
       do i = 1, size(prefixes)
-         if (self%StartsWithFString(prefixes(i)%fstr)) then
+         if (self%StartsWithRaw(prefixes(i)%raw)) then
             StartsWithArray = .true.
             return
          endif
@@ -686,14 +682,14 @@ contains
 
       integer :: idx
 
-      if (CharIsWhitespace(self%fstr(1:1))) then
+      if (CharIsWhitespace(self%raw(1:1))) then
          CountWords = 0
       else
          CountWords = 1
       endif
       idx = 1
-      do idx = 2, len(self%fstr)
-         if (CharIsWhitespace(self%Char(idx-1)) .and. .not.CharIsWhitespace(self%Char(idx))) then
+      do idx = 2, len(self%raw)
+         if (CharIsWhitespace(self%At(idx-1)) .and. .not.CharIsWhitespace(self%At(idx))) then
             CountWords = CountWords + 1
          endif
       enddo
@@ -710,7 +706,7 @@ contains
       use ftlHashModule
       class(ftlString), intent(in) :: str
 
-      ftlHashString = ftlHash(str%fstr)
+      ftlHashString = ftlHash(str%raw)
 
    end function
 
@@ -734,7 +730,7 @@ contains
 
       self%str => other%str
       self%index = other%index
-      if (len(self%str) > 0 .and. self%index <= len(self%str)) self%value => self%str%fstr(self%index:self%index)
+      if (len(self%str) > 0 .and. self%index <= len(self%str)) self%value => self%str%raw(self%index:self%index)
 
    end subroutine
 
@@ -749,7 +745,7 @@ contains
 
       self%index = self%index + 1
       if (self%index <= len(self%str)) then
-         self%value => self%str%fstr(self%index:self%index)
+         self%value => self%str%raw(self%index:self%index)
       else
          nullify(self%value)
       endif
@@ -761,7 +757,7 @@ contains
 
       self%index = self%index - 1
       if (self%index > 0) then
-         self%value => self%str%fstr(self%index:self%index)
+         self%value => self%str%raw(self%index:self%index)
       else
          nullify(self%value)
       endif

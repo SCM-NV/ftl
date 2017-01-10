@@ -35,7 +35,7 @@ contains
       write (*,'(A)') 'Running ftlString tests ...'
 
       call testNewDefault
-      call testAssignFStr
+      call testAssignraw
       call testAssignOther
 
       call testIteratorWriting
@@ -64,12 +64,12 @@ contains
    end subroutine
 
 
-   subroutine testAssignFStr
+   subroutine testAssignraw
       type(ftlString) :: s
 
       s = 'test'
 
-      ASSERT(s%fstr == 'test')
+      ASSERT(s%raw == 'test')
 
    end subroutine
 
@@ -80,14 +80,14 @@ contains
       s1 = 'testme'
       s2 = s1
 
-      ASSERT(s1%fstr == 'testme')
-      ASSERT(s2%fstr == 'testme')
+      ASSERT(s1%raw == 'testme')
+      ASSERT(s2%raw == 'testme')
       ASSERT(s1 == s2)
 
       s2 = 'theitcrowd'
 
-      ASSERT(s1%fstr == 'testme')
-      ASSERT(s2%fstr == 'theitcrowd')
+      ASSERT(s1%raw == 'testme')
+      ASSERT(s2%raw == 'theitcrowd')
       ASSERT(s1 /= s2)
 
    end subroutine

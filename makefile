@@ -26,7 +26,7 @@ BUILDDIR = build.$(PLATFORM).$(BUILD)
 
 ifeq ($(PLATFORM), gnu)
 	COMPILER = gfortran
-	FLAGS = -std=f2003 -ffree-line-length-none -Wall -Wextra -Wpedantic -Wno-target-lifetime -Wno-surprising -Wno-compare-reals -J$(BUILDDIR)
+	FLAGS = -std=f2003 -fall-intrinsics -ffree-line-length-none -Wall -Wextra -Wpedantic -Wno-target-lifetime -Wno-surprising -Wno-compare-reals -J$(BUILDDIR)
 	CXXCOMPILER = g++
 	CXXFLAGS = -std=c++11 -Ofast -march=native
 else ifeq ($(PLATFORM), intel)
