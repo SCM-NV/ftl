@@ -86,3 +86,94 @@ wrap in an interface so that the different instantiations don't collide with
 each other, but these are technical details that are all hidden inside the
 template file. From the outside we don't mind; all we have to do is instantiate
 our template once.
+
+
+Components
+##########
+
+ftlDynArray
+   A resizeable array container. It can slowly grow in size as elements are
+   added at it's end. Note that insertion at the end is an amortized constant
+   time operation. Basically, ftlDynArray is *exactly* the same as C++'s
+   std::vector. I just changed the name because calling a resizeable array a
+   vector makes no sense from a mathematical point of view.
+
+ftlList
+   A linked list container that allows constant time insert and erase operations
+   anywhere within the list. *Exactly* the same as C++'s std::list.
+
+ftlHashMap
+   An associative containers that stores elements formed by the combination of a
+   key value and a mapped value, and which allows for fast retrieval of
+   individual elements based on their keys. It's basically a dictionary that
+   internally uses a hash table to allow constant time retrieval of elements.
+   ftlHashMap is very similar to C++'s std::unordered_map (though its interface
+   is a bit less awkward).
+
+ftlHash
+   A small utility library that provides hash functions for the Fortran
+   intrinsic types. This allows them to be used as key types in ftlHashMap.
+   Furthermore these basic has functions can be used to implement hash functions
+   for other derived types, so that these can also be used as keys in
+   ftlHashMap. This file is not a template.
+
+ftlString
+   A variable length string type that integrates seamlessly with plain Fortran
+   strings. The provided ftlString type is not a template. It is quite similar
+   to C++'s std::string in the sense that it has the interface of a container of
+   single characters. However, since the std::string interface is in practice a
+   bit basic, it also offers Python's string manipulation methods.
+
+ftlAlgorithms
+   A library of generic algorithms that work on all FTL containers. *Exactly* the
+   same as C++'s std::algorithm header.
+
+ftlMemory
+   Provides general utilities to manage dynamic memory. At the moment only
+   contains a reference counted ftlSharedPtr in the spirit of C++'s
+   std::shared_ptr.
+
+
+Implementation progress
+#######################
+
+ftlDynArray, ftlList and ftlHashMap are pretty much finished.
+
+ftlAlgorithms is incomplete. Ultimately I would like all of the algorithms in
+C++'s std::algorithm header to be implemented, but so far I only did maybe 30%
+of them. It's quite a lot of work as there are many algorithms to implement. I
+would absolutely appreciate some help here.
+
+ftlString is incomplete. I would like to have all Python string manipulation
+methods, but only a handful are implemented at the moment. Help is much
+appreciated. Conversion from numeric types to ftlString also needs to be
+implemented. Fortran 2003 derived-type I/O would be nice, though this is not yet
+supported in gfortran at the moment.
+
+Definitely on the TODO list are:
+
++ A wrapper container for an existing plain Fortran array. It should provide a
+  random access iterator so that the ftlAlgorithms can work on plain Fortran
+  arrays.
+
++ An equivalent of std::deque, a double-ended queue. A container with random
+  access iterators but constant time insertion at both ends. It should be
+  reasonably local in memory.
+
++ An equivalent of std::set. Should probably share code with ftlHashMap, as it
+  is essentially a hash table without a value associated with the keys.
+
+These things might be nice:
+
++ A regular expression library. Probably best to just make a Fortran interface
+  to the C regex library ...
+
++ Random number generators and distributions like in std::random.
+
+
+License
+#######
+
+The Fortran Template Library is published under the GNU Lesser General Public
+License. This should permit virtually any use, including the use in commercial
+software according to section 3 of the license, see ``LICENSE.lgpl``.
