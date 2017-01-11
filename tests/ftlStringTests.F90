@@ -344,6 +344,8 @@ contains
 
       s = 'another test of startsWith'
       ASSERT(s%StartsWith(ftlString('another')))
+
+      ! the following two lines leak memory with gfortran, see: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=79053
       ASSERT(s%StartsWith([ftlString('Test'),ftlString('anot')]))
       ASSERT(.not.s%StartsWith([ftlString('Test'),ftlString('not there')]))
 
