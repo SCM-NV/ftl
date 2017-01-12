@@ -36,6 +36,20 @@ module ftlStringModule
    private
 
 
+   ! Python string constants:
+   character       , parameter, public :: FTL_STRING_NEWLINE     = NEW_LINE('a')
+   character(len=*), parameter, public :: FTL_STRING_LOWERCASE   = 'abcdefghijklmnopqrstuvwxyz'
+   character(len=*), parameter, public :: FTL_STRING_UPPERCASE   = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+   character(len=*), parameter, public :: FTL_STRING_LETTERS     = FTL_STRING_LOWERCASE//FTL_STRING_UPPERCASE
+   character(len=*), parameter, public :: FTL_STRING_DIGITS      = '0123456789'
+   character(len=*), parameter, public :: FTL_STRING_HEXDIGITS   = '0123456789ABCDEF'
+   character(len=*), parameter, public :: FTL_STRING_OCTDIGITS   = '01234567'
+   character(len=*), parameter, public :: FTL_STRING_PUNCTUATION = '!"#$%&'//achar(39)//'()*+,-./:;<=>?@['//achar(92)//']^_`{|}~'
+   character(len=*), parameter, public :: FTL_STRING_WHITESPACE  = ' '//char(9)//char(10)//char(13)//char(11)//char(12)
+   character(len=*), parameter, public :: FTL_STRING_PRINTABLE   = FTL_STRING_LETTERS//FTL_STRING_DIGITS// &
+                                                                   FTL_STRING_PUNCTUATION//FTL_STRING_WHITESPACE
+
+
 ! ====== Type of the ftlString container itself ==================================================================================
 
    type, public :: ftlString
