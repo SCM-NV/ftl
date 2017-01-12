@@ -977,9 +977,10 @@ contains
 
 
 
-   type(ftlStringIterator) function AdvanceN(self, n)
+   function AdvanceN(self, n)
       type(ftlStringIterator), intent(in) :: self
       integer                , intent(in) :: n
+      type(ftlStringIterator), target     :: AdvanceN
 
       call AdvanceN%New(self)
       AdvanceN%index = AdvanceN%index + n
@@ -991,9 +992,10 @@ contains
 
    end function
    !
-   type(ftlStringIterator) function ReverseN(self, n)
+   function ReverseN(self, n)
       type(ftlStringIterator), intent(in) :: self
       integer                , intent(in) :: n
+      type(ftlStringIterator), target     :: ReverseN
 
       call ReverseN%New(self)
       ReverseN%index = ReverseN%index - n
