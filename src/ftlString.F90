@@ -63,7 +63,11 @@ module ftlStringModule
       procedure         :: NewDefault
       procedure         :: NewCopyOther
       procedure         :: NewFromRaw
-      generic  , public :: New => NewDefault, NewCopyOther, NewFromRaw
+      procedure         :: NewFromInt
+      procedure         :: NewFromReal
+      procedure         :: NewFromComplex
+      procedure         :: NewFromLogical
+      generic  , public :: New => NewDefault, NewCopyOther, NewFromRaw, NewFromInt, NewFromReal, NewFromComplex, NewFromLogical
 
       procedure, public :: Delete
 
@@ -85,8 +89,11 @@ module ftlStringModule
       procedure, public :: ToReal
       procedure, public :: IsComplex
       procedure, public :: ToComplex
+      procedure, public :: IsLogical
+      procedure, public :: ToLogical
 
       ! Python string methods:
+      procedure, public :: Center
       procedure, public :: Split
       procedure         :: StartsWithRaw
       procedure         :: StartsWithOther
@@ -95,6 +102,8 @@ module ftlStringModule
       procedure         :: FindRaw
       procedure         :: FindOther
       generic  , public :: Find => FindRaw, FindOther
+      procedure, public :: Upper
+      procedure, public :: Lower
 
       ! Other string methods:
       procedure, public :: CountWords
@@ -142,6 +151,10 @@ module ftlStringModule
       module procedure NewDefaultConstr
       module procedure NewCopyOtherConstr
       module procedure NewFromRawConstr
+      module procedure NewFromIntConstr
+      module procedure NewFromRealConstr
+      module procedure NewFromComplexConstr
+      module procedure NewFromLogicalConstr
    end interface
 
 
@@ -336,6 +349,87 @@ contains
       self%raw = raw
 
    end subroutine
+   !
+   subroutine NewFromInt(self, i, format)
+      class(ftlString), intent(out)           :: self
+      integer         , intent(in)            :: i
+      character(len=*), intent(in) , optional :: format
+
+      character(len=64) :: tmp
+
+      ! Constructs an ftlString from an integer
+
+      if (present(format)) then
+         write (tmp,format) i
+         self%raw = trim(tmp)
+      else
+         write (tmp,*) i
+         self%raw = trim(adjustl(tmp))
+      endif
+
+
+   end subroutine
+   !
+   subroutine NewFromReal(self, r, format)
+      class(ftlString), intent(out)           :: self
+      real            , intent(in)            :: r
+      character(len=*), intent(in) , optional :: format
+
+      character(len=64) :: tmp
+
+      ! Constructs an ftlString from a real
+
+      if (present(format)) then
+         write (tmp,format) r
+         self%raw = trim(tmp)
+      else
+         write (tmp,*) r
+         self%raw = trim(adjustl(tmp))
+      endif
+
+   end subroutine
+   !
+   subroutine NewFromComplex(self, c, format)
+      class(ftlString), intent(out)           :: self
+      complex         , intent(in)            :: c
+      character(len=*), intent(in) , optional :: format
+
+      character(len=128) :: tmp
+
+      ! Constructs an ftlString from a complex
+
+      if (present(format)) then
+         write (tmp,format) c
+         self%raw = trim(tmp)
+      else
+         write (tmp,*) c
+         self%raw = trim(adjustl(tmp))
+      endif
+
+   end subroutine
+   !
+   subroutine NewFromLogical(self, l, format)
+      class(ftlString), intent(out)           :: self
+      logical         , intent(in)            :: l
+      character(len=*), intent(in) , optional :: format
+
+      character(len=16) :: tmp
+
+      ! Constructs an ftlString from a complex
+
+      if (present(format)) then
+         write (tmp,format) l
+         self%raw = trim(tmp)
+      else
+         if (l) then
+            self%raw = 'True'
+         else
+            self%raw = 'False'
+         endif
+      endif
+
+   end subroutine
+
 
 
 
@@ -353,6 +447,30 @@ contains
    type(ftlString) function NewFromRawConstr(raw) result(str)
       character(len=*), intent(in) :: raw
       call str%NewFromRaw(raw)
+   end function
+   !
+   type(ftlString) function NewFromIntConstr(i, format) result(str)
+      integer         , intent(in)           :: i
+      character(len=*), intent(in), optional :: format
+      call str%NewFromInt(i, format)
+   end function
+   !
+   type(ftlString) function NewFromRealConstr(r, format) result(str)
+      real            , intent(in)           :: r
+      character(len=*), intent(in), optional :: format
+      call str%NewFromReal(r, format)
+   end function
+   !
+   type(ftlString) function NewFromComplexConstr(c, format) result(str)
+      complex         , intent(in)           :: c
+      character(len=*), intent(in), optional :: format
+      call str%NewFromComplex(c, format)
+   end function
+   !
+   type(ftlString) function NewFromLogicalConstr(l, format) result(str)
+      logical         , intent(in)           :: l
+      character(len=*), intent(in), optional :: format
+      call str%NewFromLogical(l, format)
    end function
 
 
@@ -779,8 +897,58 @@ contains
 
 
 
+   pure logical function IsLogical(self)
+      class(ftlString), intent(in) :: self
+
+      logical :: tester
+      integer :: stat
+
+      read(self%raw,*,iostat=stat) tester
+      IsLogical = (stat == 0)
+
+   end function
+   !
+   pure logical function ToLogical(self)
+      class(ftlString), intent(in) :: self
+
+      integer :: stat
+
+      read(self%raw,*,iostat=stat) ToLogical
+      if (stat /= 0) ToLogical = .false.
+
+   end function
+
+
+
    ! =============> Python string methods:
 
+
+
+   ! Return centered in a string of length width. Padding is done using the specified fillchar (default is a space). The
+   ! original string is returned if width is less than or equal to len(self).
+   !
+   type(ftlString) function Center(self, width, fillchar)
+      class(ftlString), intent(in)           :: self
+      integer         , intent(in)           :: width
+      character       , intent(in), optional :: fillchar
+
+      character :: fc
+      integer :: numfill
+
+      if (present(fillchar)) then
+         fc = fillchar
+      else
+         fc = ' '
+      endif
+
+      if (len(self%raw) >= width) then
+         Center = self
+      else
+         numfill = width - len(self%raw)
+         Center = repeat(fc, numfill/2) // self%raw // repeat(fc, numfill/2 + mod(numfill,2))
+      endif
+
+   end function
 
 
    ! Return a list of the words in the string, using sep as the delimiter string. If maxsplit is present, at most
@@ -893,6 +1061,35 @@ contains
 
    end function
 
+
+
+   ! Return a copy of the string with all the cased characters converted to uppercase/lowercase.
+   !
+   type(ftlString) function Upper(self)
+      class(ftlString), intent(in) :: self
+
+      integer :: idx, ascii
+
+      Upper = self
+      do idx = 1, len(Upper%raw)
+         ascii = iachar(Upper%raw(idx:idx))
+         if (ascii >= 97 .and. ascii <= 122) Upper%raw(idx:idx) = achar(ascii-32)
+      enddo
+
+   end function
+   !
+   type(ftlString) function Lower(self)
+      class(ftlString), intent(in) :: self
+
+      integer :: idx, ascii
+
+      Lower = self
+      do idx = 1, len(Lower%raw)
+         ascii = iachar(Lower%raw(idx:idx))
+         if (ascii >= 65 .and. ascii <= 90) Lower%raw(idx:idx) = achar(ascii+32)
+      enddo
+
+   end function
 
 
 

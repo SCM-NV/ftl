@@ -42,7 +42,8 @@ contains
 
       call testHash
 
-      call testConversionToNumeric
+      call testStringFromNumeric
+      call testStringToNumeric
 
       ! Overloaded operators:
       call testComparison
@@ -52,8 +53,10 @@ contains
       call testFortranStandardMethods
 
       ! Python string methods:
+      call testCenter
       call testSplit
       call testStartsWith
+      call testUpperLower
 
       ! Other string methods:
       call testCountWords
@@ -147,7 +150,50 @@ contains
    end subroutine
 
 
-   subroutine testConversionToNumeric
+   subroutine testStringFromNumeric
+      type(ftlString) :: s
+
+      s = ftlString(42)
+      ASSERT(s == '42')
+      ASSERT(s%IsInt())
+      ASSERT(int(s) == 42)
+
+      s = ftlString(42,'(I4)')
+      ASSERT(s == '  42')
+      ASSERT(s%IsInt())
+      ASSERT(int(s) == 42)
+
+      s = ftlString(2.0)
+      ! not sure what the default output will look like, but it shouldn't contain trailing or leading whitespace ...
+      ASSERT(trim(adjustl(s)) == s)
+      ASSERT(s%IsReal())
+      ASSERT(real(s) == 2.0)
+
+      s = ftlString(2.0,'(F3.1)')
+      ASSERT(s == '2.0')
+      ASSERT(s%IsReal())
+      ASSERT(real(s) == 2.0)
+
+      s = ftlString((1.0,2.3))
+      ! not sure what the default output will look like, but it shouldn't contain trailing or leading whitespace ...
+      ASSERT(trim(adjustl(s)) == s)
+      ASSERT(s%IsComplex())
+      ASSERT(complex(s) == (1.0,2.3))
+
+      s = ftlString(.true.)
+      ASSERT(s == 'True')
+      s = ftlString(.false.)
+      ASSERT(s == 'False')
+
+      s = ftlString(.true.,'(L3)')
+      ASSERT(s == '  T')
+      s = ftlString(.false.,'(L3)')
+      ASSERT(s == '  F')
+
+   end subroutine
+
+
+   subroutine testStringToNumeric
       type(ftlString) :: s
 
       s = '25'
@@ -192,6 +238,25 @@ contains
       s = '(0.0,1.0)'
       ASSERT(s%IsComplex())
       ASSERT(complex(s) == (0.0,1.0))
+
+      s = 'T'
+      ASSERT(s%IsLogical())
+      ASSERT(s%ToLogical() .eqv. .true.)
+
+      s = 'True'
+      ASSERT(s%IsLogical())
+      ASSERT(s%ToLogical() .eqv. .true.)
+
+      s = 'F'
+      ASSERT(s%IsLogical())
+      ASSERT(s%ToLogical() .eqv. .false.)
+
+      s = 'False'
+      ASSERT(s%IsLogical())
+      ASSERT(s%ToLogical() .eqv. .false.)
+
+      s = 'N'
+      ASSERT(.not.s%IsLogical())
 
    end subroutine
 
@@ -299,6 +364,25 @@ contains
    end subroutine
 
 
+   subroutine testCenter
+      type(ftlString) :: s
+
+      s = 'x'
+
+      ASSERT(s%Center(9) == '    x    ')
+      ASSERT(s%Center(10) == '    x     ')
+      ASSERT(s%Center(2,'a') == 'xa')
+      ASSERT(s%Center(3,'a') == 'axa')
+
+      s = 'longstring'
+
+      ASSERT(s%Center(4) == 'longstring')
+      ASSERT(s%Center(10) == 'longstring')
+      ASSERT(s%Center(11) == 'longstring ')
+
+   end subroutine
+
+
    subroutine testSplit
       type(ftlString) :: s
       type(ftlString), allocatable :: words(:)
@@ -348,6 +432,22 @@ contains
       ! the following two lines leak memory with gfortran, see: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=79053
       ASSERT(s%StartsWith([ftlString('Test'),ftlString('anot')]))
       ASSERT(.not.s%StartsWith([ftlString('Test'),ftlString('not there')]))
+
+   end subroutine
+
+
+   subroutine testUpperLower
+      type(ftlString) :: s
+
+      s = 'This is .A. [test]!'
+      ASSERT(s%Upper() == 'THIS IS .A. [TEST]!')
+      ASSERT(s%Lower() == 'this is .a. [test]!')
+
+      s = FTL_STRING_DIGITS//FTL_STRING_LOWERCASE//FTL_STRING_WHITESPACE//FTL_STRING_PUNCTUATION
+      ASSERT(s%Upper() == FTL_STRING_DIGITS//FTL_STRING_UPPERCASE//FTL_STRING_WHITESPACE//FTL_STRING_PUNCTUATION)
+
+      s = FTL_STRING_DIGITS//FTL_STRING_UPPERCASE//FTL_STRING_WHITESPACE//FTL_STRING_PUNCTUATION
+      ASSERT(s%Lower() == FTL_STRING_DIGITS//FTL_STRING_LOWERCASE//FTL_STRING_WHITESPACE//FTL_STRING_PUNCTUATION)
 
    end subroutine
 
