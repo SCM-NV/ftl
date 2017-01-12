@@ -40,7 +40,7 @@ Once this function template is defined one can just call the function.
 The compiler will determine that the type ``T`` is ``int``  for the first call
 and ``float`` for the second and will generate two versions of the max function
 template: One for ``int`` and ``float``. This is called template instantiation.
-This does not only work for the plain old types like numbers, but for ``any``
+This does not only work for the plain old types like numbers, but for *any*
 type, provided that it overloads the ``<`` operator. If it doesn't, the compiler
 can not instantiate the the template and will produce an error.
 
