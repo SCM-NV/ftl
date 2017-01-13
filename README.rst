@@ -94,7 +94,7 @@ Components
 
 ftlDynArray
    A resizeable array container. It can slowly grow in size as elements are
-   added at it's end. Note that insertion at the end is an amortized constant
+   added at its end. Note that insertion at the end is an amortized constant
    time operation. Basically, ftlDynArray is *exactly* the same as C++'s
    std::vector. I just changed the name because calling a resizeable array a
    vector makes no sense from a mathematical point of view.
