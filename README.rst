@@ -147,9 +147,8 @@ would absolutely appreciate some help here.
 
 ftlString is incomplete. I would like to have all Python string manipulation
 methods, but only a handful are implemented at the moment. Help is much
-appreciated. Conversion from numeric types to ftlString also needs to be
-implemented. Fortran 2003 derived-type I/O would be nice, though this is not yet
-supported in gfortran at the moment.
+appreciated. Fortran 2003 derived-type I/O would be nice, though this is not
+yet supported in gfortran at the moment.
 
 Definitely on the TODO list are:
 
