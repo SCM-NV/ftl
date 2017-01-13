@@ -503,12 +503,12 @@ contains
       call s%New('still testing')
       it = s%Begin()
 
-      ASSERT(associated(it%value,s%At(1)))
+      !ASSERT(associated(it%value,s%At(1)))
       ASSERT(it%value == 's')
 
       call it%Inc()
 
-      ASSERT(associated(it%value,s%At(2)))
+      !ASSERT(associated(it%value,s%At(2)))
       ASSERT(it%value == 't')
 
    end subroutine
@@ -522,12 +522,12 @@ contains
       it = s%End()
       call it%Dec()
 
-      ASSERT(associated(it%value,s%At(17)))
+      !ASSERT(associated(it%value,s%At(17)))
       ASSERT(it%value == 'g')
 
       call it%Dec()
 
-      ASSERT(associated(it%value,s%At(16)))
+      !ASSERT(associated(it%value,s%At(16)))
       ASSERT(it%value == 'n')
 
    end subroutine
@@ -542,12 +542,12 @@ contains
       it2 = it1 + 4
 
       ASSERT(it2 - it1 == 4)
-      ASSERT(associated(it2%value,s%At(5)))
+      !ASSERT(associated(it2%value,s%At(5)))
       ASSERT(it2%value == 's')
 
       it2 = it2 - 2
       ASSERT(it2 - it1 == 2)
-      ASSERT(associated(it2%value,s%At(3)))
+      !ASSERT(associated(it2%value,s%At(3)))
       ASSERT(it2%value == '.')
 
    end subroutine
