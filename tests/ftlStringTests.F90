@@ -54,6 +54,7 @@ contains
 
       ! Python string methods:
       call testCenter
+      call testPartition
       call testSplit
       call testStartsWith
       call testUpperLower
@@ -379,6 +380,46 @@ contains
       ASSERT(s%Center(4) == 'longstring')
       ASSERT(s%Center(10) == 'longstring')
       ASSERT(s%Center(11) == 'longstring ')
+
+   end subroutine
+
+
+   subroutine testPartition
+      type(ftlString) :: s, sep
+      type(ftlString) :: part(3)
+
+      s = 'option=value'
+
+      part = s%Partition('=')
+
+      ASSERT(part(1) == 'option')
+      ASSERT(part(2) == '=')
+      ASSERT(part(3) == 'value')
+
+      part = s%Partition('?')
+
+      ASSERT(part(1) == 'option=value')
+      ASSERT(part(2) == '')
+      ASSERT(part(3) == '')
+
+      part = s%Partition('value')
+
+      ASSERT(part(1) == 'option=')
+      ASSERT(part(2) == 'value')
+      ASSERT(part(3) == '')
+
+      part = s%Partition('o')
+
+      ASSERT(part(1) == '')
+      ASSERT(part(2) == 'o')
+      ASSERT(part(3) == 'ption=value')
+
+      sep = '='
+      part = s%Partition(sep)
+
+      ASSERT(part(1) == 'option')
+      ASSERT(part(2) == '=')
+      ASSERT(part(3) == 'value')
 
    end subroutine
 

@@ -94,6 +94,9 @@ module ftlStringModule
 
       ! Python string methods:
       procedure, public :: Center
+      procedure         :: PartitionRaw
+      procedure         :: PartitionOther
+      generic  , public :: Partition => PartitionRaw, PartitionOther
       procedure, public :: Split
       procedure         :: StartsWithRaw
       procedure         :: StartsWithOther
@@ -949,6 +952,42 @@ contains
       endif
 
    end function
+
+
+
+   ! Split the string at the first occurrence of sep, and return a 3-tuple containing the part before the separator, the
+   ! separator itself, and the part after the separator. If the separator is not found, return a 3-tuple containing the
+   ! string itself, followed by two empty strings.
+   !
+   function PartitionRaw(self, sep) result(partition)
+      class(ftlString), intent(in) :: self
+      character(len=*), intent(in) :: sep
+       type(ftlString)             :: partition(3)
+
+      integer :: idx
+
+      idx = index(self%raw, sep)
+      if (idx == 0) then ! not found
+         partition(1) = self
+         partition(2) = ''
+         partition(3) = ''
+      else
+         partition(1) = self%raw(1:idx-1)
+         partition(2) = self%raw(idx:idx+len(sep)-1)
+         partition(3) = self%raw(idx+len(sep):)
+      endif
+
+   end function
+   !
+   function PartitionOther(self, sep) result(partition)
+      class(ftlString), intent(in) :: self
+       type(ftlString), intent(in) :: sep
+       type(ftlString)             :: partition(3)
+
+      partition = self%PartitionRaw(sep%raw)
+
+   end function
+
 
 
    ! Return a list of the words in the string, using sep as the delimiter string. If maxsplit is present, at most
