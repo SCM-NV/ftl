@@ -30,7 +30,8 @@ look at how one would define a generic ``max()`` function.
       return value;
    }
 
-Once this function template is defined one can just call the function.
+Once this function template is defined one can just call it like any other
+function.
 
 .. code:: c++
 
@@ -175,5 +176,6 @@ License
 #######
 
 The Fortran Template Library is published under the GNU Lesser General Public
-License. This should permit virtually any use, including the use in commercial
-software according to section 3 of the license, see ``LICENSE.lgpl``.
+License. This should permit virtually any use, including the use in closed
+source software according to section 3 ("Object Code Incorporating Material from
+Library Header Files") of the GNU Lesser General Public License.
