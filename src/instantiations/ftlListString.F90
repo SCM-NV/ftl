@@ -21,4 +21,4 @@
 #define FTL_TEMPLATE_TYPE_MODULE ftlStringModule
 #define FTL_TEMPLATE_TYPE_NAME String
 #define FTL_INSTANTIATE_TEMPLATE
-#include "ftlDynArray.F90_template"
+#include "ftlList.F90_template"
