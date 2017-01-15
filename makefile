@@ -103,7 +103,7 @@ $(BUILDDIR)/ftlAlgorithmsTests.o: tests/ftlAlgorithmsTests.F90 $(BUILDDIR)/ftlDy
 $(BUILDDIR)/ftlMemoryTests.o: tests/ftlMemoryTests.F90 $(BUILDDIR)/ftlMemoryInt.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
 
-$(BUILDDIR)/ftlStringTests.o: tests/ftlStringTests.F90 $(BUILDDIR)/ftlString.o | $(BUILDDIR)
+$(BUILDDIR)/ftlStringTests.o: tests/ftlStringTests.F90 $(BUILDDIR)/ftlString.o $(BUILDDIR)/ftlDynArrayString.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
 
 
@@ -122,6 +122,9 @@ $(BUILDDIR)/ftlDynArrayInt.o: instantiations/ftlDynArrayInt.F90 src/ftlDynArray.
 	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
 
 $(BUILDDIR)/ftlDynArrayPoint2D.o: instantiations/ftlDynArrayPoint2D.F90 src/ftlDynArray.F90_template $(BUILDDIR)/Point2D.o | $(BUILDDIR)
+	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
+
+$(BUILDDIR)/ftlDynArrayString.o: src/instantiations/ftlDynArrayString.F90 src/ftlDynArray.F90_template $(BUILDDIR)/ftlString.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
 
 $(BUILDDIR)/ftlListInt.o: instantiations/ftlListInt.F90 src/ftlList.F90_template | $(BUILDDIR)
@@ -145,7 +148,7 @@ $(BUILDDIR)/ftlDynArrayPoint2DAlgorithms.o: instantiations/ftlDynArrayPoint2DAlg
 $(BUILDDIR)/ftlListIntAlgorithms.o: instantiations/ftlListIntAlgorithms.F90 src/ftlAlgorithms.F90_template $(BUILDDIR)/ftlListInt.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
 
-$(BUILDDIR)/ftlStringAlgorithms.o: src/ftlStringAlgorithms.F90 src/ftlAlgorithms.F90_template $(BUILDDIR)/ftlString.o | $(BUILDDIR)
+$(BUILDDIR)/ftlStringAlgorithms.o: src/instantiations/ftlStringAlgorithms.F90 src/ftlAlgorithms.F90_template $(BUILDDIR)/ftlString.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
 
 

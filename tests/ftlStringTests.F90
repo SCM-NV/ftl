@@ -22,6 +22,7 @@ module ftlStringTestsModule
 
    use ftlTestToolsModule
    use ftlStringModule
+   use ftlDynArrayStringModule
 
    implicit none
    private
@@ -76,6 +77,9 @@ contains
 
       call testAdvanceReverseDiff
       call testLogicalOperations
+
+      ! Tests of ftl Containers containing ftlStrings:
+      call testSplitWordsIntoDynArray
 
    end subroutine
 
@@ -755,6 +759,34 @@ contains
       call it2%Inc()
 
       ASSERT(it2 == s%End())
+
+   end subroutine
+
+
+   subroutine testSplitWordsIntoDynArray
+      type(ftlString) :: s, snew
+      type(ftlDynArrayString) :: v
+      type(ftlDynArrayStringIterator) :: it
+
+      s = 'This is a sentence which we are going to split up into words. Then we will put it into a ftlDynArray.'
+
+      ! Let's remove everything after sentence in the first sentence ...
+      v = s%Split()
+      ASSERT(size(v) == 21)
+      call v%Erase(5,14)
+      ASSERT(size(v) == 12)
+      ASSERT(v%data(4) == 'sentence')
+      v%data(4) = v%data(4) // '.' ! add the dot we deleted along with "words."
+      ASSERT(v%data(4) == 'sentence.')
+
+      snew = v%front
+      it = v%Begin() + 1
+      do while (it /= v%End())
+         snew = snew // ' ' // it%value
+         call it%Inc()
+      enddo
+
+      ASSERT(snew == 'This is a sentence. Then we will put it into a ftlDynArray.')
 
    end subroutine
 
