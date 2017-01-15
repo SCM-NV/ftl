@@ -940,6 +940,7 @@ contains
       character(len=256) :: buff
 
       self%raw = ''
+      nRead = 0
       do
          read (unit, '(A)', advance='no', err=10, end=10, eor=10, size=nRead, iostat=ios) buff
          self%raw = self%raw//buff(:nRead)

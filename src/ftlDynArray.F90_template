@@ -687,8 +687,10 @@ contains
 
       allocate(newstorage(n))
 
-      numretain = min(self%psize, n)
-      newstorage(1:numretain) = self%storage(1:numretain)
+      if (allocated(self%storage)) then
+         numretain = min(self%psize, n)
+         newstorage(1:numretain) = self%storage(1:numretain)
+      endif
 
       call move_alloc(newstorage, self%storage)
 
