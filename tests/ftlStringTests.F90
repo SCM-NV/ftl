@@ -50,6 +50,10 @@ contains
       call testConcat
       call testIn
 
+      ! File reading:
+      call testReadLine
+      call testReadUntilEOF
+
       call testFortranStandardMethods
 
       ! Python string methods:
@@ -321,6 +325,92 @@ contains
    end subroutine
 
 
+   subroutine testReadLine
+      type(ftlString) :: line
+      integer, parameter :: unit = 29
+      integer :: iostat
+
+      open (unit=unit, file='tests/assets/astronomer.txt', status='old', action='read', iostat=iostat)
+      ASSERT(iostat == 0)
+      if (iostat == 0) then
+         call line%ReadLine(unit)
+         ASSERT(line == 'When I heard the learned astronomer,')
+         call line%ReadLine(unit)
+         ASSERT(line == 'When the proofs, the figures, were ranged in columns before me,')
+         call line%ReadLine(unit)
+         ASSERT(line == 'When I was shown the charts and diagrams, to add, divide,')
+         call line%ReadLine(unit)
+         ASSERT(line == '   and measure them,')
+         call line%ReadLine(unit)
+         ASSERT(line == 'When I sitting heard the astronomer where he lectured with')
+         call line%ReadLine(unit)
+         ASSERT(line == '   much applause in the lecture-room,')
+         call line%ReadLine(unit)
+         ASSERT(line == 'How soon unaccountable I became tired and sick,')
+         call line%ReadLine(unit)
+         ASSERT(line == 'Till rising and gliding out I wandered off by myself,')
+         call line%ReadLine(unit)
+         ASSERT(line == 'In the mystical moist night-air, and from time to time,')
+         call line%ReadLine(unit)
+         ASSERT(line == 'Looked up in perfect silence at the stars.')
+         call line%ReadLine(unit, iostat) ! reading past the end of the file
+         ASSERT(line == '')
+         ASSERT(is_iostat_end(iostat))
+         call line%ReadLine(unit)
+         ASSERT(line == '')
+         ASSERT(is_iostat_end(iostat))
+      endif
+      close(unit)
+
+      open (unit=unit, file='tests/assets/emptyfile.txt', status='old', action='read', iostat=iostat)
+      ASSERT(iostat == 0)
+      if (iostat == 0) then
+         call line%ReadLine(unit, iostat) ! reading past the end of the file
+         ASSERT(line == '')
+         ASSERT(is_iostat_end(iostat))
+         call line%ReadLine(unit)
+         ASSERT(line == '')
+         ASSERT(is_iostat_end(iostat))
+      endif
+      close(unit)
+
+   end subroutine
+
+
+   subroutine testReadUntilEOF
+      type(ftlString) :: contents
+      integer, parameter :: unit = 29
+      integer :: iostat
+
+      open (unit=unit, file='tests/assets/frankenstein.txt', status='old', action='read', iostat=iostat)
+      ASSERT(iostat == 0)
+      if (iostat == 0) then
+         call contents%ReadUntilEOF(unit)
+         ASSERT('Geneva' .in. contents)
+         ASSERT('darkness and distance.' .in. contents)
+         ASSERT(.not.('Uilleann pipes' .in. contents))
+      endif
+      close(unit)
+
+      open (unit=unit, file='tests/assets/singleline.txt', status='old', action='read', iostat=iostat)
+      ASSERT(iostat == 0)
+      if (iostat == 0) then
+         call contents%ReadUntilEOF(unit)
+         ASSERT(contents == 'This is just one single line.')
+      endif
+      close(unit)
+
+      open (unit=unit, file='tests/assets/emptyfile.txt', status='old', action='read', iostat=iostat)
+      ASSERT(iostat == 0)
+      if (iostat == 0) then
+         call contents%ReadUntilEOF(unit)
+         ASSERT(contents == '')
+      endif
+      close(unit)
+
+   end subroutine
+
+
    subroutine testFortranStandardMethods
       type(ftlString) :: s1, s2
 
@@ -457,6 +547,7 @@ contains
 
    subroutine testStartsWith
       type(ftlString) :: s
+      type(ftlString), allocatable :: prefixes(:)
 
       s = 'Teststartswith'
       ASSERT(s%StartsWith('Test'))
@@ -471,8 +562,18 @@ contains
       ASSERT(s%StartsWith(ftlString('another')))
 
       ! the following two lines leak memory with gfortran, see: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=79053
-      ASSERT(s%StartsWith([ftlString('Test'),ftlString('anot')]))
-      ASSERT(.not.s%StartsWith([ftlString('Test'),ftlString('not there')]))
+      !ASSERT(s%StartsWith())
+      !ASSERT(.not.s%StartsWith([ftlString('Test'),ftlString('not there')]))
+
+      ! this is a workaround that does not leak ...
+      allocate(prefixes(2))
+      prefixes(1) = ftlString('Test')
+      prefixes(2) = ftlString('anot')
+      ASSERT(s%StartsWith(prefixes))
+
+      prefixes(1) = ftlString('Test')
+      prefixes(2) = ftlString('not there')
+      ASSERT(.not.s%StartsWith(prefixes))
 
    end subroutine
 

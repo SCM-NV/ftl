@@ -92,6 +92,10 @@ module ftlStringModule
       procedure, public :: IsLogical
       procedure, public :: ToLogical
 
+      ! File reading:
+      procedure, public :: ReadLine
+      procedure, public :: ReadUntilEOF
+
       ! Python string methods:
       procedure, public :: Center
       procedure         :: PartitionRaw
@@ -920,6 +924,66 @@ contains
       if (stat /= 0) ToLogical = .false.
 
    end function
+
+
+
+   ! =============> File reading:
+
+
+
+   subroutine ReadLine(self, unit, iostat)
+      class(ftlString), intent(inout)         :: self
+      integer         , intent(in)            :: unit
+      integer         , intent(out), optional :: iostat
+
+      integer :: ios, nRead
+      character(len=256) :: buff
+
+      self%raw = ''
+      do
+         read (unit, '(A)', advance='no', err=10, end=10, eor=10, size=nRead, iostat=ios) buff
+         self%raw = self%raw//buff(:nRead)
+      enddo
+   10 self%raw = self%raw//buff(:nRead)
+      if (present(iostat)) iostat = ios
+
+   end subroutine
+
+
+
+   subroutine ReadUntilEOF(self, unit)
+      class(ftlString), intent(inout) :: self
+      integer         , intent(in)    :: unit
+
+      integer :: ios, nRead, newlen
+      type(ftlString) :: line
+      character(len=:), allocatable :: buffer
+
+      self = ''
+
+      call line%ReadLine(unit, ios)
+      if (is_iostat_end(ios)) return
+
+      buffer = line%raw  ! produces a bogus warning with gfortran, see: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=56670
+      nRead = len(line)
+
+      do while (.true.)
+         call line%ReadLine(unit, ios)
+         if (is_iostat_end(ios)) exit
+         if (len(buffer) < nRead + 1 + len(line%raw)) then
+            ! not enough space anymore, we need to enlarge the buffer
+            newlen = max(2*len(buffer), nRead + 1 + len(line%raw))
+            buffer = buffer // repeat('_',newlen-len(buffer))
+         endif
+         buffer(nRead+1:nRead+1) = FTL_STRING_NEWLINE
+         nRead = nRead + 1
+         buffer(nRead+1:nRead+len(line%raw)) = line%raw
+         nRead = nRead + len(line%raw)
+      enddo
+
+      self = buffer(:nRead)
+
+   end subroutine
 
 
 
