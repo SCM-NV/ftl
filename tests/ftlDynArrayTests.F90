@@ -41,6 +41,8 @@ contains
       call testNewFill
       call testNewFromArray
 
+      call testAssignment
+
       call testDelete
 
       call testBegin
@@ -152,6 +154,46 @@ contains
       ASSERT(v%front == 5)
       ASSERT(v%back == 88)
       ASSERT(v%End() - v%Begin() == 7)
+
+   end subroutine
+
+
+   subroutine testAssignment
+      type(ftlDynArrayInt) :: v1, v2
+
+      v1 = [5,13,41,97,17,10,88]
+
+      ASSERT(.not.v1%Empty())
+      ASSERT(v1%Size() == 7)
+      ASSERT(Size(v1) == 7)
+      ASSERT(size(v1%data) == 7)
+      ASSERT(all(v1%data == [5,13,41,97,17,10,88]))
+      ASSERT(v1%front == 5)
+      ASSERT(v1%back == 88)
+      ASSERT(v1%End() - v1%Begin() == 7)
+
+      v2 = v1
+
+      ASSERT(.not.v2%Empty())
+      ASSERT(v2%Size() == 7)
+      ASSERT(Size(v2) == 7)
+      ASSERT(size(v2%data) == 7)
+      ASSERT(all(v2%data == [5,13,41,97,17,10,88]))
+      ASSERT(v2%front == 5)
+      ASSERT(v2%back == 88)
+      ASSERT(v2%End() - v2%Begin() == 7)
+
+      v1 = [1,2]
+
+      ASSERT(.not.v1%Empty())
+      ASSERT(v1%Size() == 2)
+      ASSERT(Size(v1) == 2)
+      ASSERT(size(v1%data) == 2)
+      ASSERT(all(v1%data == [1,2]))
+      ASSERT(v1%front == 1)
+      ASSERT(v1%back == 2)
+      ASSERT(v1%End() - v1%Begin() == 2)
+      ASSERT(v1%Capacity() == 7) ! no reallocation on smaller assignment
 
    end subroutine
 
