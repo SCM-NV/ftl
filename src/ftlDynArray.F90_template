@@ -337,20 +337,7 @@ contains
    end function
 
 
-   ! Resizes the container so that it contains n elements.
-   !
-   ! If n is smaller than the current container size, the content is reduced to its first n elements, removing those beyond
-   ! (and destroying them).
-   !
-   ! If n is greater than the current container size, the content is expanded by inserting at the end as many elements as
-   ! needed to reach a size of n. If val is specified, the new elements are initialized as copies of val, otherwise, they are
-   ! value-initialized.
-   !
-   ! If n is also greater than the current container capacity, an automatic reallocation of the allocated storage space takes
-   ! place.
-   !
-   ! Notice that this function changes the actual content of the container by inserting or erasing elements from it.
-   !
+
    subroutine Resize(self, n, val)
       class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(inout)        :: self
       integer                                       , intent(in)           :: n
@@ -367,16 +354,6 @@ contains
 
 
 
-   ! Returns the size of the storage space currently allocated for the dynArray, expressed in terms of elements.
-   !
-   ! This capacity is not necessarily equal to the dynArray size. It can be equal or greater, with the extra space allowing to
-   ! accommodate for growth without the need to reallocate on each insertion.
-   !
-   ! Notice that this capacity does not suppose a limit on the size of the dynArray. When this capacity is exhausted and more is
-   ! needed, it is automatically expanded by the container (reallocating it storage space).
-   !
-   ! The capacity of a dynArray can be explicitly altered by calling member ftlDynArray%reserve.
-   !
    pure integer function Capacity(self)
       class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: self
 
@@ -403,15 +380,6 @@ contains
 
 
 
-   ! Requests that the dynArray capacity be at least enough to contain n elements.
-   !
-   ! If n is greater than the current dynArray capacity, the function causes the container to reallocate its storage increasing
-   ! its capacity to n (or greater).
-   !
-   ! In all other cases, the function call does not cause a reallocation and the dynArray capacity is not affected.
-   !
-   ! This function has no effect on the dynArray size and cannot alter its elements.
-   !
    subroutine Reserve(self, n)
       class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
       integer                                       , intent(in)    :: n
@@ -642,11 +610,6 @@ contains
 
 
 
-   ! Removes all elements from the dynArray (which are destroyed), leaving the container with a size of 0.
-   !
-   ! A reallocation is not guaranteed to happen, and the dynArray capacity is not guaranteed to change due to calling this
-   ! function.
-   !
    subroutine Clear(self)
       class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
 
