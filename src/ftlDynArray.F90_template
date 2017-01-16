@@ -325,10 +325,6 @@ contains
 
 
 
-   ! Returns the number of elements in the dynArray.
-   !
-   ! This is the number of actual objects held in the dynArray, which is not necessarily equal to its storage capacity.
-   !
    pure integer function SizeDynArray(self) result(Size)
       class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: self
 
@@ -367,10 +363,6 @@ contains
 
 
 
-   ! Returns whether the dynArray is empty (i.e. whether its size is 0).
-   !
-   ! This function does not modify the container in any way. To clear the content of a dynArray, see ftlDynArray%clear.
-   !
    pure logical function Empty(self)
       class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: self
 
@@ -390,13 +382,6 @@ contains
 
 
 
-   ! Requests the container to reduce its capacity to fit its size.
-   !
-   ! The request is non-binding, and the container implementation is free to optimize otherwise and leave the dynArray with a
-   ! capacity greater than its size.
-   !
-   ! This may cause a reallocation, but has no effect on the dynArray size and cannot alter its elements.
-   !
    subroutine ShrinkToFit(self)
       class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
 
