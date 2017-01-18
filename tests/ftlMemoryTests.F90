@@ -37,7 +37,7 @@ contains
       call testNewDefault
       call testNewFromRawPtr
       call testNewFromOther
-      call testAssignOtherAndReset
+      call testAssignOtherAndNullify
       call testAllocate
       call testSwap
 
@@ -115,7 +115,7 @@ contains
    end subroutine
 
 
-   subroutine testAssignOtherAndReset
+   subroutine testAssignOtherAndNullify
       type(ftlSharedPtrInt) :: sp1, sp2
       integer, pointer :: i
 
@@ -145,7 +145,7 @@ contains
 
       ASSERT(associated(sp1, sp2))
 
-      call sp1%Reset()
+      call nullify(sp1)
 
       ASSERT(sp1%useCount() == 0)
       ASSERT(.not.sp1%Unique())

@@ -399,17 +399,6 @@ contains
 
 
 
-   ! The dynArray is extended by inserting new elements before the element at the specified position, effectively increasing
-   ! the container size by the number of elements inserted.  This causes an automatic reallocation of the allocated storage
-   ! space if -and only if- the new dynArray size surpasses the current dynArray capacity.
-   !
-   ! Because dynArrays use an array as their underlying storage, inserting elements in positions other than the dynArray end
-   ! causes the container to relocate all the elements that were after position to their new positions. This is generally an
-   ! inefficient operation compared to the one performed for the same operation by other kinds of sequence containers (such
-   ! as list or forward_list).
-   !
-   ! The parameters determine how many elements are inserted and to which values they are initialized:
-   !
    subroutine InsertSingleAtIndex(self, position, val)
       class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
       integer                                       , intent(in)    :: position
@@ -509,15 +498,6 @@ contains
 
 
 
-   ! Removes from the dynArray either a single element (position) or a range of elements [first,last).
-   !
-   ! This effectively reduces the container size by the number of elements removed, which are destroyed.
-   !
-   ! Because dynArrays use an array as their underlying storage, erasing elements in positions other than the dynArray end causes
-   ! the container to relocate all the elements after the segment erased to their new positions. This is generally an
-   ! inefficient operation compared to the one performed for the same operation by other kinds of sequence containers (such
-   ! as list or forward_list).
-   !
    subroutine EraseSingle(self, position)
       class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME))         , intent(inout) :: self
       type(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)    :: position
