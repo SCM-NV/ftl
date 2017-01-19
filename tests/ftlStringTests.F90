@@ -63,6 +63,7 @@ contains
       call testSplit
       call testStartsWith
       call testUpperLower
+      call testReplace
 
       ! Other string methods:
       call testCountWords
@@ -594,6 +595,24 @@ contains
 
       s = FTL_STRING_DIGITS//FTL_STRING_UPPERCASE//FTL_STRING_WHITESPACE//FTL_STRING_PUNCTUATION
       ASSERT(s%Lower() == FTL_STRING_DIGITS//FTL_STRING_LOWERCASE//FTL_STRING_WHITESPACE//FTL_STRING_PUNCTUATION)
+
+   end subroutine
+
+
+   subroutine testReplace
+      type(ftlString) :: s, old, new
+
+      s = 'test This is our test sentence for testing replacing substrings.test'
+
+      ! same length replacements
+
+      ASSERT(s%Replace('test','TEST')    ==  'TEST This is our TEST sentence for TESTing replacing substrings.TEST')
+      ASSERT(s%Replace('test','TEST', 2) ==  'TEST This is our TEST sentence for testing replacing substrings.test')
+      ASSERT(s%Replace('e','_')          ==  't_st This is our t_st s_nt_nc_ for t_sting r_placing substrings.t_st')
+
+      ! varying length replacements
+
+      !ASSERT(s%Replace('testing','testinating') == 'test This is our test sentence for testinating replacing substrings.test')
 
    end subroutine
 

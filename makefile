@@ -66,7 +66,9 @@ test: $(BUILDDIR)/tests
 memcheck: $(BUILDDIR)/tests
 	valgrind --leak-check=yes ./$(BUILDDIR)/tests
 
-perftest: $(BUILDDIR)/perftest_sortDynArrayInt $(BUILDDIR)/perftest_sortDynArrayInt_ref
+perftest: $(BUILDDIR)/perftest_sortDynArrayInt $(BUILDDIR)/perftest_sortDynArrayInt_ref $(BUILDDIR)/perftest_countDistinctWords
+	./$(BUILDDIR)/perftest_countDistinctWords
+	./perftests/countDistinctWords.py
 	./$(BUILDDIR)/perftest_sortDynArrayInt
 	./$(BUILDDIR)/perftest_sortDynArrayInt_ref
 
@@ -114,6 +116,9 @@ $(BUILDDIR)/perftest_sortDynArrayInt: perftests/sortDynArrayInt.F90 $(BUILDDIR)/
 
 $(BUILDDIR)/perftest_sortDynArrayInt_ref: perftests/sortDynArrayInt.cpp | $(BUILDDIR)
 	$(CXXCOMPILER) $(CXXFLAGS) $< -o $@
+
+$(BUILDDIR)/perftest_countDistinctWords: perftests/countDistinctWords.F90 $(BUILDDIR)/ftlString.o $(BUILDDIR)/ftlHashMapFtlStrInt.o | $(BUILDDIR)
+	$(COMPILER) $(FLAGS) $(INCLUDES) $< $(BUILDDIR)/*.o -o $@
 
 
 # Container instantiations:

@@ -111,6 +111,12 @@ module ftlStringModule
       generic  , public :: Find => FindRaw, FindOther
       procedure, public :: Upper
       procedure, public :: Lower
+      procedure         :: ReplaceRawWithRaw
+      procedure         :: ReplaceStringWithString
+      procedure         :: ReplaceRawWithString
+      procedure         :: ReplaceStringWithRaw
+      procedure         :: ReplaceImplementationEqualLength
+      generic  , public :: Replace => ReplaceRawWithRaw, ReplaceStringWithString, ReplaceRawWithString, ReplaceStringWithRaw
 
       ! Other string methods:
       procedure, public :: CountWords
@@ -1192,6 +1198,96 @@ contains
          ascii = iachar(Lower%raw(idx:idx))
          if (ascii >= 65 .and. ascii <= 90) Lower%raw(idx:idx) = achar(ascii+32)
       enddo
+
+   end function
+
+
+
+   ! Return a copy of the string with all occurrences of substring old replaced by new. If the optional argument count is given,
+   ! only the first count occurrences are replaced.
+   !
+   type(ftlString) function ReplaceRawWithRaw(self, old, new, count) result(str)
+      class(ftlString), intent(in)           :: self
+      character(len=*), intent(in)           :: old
+      character(len=*), intent(in)           :: new
+      integer         , intent(in), optional :: count
+
+      if (len(old) == len(new)) then
+         str = self%ReplaceImplementationEqualLength(old, new, count)
+      else
+         stop 'TODO'
+      endif
+
+   end function
+   !
+   type(ftlString) function ReplaceStringWithRaw(self, old, new, count) result(str)
+      class(ftlString), intent(in)           :: self
+       type(ftlString), intent(in)           :: old
+      character(len=*), intent(in)           :: new
+      integer         , intent(in), optional :: count
+
+      str = self%ReplaceRawWithRaw(old%raw, new, count)
+
+   end function
+   !
+   type(ftlString) function ReplaceRawWithString(self, old, new, count) result(str)
+      class(ftlString), intent(in)           :: self
+      character(len=*), intent(in)           :: old
+       type(ftlString), intent(in)           :: new
+      integer         , intent(in), optional :: count
+
+      str = self%ReplaceRawWithRaw(old, new%raw, count)
+
+   end function
+   !
+   type(ftlString) function ReplaceStringWithString(self, old, new, count) result(str)
+      class(ftlString), intent(in)           :: self
+       type(ftlString), intent(in)           :: old
+       type(ftlString), intent(in)           :: new
+      integer         , intent(in), optional :: count
+
+      str = self%ReplaceRawWithRaw(old%raw, new%raw, count)
+
+   end function
+   !
+   ! Actual implementations of Replace:
+   !
+   type(ftlString) function ReplaceImplementationEqualLength(self, old, new, count) result(str)
+      class(ftlString), intent(in)           :: self
+      character(len=*), intent(in)           :: old
+      character(len=*), intent(in)           :: new
+      integer         , intent(in), optional :: count
+
+      integer :: doneEnd, replacements, nextIdx
+
+      str%raw = self%raw
+      doneEnd = 1
+      replacements = 0
+      do while (.true.)
+         nextIdx = index(str%raw(doneEnd:), old) + doneEnd - 1
+         if (nextIdx >= doneEnd) then ! found one more to replace
+            str%raw(nextIdx:nextIdx+len(old)-1) = new
+            doneEnd = doneEnd + len(old)
+            if (present(count)) then
+               replacements = replacements + 1
+               if (replacements == count) exit
+            endif
+         else
+            exit
+         endif
+      enddo
+
+   end function
+   !
+   type(ftlString) function ReplaceGeneral(self, old, new, count) result(str)
+      class(ftlString), intent(in)           :: self
+      character(len=*), intent(in)           :: old
+      character(len=*), intent(in)           :: new
+      integer         , intent(in), optional :: count
+
+      stop 'TODO'
+
+      write (*,*) old, new, count
 
    end function
 
