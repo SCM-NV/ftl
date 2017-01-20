@@ -30,7 +30,6 @@ subroutine countDistictWords(filename)
    type(ftlString) :: charsToRemove
    type(ftlString), allocatable :: words(:)
    type(ftlHashMapFtlStrInt) :: wordOcc
-   type(ftlHashMapFtlStrIntIterator) :: it
    real :: start, finish
 
    call cpu_time(start)
@@ -46,9 +45,9 @@ subroutine countDistictWords(filename)
 
    ! Step 2: Replace all that doesn't belong into a proper word with spaces and lowercase everything.
    charsToRemove = FTL_STRING_PUNCTUATION // FTL_STRING_WHITESPACE(2:) ! <- 1 is space itself, no need to replace it ...
-   do i = 1, len(charsToRemove)
-      contents = contents%Replace(charsToRemove%At(i), ' ')
-   enddo
+   do i = 1, len(charsToRemove); associate(c => charsToRemove%At(i))
+      contents = contents%Replace(c, ' ')
+   end associate; enddo
    contents = contents%Lower()
 
    ! Step 3: Split the ftlString up into an array of words.
@@ -57,14 +56,13 @@ subroutine countDistictWords(filename)
 
    ! Step 4: Count the number of distinct words.
    call wordOcc%New(1000) ! <-- guess there are at least 1000 distinct words in the book
-   do i = 1, size(words)
-      it = wordOcc%Find(words(i))
-      if (it == wordOcc%End()) then
-         call wordOcc%Set(words(i), 1)
+   do i = 1, size(words); associate(word => words(i))
+      if (word .in. wordOcc) then
+         call wordOcc%Set(word, wordOcc%Get(word) + 1)
       else
-         it%value = it%value + 1
+         call wordOcc%Set(word, 1)
       endif
-   enddo
+   end associate; enddo
    write (*,*) 'Number of distinct words: ', size(wordOcc)
 
    call cpu_time(finish)
