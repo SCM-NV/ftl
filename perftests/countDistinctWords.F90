@@ -19,7 +19,7 @@
 subroutine countDistictWords(filename)
 
    use ftlStringModule
-   use ftlHashMapFtlStrIntModule
+   use ftlHashMapStringIntModule
 
    implicit none
 
@@ -29,7 +29,7 @@ subroutine countDistictWords(filename)
    type(ftlString) :: contents
    type(ftlString) :: charsToRemove
    type(ftlString), allocatable :: words(:)
-   type(ftlHashMapFtlStrInt) :: wordOcc
+   type(ftlHashMapStringInt) :: wordOcc
    real :: start, finish
 
    call cpu_time(start)

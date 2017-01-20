@@ -23,7 +23,7 @@ module ftlHashMapTestsModule
    use ftlTestToolsModule
    use ftlHashMapStrIntModule
    use ftlStringModule
-   use ftlHashMapFtlStrIntModule
+   use ftlHashMapStringIntModule
 
    implicit none
    private
@@ -46,7 +46,7 @@ contains
       call testEraseKey
       call testEraseIterators
 
-      call testFtlStringSpecialization
+      call testStringingSpecialization
 
    end subroutine
 
@@ -414,8 +414,8 @@ contains
    end subroutine
 
 
-   subroutine testFtlStringSpecialization
-      type(ftlHashMapFtlStrInt) :: um
+   subroutine testStringingSpecialization
+      type(ftlHashMapStringInt) :: um
 
       call um%New(10)
 
