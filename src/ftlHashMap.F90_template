@@ -32,7 +32,6 @@
 ! ftlHashMap containers are faster than map containers to access individual elements by their key, although they are
 ! generally less efficient for range iteration through a subset of their elements.
 !
-!
 ! Iterators in the container are at least forward iterators.
 
 #define FTL_CONTAINER ftlHashMap
@@ -454,11 +453,23 @@ contains
       class(CAT3(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME)), intent(in), target :: self
       FTL_TEMPLATE_KEYTYPE_WRAP                                               , intent(in)         :: key
 
-      Find = self%Begin()
-      do while (Find /= self%End())
-         if (Find%Key() == key) exit
-         call Find%Inc()
-      enddo
+      Find%buckets => self%buckets
+      Find%bidx = self%Bucket(key)
+      Find%entr => Find%buckets(Find%bidx)
+
+      do while (associated(Find%entr))
+         select type(entr => Find%entr)
+         type is (DataEntry)
+            if (key == entr%key) then
+               Find%value => entr%value
+               return
+            endif
+         end select
+         Find%entr => Find%entr%next
+      end do
+
+      Find%bIdx = size(self%buckets) + 1
+      nullify(Find%entr)
 
    end function
 
