@@ -22,34 +22,40 @@ import sys
 import string
 import time
 
-start = time.clock()
+def countDistictWords(filename):
 
-# Step 1: Read the entire book into a string.
-try:
-    with open('tests/assets/frankenstein.txt','r') as f:
-        contents = f.read()
-except:
-    print('Unable to open file.')
-    sys.exit(1)
+    start = time.clock()
 
-# Step 2: Replace all that doesn't belong into a proper word with spaces and lowercase everything.
-charsToRemove = string.punctuation + string.whitespace.replace(' ', '')
-for c in charsToRemove:
-    contents = contents.replace(c, ' ')
-contents = contents.lower()
+    # Step 1: Read the entire book into a string.
+    try:
+        with open(filename,'r') as f:
+            contents = f.read()
+    except:
+        print('Unable to open file.')
+        sys.exit(1)
 
-# Step 3: Split the ftlString up into an array of words.
-words = contents.split()
-print('Number of words: %i'%(len(words)))
+    # Step 2: Replace all that doesn't belong into a proper word with spaces and lowercase everything.
+    charsToRemove = string.punctuation + string.whitespace.replace(' ', '')
+    for c in charsToRemove:
+        contents = contents.replace(c, ' ')
+    contents = contents.lower()
 
-# Step 4: Count the number of distinct words.
-wordOcc = {}
-for word in words:
-    if word in wordOcc:
-        wordOcc[word] += 1
-    else:
-        wordOcc[word] = 1
-print('Number of distinct words: %i'%(len(wordOcc)))
+    # Step 3: Split the ftlString up into an array of words.
+    words = contents.split()
+    print('Number of words: %i'%(len(words)))
 
-finish = time.clock()
-print('Counted all distinct words in Frankenstein in %f s'%(finish-start))
+    # Step 4: Count the number of distinct words.
+    wordOcc = {}
+    for word in words:
+        if word in wordOcc:
+            wordOcc[word] += 1
+        else:
+            wordOcc[word] = 1
+    print('Number of distinct words: %i'%(len(wordOcc)))
+
+    finish = time.clock()
+    print('Counted all distinct words in %s in %f s'%(filename, finish-start))
+
+
+countDistictWords('tests/assets/frankenstein.txt')
+countDistictWords('tests/assets/mobydick.txt')

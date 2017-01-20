@@ -16,12 +16,15 @@
 ! with the Fortran Template Library.  If not, see <http://www.gnu.org/licenses/>.
 
 
-program main
+subroutine countDistictWords(filename)
 
    use ftlStringModule
    use ftlHashMapFtlStrIntModule
 
    implicit none
+
+   character(len=*), intent(in) :: filename
+
    integer :: iostat, i
    type(ftlString) :: contents
    type(ftlString) :: charsToRemove
@@ -33,7 +36,7 @@ program main
    call cpu_time(start)
 
    ! Step 1: Read the entire book into an ftlString.
-   open (unit=19, file='tests/assets/frankenstein.txt', status='old', action='read', iostat=iostat)
+   open (unit=19, file=filename, status='old', action='read', iostat=iostat)
    if (iostat == 0) then
       call contents%ReadUntilEOF(19)
    else
@@ -65,6 +68,14 @@ program main
    write (*,*) 'Number of distinct words: ', size(wordOcc)
 
    call cpu_time(finish)
-   write (*,'(A,f7.3,A)') 'Counted all distinct words in Frankenstein in ',(finish-start),' s'
+   write (*,'(A,f7.3,A)') 'Counted all distinct words in '//filename//' in ',(finish-start),' s'
+
+end subroutine
+
+
+program main
+
+   call countDistictWords('tests/assets/frankenstein.txt')
+   call countDistictWords('tests/assets/mobydick.txt')
 
 end program

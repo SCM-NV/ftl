@@ -115,8 +115,9 @@ module ftlStringModule
       procedure         :: ReplaceStringWithString
       procedure         :: ReplaceRawWithString
       procedure         :: ReplaceStringWithRaw
-      procedure         :: ReplaceImplementationEqualLength
       generic  , public :: Replace => ReplaceRawWithRaw, ReplaceStringWithString, ReplaceRawWithString, ReplaceStringWithRaw
+      procedure         :: ReplaceImplementationEqualLength
+      procedure         :: ReplaceImplementationSingleChar
 
       ! Other string methods:
       procedure, public :: CountWords
@@ -1213,7 +1214,11 @@ contains
       integer         , intent(in), optional :: count
 
       if (len(old) == len(new)) then
-         str = self%ReplaceImplementationEqualLength(old, new, count)
+         if (len(old) == 1) then
+            str = self%ReplaceImplementationSingleChar(old, new, count)
+         else
+            str = self%ReplaceImplementationEqualLength(old, new, count)
+         endif
       else
          stop 'TODO'
       endif
@@ -1274,6 +1279,28 @@ contains
             endif
          else
             exit
+         endif
+      enddo
+
+   end function
+   !
+   type(ftlString) function ReplaceImplementationSingleChar(self, old, new, count) result(str)
+      class(ftlString), intent(in)           :: self
+      character       , intent(in)           :: old
+      character       , intent(in)           :: new
+      integer         , intent(in), optional :: count
+
+      integer :: i, replacements
+
+      str%raw = self%raw
+      replacements = 0
+      do i = 1, len(str%raw)
+         if (str%raw(i:i) == old) then
+            str%raw(i:i) = new
+            if (present(count)) then
+               replacements = replacements + 1
+               if (replacements == count) exit
+            endif
          endif
       enddo
 
