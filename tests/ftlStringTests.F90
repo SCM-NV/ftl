@@ -622,7 +622,7 @@ contains
 
 
    subroutine testReplace
-      type(ftlString) :: s, old, new
+      type(ftlString) :: s
 
       s = 'test This is our test sentence for testtesting replacing substrings.test'
 

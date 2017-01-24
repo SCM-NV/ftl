@@ -1052,7 +1052,7 @@ contains
       count = 0
       doneEnd = 1
       do while (.true.)
-         next = index(self%raw(doneEnd:), sub) + doneEnd - 1
+         next = self%Find(sub, begin=doneEnd)
          if (next >= doneEnd) then ! found one more
             count = count + 1
             doneEnd = next + len(sub)
@@ -1198,24 +1198,38 @@ contains
 
 
 
-   ! Return the lowest index in the string where substring sub is found within the slice s[start:end]. Optional
-   ! arguments start and end are interpreted as in slice notation. Return -1 if sub is not found.
+   ! Return the lowest index in the string where substring sub is found within the slice s[begin:end).
+   ! Returns 0 if sub is not found.
    !
-   pure integer function FindOther(self, sub) result(idx)
-      class(ftlString), intent(in) :: self
-       type(ftlString), intent(in) :: sub
+   pure integer function FindOther(self, sub, begin, end) result(idx)
+      class(ftlString), intent(in)           :: self
+       type(ftlString), intent(in)           :: sub
+      integer         , intent(in), optional :: begin, end
 
-      idx = index(self, sub)
-      if (idx == 0) idx = -1
+      idx = self%FindRaw(sub%raw, begin, end)
 
    end function
    !
-   pure integer function FindRaw(self, sub) result(idx)
-      class(ftlString), intent(in) :: self
-      character(len=*), intent(in) :: sub
+   pure integer function FindRaw(self, sub, begin, end) result(idx)
+      class(ftlString), intent(in)           :: self
+      character(len=*), intent(in)           :: sub
+      integer         , intent(in), optional :: begin, end
 
-      idx = index(self, sub)
-      if (idx == 0) idx = -1
+      integer :: begin_, end_
+
+      if (present(begin)) then
+         begin_ = begin
+      else
+         begin_ = 1
+      endif
+
+      if (present(end)) then
+         end_ = end
+      else
+         end_ = len(self%raw) + 1
+      endif
+
+      idx = index(self%raw(begin:end_-1), sub) + begin_ - 1
 
    end function
 
@@ -1338,7 +1352,7 @@ contains
       doneEnd = 1
       replacements = 0
       do while (.true.)
-         nextIdx = index(str%raw(doneEnd:), old) + doneEnd - 1
+         nextIdx = str%Find(old, begin=doneEnd)
          if (nextIdx >= doneEnd) then ! found one more to replace
             str%raw(nextIdx:nextIdx+len(old)-1) = new
             doneEnd = nextIdx + len(old)
@@ -1373,7 +1387,7 @@ contains
       writeEnd = 1
       replacements = 0
       do while (replacements < numOcc)
-         readNext = index(self%raw(readEnd:), old) + readEnd - 1
+         readNext = self%Find(old, begin=readEnd)
          str%raw(writeEnd:writeEnd+(readNext-readEnd)-1) = self%raw(readEnd:readNext-1)
          writeEnd = writeEnd + (readNext-readEnd)
          readEnd = readNext
@@ -1590,7 +1604,7 @@ contains
 
    pure logical function CharIsWhitespace(c)
       character, intent(in) :: c
-      CharIsWhitespace = (c == ' ' .or. iachar(c) == 9)
+      CharIsWhitespace = (scan(c,FTL_STRING_WHITESPACE) /= 0)
    end function
 
 
