@@ -98,6 +98,9 @@ module ftlStringModule
 
       ! Python string methods:
       procedure, public :: Center
+      procedure         :: CountRaw
+      procedure         :: CountOther
+      generic  , public :: Count => CountRaw, CountOther
       procedure         :: PartitionRaw
       procedure         :: PartitionOther
       generic  , public :: Partition => PartitionRaw, PartitionOther
@@ -118,6 +121,7 @@ module ftlStringModule
       generic  , public :: Replace => ReplaceRawWithRaw, ReplaceStringWithString, ReplaceRawWithString, ReplaceStringWithRaw
       procedure         :: ReplaceImplementationEqualLength
       procedure         :: ReplaceImplementationSingleChar
+      procedure         :: ReplaceImplementationGeneral
 
       ! Other string methods:
       procedure, public :: CountWords
@@ -1027,6 +1031,49 @@ contains
 
 
 
+   ! Return the number of non-overlapping occurrences of substring sub in the range [start, end). Optional arguments
+   ! start and end are interpreted as in Python slice notation.
+   !
+   integer function CountRaw(self, sub, start, end) result(count)
+      class(ftlString), intent(in)           :: self
+      character(len=*), intent(in)           :: sub
+      integer         , intent(in), optional :: start, end
+
+      integer doneEnd, next
+
+      if (present(start) .or. present(end)) stop 'TODO'
+
+      if (len(sub) == 0) then
+         ! replicate Python string behavior
+         count = len(self%raw) + 1
+         return
+      endif
+
+      count = 0
+      doneEnd = 1
+      do while (.true.)
+         next = index(self%raw(doneEnd:), sub) + doneEnd - 1
+         if (next >= doneEnd) then ! found one more
+            count = count + 1
+            doneEnd = next + len(sub)
+         else
+            exit
+         endif
+      enddo
+
+   end function
+   !
+   integer function CountOther(self, sub, start, end) result(count)
+      class(ftlString), intent(in)           :: self
+       type(ftlString), intent(in)           :: sub
+      integer         , intent(in), optional :: start, end
+
+      count = CountRaw(self, sub%raw, start, end)
+
+   end function
+
+
+
    ! Split the string at the first occurrence of sep, and return a 3-tuple containing the part before the separator, the
    ! separator itself, and the part after the separator. If the separator is not found, return a 3-tuple containing the
    ! string itself, followed by two empty strings.
@@ -1220,7 +1267,7 @@ contains
             str = self%ReplaceImplementationEqualLength(old, new, count)
          endif
       else
-         stop 'TODO'
+         str = self%ReplaceImplementationGeneral(old, new, count)
       endif
 
    end function
@@ -1257,33 +1304,6 @@ contains
    !
    ! Actual implementations of Replace:
    !
-   type(ftlString) function ReplaceImplementationEqualLength(self, old, new, count) result(str)
-      class(ftlString), intent(in)           :: self
-      character(len=*), intent(in)           :: old
-      character(len=*), intent(in)           :: new
-      integer         , intent(in), optional :: count
-
-      integer :: doneEnd, replacements, nextIdx
-
-      str%raw = self%raw
-      doneEnd = 1
-      replacements = 0
-      do while (.true.)
-         nextIdx = index(str%raw(doneEnd:), old) + doneEnd - 1
-         if (nextIdx >= doneEnd) then ! found one more to replace
-            str%raw(nextIdx:nextIdx+len(old)-1) = new
-            doneEnd = doneEnd + len(old)
-            if (present(count)) then
-               replacements = replacements + 1
-               if (replacements == count) exit
-            endif
-         else
-            exit
-         endif
-      enddo
-
-   end function
-   !
    type(ftlString) function ReplaceImplementationSingleChar(self, old, new, count) result(str)
       class(ftlString), intent(in)           :: self
       character       , intent(in)           :: old
@@ -1299,22 +1319,72 @@ contains
             str%raw(i:i) = new
             if (present(count)) then
                replacements = replacements + 1
-               if (replacements == count) exit
+               if (replacements == count) return
             endif
          endif
       enddo
 
    end function
    !
-   type(ftlString) function ReplaceGeneral(self, old, new, count) result(str)
+   type(ftlString) function ReplaceImplementationEqualLength(self, old, new, count) result(str)
       class(ftlString), intent(in)           :: self
       character(len=*), intent(in)           :: old
       character(len=*), intent(in)           :: new
       integer         , intent(in), optional :: count
 
-      stop 'TODO'
+      integer :: doneEnd, replacements, nextIdx
 
-      write (*,*) old, new, count
+      str%raw = self%raw
+      doneEnd = 1
+      replacements = 0
+      do while (.true.)
+         nextIdx = index(str%raw(doneEnd:), old) + doneEnd - 1
+         if (nextIdx >= doneEnd) then ! found one more to replace
+            str%raw(nextIdx:nextIdx+len(old)-1) = new
+            doneEnd = nextIdx + len(old)
+            if (present(count)) then
+               replacements = replacements + 1
+               if (replacements == count) return
+            endif
+         else
+            return
+         endif
+      enddo
+
+   end function
+   !
+   type(ftlString) function ReplaceImplementationGeneral(self, old, new, count) result(str)
+      class(ftlString), intent(in)           :: self
+      character(len=*), intent(in)           :: old
+      character(len=*), intent(in)           :: new
+      integer         , intent(in), optional :: count
+
+      integer :: replacements, readEnd, writeEnd, readNext, numOcc
+
+      ! count how many occurrences we need to replace
+      numOcc = self%Count(old)
+      if (present(count)) numOcc = min(numOcc, count)
+
+      ! allocate output string with the correct size
+      str%raw = repeat('_', len(self%raw)+numOcc*(len(new)-len(old)))
+
+      ! do the replacements
+      readEnd = 1
+      writeEnd = 1
+      replacements = 0
+      do while (replacements < numOcc)
+         readNext = index(self%raw(readEnd:), old) + readEnd - 1
+         str%raw(writeEnd:writeEnd+(readNext-readEnd)-1) = self%raw(readEnd:readNext-1)
+         writeEnd = writeEnd + (readNext-readEnd)
+         readEnd = readNext
+         str%raw(writeEnd:writeEnd+len(new)-1) = new
+         writeEnd = writeEnd + len(new)
+         readEnd = readEnd + len(old)
+         replacements = replacements + 1
+      enddo
+
+      ! all replacements done, copy the rest of the string
+      str%raw(writeEnd:) = self%raw(readEnd:)
 
    end function
 

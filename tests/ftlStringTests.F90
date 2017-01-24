@@ -59,6 +59,7 @@ contains
 
       ! Python string methods:
       call testCenter
+      call testCount
       call testPartition
       call testSplit
       call testStartsWith
@@ -479,6 +480,27 @@ contains
    end subroutine
 
 
+   subroutine testCount
+      type(ftlString) :: s, sub
+
+      s = 'testtesttest'
+      sub = 'test'
+      ASSERT(s%Count(sub) == 3)
+      ASSERT(s%Count('hallelujathisisalong string') == 0)
+
+      s = 'test This is our test sentence for testing replacing substrings.test'
+      ASSERT(s%Count('testing') == 1)
+
+      s = 'ABABAB'
+      ASSERT(s%Count('AB') == 3)
+      ASSERT(s%Count('ABAB') == 1) ! counts non overlapping ABABs!
+
+      s = 'test'
+      ASSERT(s%Count('') == 5) ! replicating a Python behavior
+
+   end subroutine
+
+
    subroutine testPartition
       type(ftlString) :: s, sep
       type(ftlString) :: part(3)
@@ -602,17 +624,22 @@ contains
    subroutine testReplace
       type(ftlString) :: s, old, new
 
-      s = 'test This is our test sentence for testing replacing substrings.test'
+      s = 'test This is our test sentence for testtesting replacing substrings.test'
 
-      ! same length replacements
+      ASSERT(s%Replace('test','TEST')    ==  'TEST This is our TEST sentence for TESTTESTing replacing substrings.TEST')
+      ASSERT(s%Replace('test','TEST', 2) ==  'TEST This is our TEST sentence for testtesting replacing substrings.test')
+      ASSERT(s%Replace('e','_')          ==  't_st This is our t_st s_nt_nc_ for t_stt_sting r_placing substrings.t_st')
 
-      ASSERT(s%Replace('test','TEST')    ==  'TEST This is our TEST sentence for TESTing replacing substrings.TEST')
-      ASSERT(s%Replace('test','TEST', 2) ==  'TEST This is our TEST sentence for testing replacing substrings.test')
-      ASSERT(s%Replace('e','_')          ==  't_st This is our t_st s_nt_nc_ for t_sting r_placing substrings.t_st')
+      ASSERT(s%Replace('testing','testinating') == 'test This is our test sentence for testtestinating replacing substrings.test')
+      ASSERT(s%Replace('test','') == ' This is our  sentence for ing replacing substrings.')
+      ASSERT(s%Replace('t','__') == '__es__ This is our __es__ sen__ence for __es____es__ing replacing subs__rings.__es__')
+      ASSERT(s%Replace('t','__',2) == '__es__ This is our test sentence for testtesting replacing substrings.test')
 
-      ! varying length replacements
+      s = 'ABABAB'
 
-      !ASSERT(s%Replace('testing','testinating') == 'test This is our test sentence for testinating replacing substrings.test')
+      ASSERT(s%Replace('A','B') == 'BBBBBB')
+      ASSERT(s%Replace('AB','B') == 'BBB')
+      ASSERT(s%Replace('BA','AB') == 'AABABB')
 
    end subroutine
 
