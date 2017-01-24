@@ -26,12 +26,12 @@ BUILDDIR = build.$(PLATFORM).$(BUILD)
 
 ifeq ($(PLATFORM), gnu)
 	COMPILER = gfortran
-	FLAGS = -std=f2003 -fall-intrinsics -ffree-line-length-none -Wall -Wextra -Wpedantic -Wno-target-lifetime -Wno-surprising -Wno-compare-reals -J$(BUILDDIR)
+	FLAGS = -std=f2003 -fopenmp -fall-intrinsics -ffree-line-length-none -Wall -Wextra -Wpedantic -Wno-target-lifetime -Wno-surprising -Wno-compare-reals -J$(BUILDDIR)
 	CXXCOMPILER = g++
 	CXXFLAGS = -std=c++11 -Ofast -march=native
 else ifeq ($(PLATFORM), intel)
 	COMPILER = ifort
-	FLAGS = -stand f03 -assume realloc_lhs -warn -diag-disable=5268 -module $(BUILDDIR)
+	FLAGS = -stand f03 -qopenmp -assume realloc_lhs -warn -diag-disable=5268 -module $(BUILDDIR)
 	CXXCOMPILER = icpc
 	CXXFLAGS = -std=c++11 -fast -xHost
 else

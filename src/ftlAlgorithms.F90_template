@@ -947,7 +947,11 @@ contains
       if (last-first < 128) then
          call InsertionSort(first, last, comp)
       else
-         call IntroSort(first, last, comp, 2*floor(log(float(last-first))/log(2.0)))
+         !$omp parallel
+         !$omp single
+         call IntroSort(first, last, comp, 0, 2*floor(log(float(last-first))/log(2.0)))
+         !$omp end single nowait
+         !$omp end parallel
       endif
 #else /* ifdef FTL_CONTAINER_PROVIDES_BIDIRECTIONAL_ITERATOR || ifdef FTL_CONTAINER_PROVIDES_FORWARD_ITERATOR */
       ! TODO: implement an O(N*log(N)) algorithm
@@ -1040,14 +1044,14 @@ contains
 
    end subroutine
    !
-   recursive subroutine IntroSort(first, last, comp, depthLimit)
+   recursive subroutine IntroSort(first, last, comp, depth, depthLimit)
       type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
 #ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
       procedure(Comparator)                                    , optional   :: comp
 #else
       procedure(Comparator)                                                 :: comp
 #endif
-      integer                                                  , intent(in) :: depthLimit
+      integer                                                  , intent(in) :: depth, depthLimit
 
       type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: pivot, it1, it2
 
@@ -1096,8 +1100,12 @@ contains
          call ftlIterSwap(pivot, right) ! swap pivot to its correct place at right
 
          ! recursion:
-         call IntroSort(first, right, comp, depthLimit-1) ! introsort left subrange
-         call IntroSort(right+1, last, comp, depthLimit-1) ! ... and right subrange
+         !$omp task if(depth==0)
+         call IntroSort(first, right, comp, depth+1, depthLimit-1) ! introsort left subrange
+         !$omp end task
+         !$omp task if(depth==0)
+         call IntroSort(right+1, last, comp, depth+1, depthLimit-1) ! ... and right subrange
+         !$omp end task
 
          end associate
 
