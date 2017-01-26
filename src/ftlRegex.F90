@@ -24,9 +24,11 @@
 module ftlRegexModule
 
    use iso_c_binding
+   use ftlStringModule
 
    implicit none
    private
+
 
    type, public :: ftlRegex
       private
@@ -47,16 +49,39 @@ module ftlRegexModule
       final             :: Finalizer
 #endif
 
+      procedure         :: MatchRaw
+      generic  , public :: Match => MatchRaw
+
       procedure         :: PrintError
 
    end type
 
+   type, public :: ftlRegexGroup
+      type(ftlString) :: text
+      integer         :: begin = 0
+      integer         :: end   = 0
+   end type
 
-   ! Interfaces for the functions in POSIX regex.h
+   type, public :: ftlRegexMatch
+      type(ftlString)                  :: text
+      integer                          :: begin = 0
+      integer                          :: end   = 0
+      type(ftlRegexGroup), allocatable :: group(:)
+   !contains
+      !procedure :: Matches
+   end type
+
+
+   ! Interfaces for the functions, types, etc. in POSIX regex.h
+
+   type, bind(C) :: C_regmatch_t
+      integer(C_int) :: rm_so
+      integer(C_int) :: rm_eo
+   end type
 
    interface
 
-      function C_regcomp(preg, pattern, flags) result(status) bind(C,name="regcomp")
+      function C_regcomp(preg, pattern, flags) result(status) bind(C,name='regcomp')
          import
          type(C_ptr)           , intent(in), value :: preg
          character(kind=C_char), intent(in)        :: pattern(*)
@@ -64,18 +89,28 @@ module ftlRegexModule
          integer(C_int)                            :: status
       end function
 
-      subroutine C_regfree(reg) bind(C,name="regfree")
+      subroutine C_regfree(preg) bind(C,name='regfree')
          import
-         type(C_ptr), intent(in), value :: reg
+         type(C_ptr), intent(in), value :: preg
       end subroutine
 
-      function C_regerror(errcode, reg, errbuf, errbuf_size) result(regerror) bind(C,name="regerror")
+      function C_regerror(errcode, preg, errbuf, errbuf_size) result(errlen) bind(C,name='regerror')
          import
          integer(C_int)        , intent(in) , value :: errcode
-         type(C_ptr)           , intent(in) , value :: reg
-         character(kind=C_char), intent(out)        :: errbuf
+         type(C_ptr)           , intent(in) , value :: preg
+         character(kind=C_char), intent(out)        :: errbuf(*)
          integer(C_size_t)     , intent(in) , value :: errbuf_size
-         integer(C_size_t)                          :: regerror
+         integer(C_size_t)                          :: errlen
+      end function
+
+      function C_regexec(preg, string, nmatch, pmatch, eflags) result(status) bind(C,name='regexec')
+         import
+         type(C_ptr)           , intent(in) , value :: preg
+         character(kind=C_char), intent(in)         :: string(*)
+         integer(C_size_t)     , intent(in) , value :: nmatch
+         type(C_regmatch_t)    , intent(out)        :: pmatch(*)
+         integer(C_int)        , intent(in) , value :: eflags
+         integer(C_int)                             :: status
       end function
 
    end interface
@@ -98,10 +133,10 @@ contains
 
       allocate(self%regdata(64))
       self%preg = c_loc(self%regdata(1))
-      status = C_regcomp(self%preg, self%pattern, 1)
+      status = C_regcomp(self%preg, self%pattern, 1_C_int)
       if (status /= 0) then
          call self%PrintError(status)
-         stop 'ERROR compiling regex in ftlRegex%New()'
+         stop 'ERROR compiling regex'
       endif
 
    end subroutine
@@ -126,6 +161,43 @@ contains
       call self%Delete()
    end subroutine
 #endif
+
+
+
+   type(ftlRegexMatch) function MatchRaw(self, string, flags) result(match)
+      class(ftlRegex) , intent(in)           :: self
+      character(len=*), intent(in)           :: string
+      integer         , intent(in), optional :: flags(:)
+
+      character(len=:,kind=C_char), allocatable :: cstring
+      integer(C_size_t), parameter :: nmatch = 1024
+      type(C_regmatch_t) :: pmatch(nmatch)
+      integer(C_int) :: status
+
+      integer :: nGroups, iGroup
+
+      cstring = string // C_NULL_char
+      status = C_regexec(self%preg, cstring, nmatch, pmatch, 1_C_int)
+      if (status /= 0 .and. status /= 1) then
+         call self%PrintError(status)
+         stop 'ERROR matching regex'
+      endif
+      if (status == 1) return
+
+      match%text  = string(pmatch(1)%rm_so+1:pmatch(1)%rm_eo)
+      match%begin = pmatch(1)%rm_so+1
+      match%end   = pmatch(1)%rm_eo+1
+
+      nGroups = count(pmatch(2:)%rm_so /= -1)
+      if (nGroups == 0) return
+      allocate(match%group(nGroups))
+      do iGroup = 1, nGroups
+         match%group(iGroup)%text  = string(pmatch(iGroup+1)%rm_so+1:pmatch(iGroup+1)%rm_eo)
+         match%group(iGroup)%begin = pmatch(iGroup+1)%rm_so+1
+         match%group(iGroup)%end   = pmatch(iGroup+1)%rm_eo+1
+      enddo
+
+   end function
 
 
 

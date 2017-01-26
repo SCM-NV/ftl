@@ -174,7 +174,7 @@ $(BUILDDIR)/ftlHash.o: src/ftlHash.F90 | $(BUILDDIR)
 $(BUILDDIR)/ftlString.o: src/ftlString.F90 $(BUILDDIR)/ftlHash.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
 
-$(BUILDDIR)/ftlRegex.o: src/ftlRegex.F90 | $(BUILDDIR)
+$(BUILDDIR)/ftlRegex.o: src/ftlRegex.F90 $(BUILDDIR)/ftlString.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
 
 

@@ -34,15 +34,28 @@ contains
 
       write (*,'(A)') 'Running ftlRegex tests ...'
 
-      call testNew
+      call testCaptureGroups
 
    end subroutine
 
 
-   subroutine testNew
+   subroutine testCaptureGroups
       type(ftlRegex) :: r
+      type(ftlRegexMatch) :: m
 
-      call r%New('a')
+      call r%New('(\w{1,})\s{0,}=\s{0,}(\w{1,})')
+
+      m = r%Match('occupations option=value')
+      ASSERT(m%text == 'option=value')
+      ASSERT(m%begin == 13)
+      ASSERT(m%end == 25)
+      ASSERT(size(m%group) == 2)
+      ASSERT(m%group(1)%text == 'option')
+      ASSERT(m%group(1)%begin == 13)
+      ASSERT(m%group(1)%end == 19)
+      ASSERT(m%group(2)%text == 'value')
+      ASSERT(m%group(2)%begin == 20)
+      ASSERT(m%group(2)%end == 25)
 
    end subroutine
 
