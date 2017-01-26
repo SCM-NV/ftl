@@ -976,7 +976,7 @@ contains
       call line%ReadLine(unit, ios)
       if (is_iostat_end(ios)) return
 
-      buffer = line%raw  ! produces a bogus warning with gfortran, see: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=56670
+      buffer = line%raw ! produces a bogus warning with gfortran, see: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=56670
       nRead = len(line)
 
       do while (.true.)

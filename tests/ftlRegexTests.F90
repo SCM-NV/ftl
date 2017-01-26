@@ -1,4 +1,4 @@
-! Copyright (c) 2016, 2017  Robert Rüger
+! Copyright (c) 2017  Robert Rüger
 !
 ! This file is part of of the Fortran Template Library.
 !
@@ -18,33 +18,33 @@
 
 #include "ftlTestTools.inc"
 
-program tests
+module ftlRegexTestsModule
 
    use ftlTestToolsModule
-   use ftlStringTestsModule
-   use ftlRegexTestsModule
-   use ftlDynArrayTestsModule
-   use ftlListTestsModule
-   use ftlHashMapTestsModule
-   use ftlMemoryTestsModule
-   use ftlAlgorithmsTestsModule
+   use ftlRegexModule
 
-   ! dummy assertion to test that assertions themselves work ...
-   ASSERT(.false.)
+   implicit none
+   private
+   public :: ftlRegexTests
 
-   call ftlRegexTests
-   call ftlStringTests
-   call ftlDynArrayTests
-   call ftlListTests
-   call ftlHashMapTests
-   call ftlMemoryTests
-   call ftlAlgorithmsTests
+contains
 
-   write (*,'(A,I0,A,I0)') 'Failed assertions: ',num_failed,'/',num_asserts
-   if (num_failed > 0) then
-      write (*,'(A)') 'TEST FAILED'
-   else
-      write (*,'(A)') 'TEST PASSED'
-   endif
 
-end program
+   subroutine ftlRegexTests
+
+      write (*,'(A)') 'Running ftlRegex tests ...'
+
+      call testNew
+
+   end subroutine
+
+
+   subroutine testNew
+      type(ftlRegex) :: r
+
+      call r%New('a')
+
+   end subroutine
+
+
+end module
