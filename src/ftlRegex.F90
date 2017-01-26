@@ -58,7 +58,7 @@ module ftlRegexModule
 
       function C_regcomp(preg, pattern, flags) result(status) bind(C,name="regcomp")
          import
-         type(C_ptr)                       , value :: preg
+         type(C_ptr)           , intent(in), value :: preg
          character(kind=C_char), intent(in)        :: pattern(*)
          integer(C_int)        , intent(in), value :: flags
          integer(C_int)                            :: status
@@ -71,10 +71,10 @@ module ftlRegexModule
 
       function C_regerror(errcode, reg, errbuf, errbuf_size) result(regerror) bind(C,name="regerror")
          import
-         integer(C_int)                     , value :: errcode
+         integer(C_int)        , intent(in) , value :: errcode
          type(C_ptr)           , intent(in) , value :: reg
          character(kind=C_char), intent(out)        :: errbuf
-         integer(C_size_t)                  , value :: errbuf_size
+         integer(C_size_t)     , intent(in) , value :: errbuf_size
          integer(C_size_t)                          :: regerror
       end function
 
@@ -134,12 +134,11 @@ contains
       class(ftlRegex), intent(in) :: self
       integer(C_int) , intent(in) :: status
 
-      character(len=:,kind=C_char), allocatable :: errbuf
+      character(len=1024,kind=C_char) :: errbuf
       integer(C_size_t) :: errlen
 
-      errbuf = repeat(' ', 1024) ! produces a bogus warning with gfortran, see: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=56670
       errlen = C_regerror(status, self%preg, errbuf, int(len(errbuf), C_size_t))
-      write (error_unit,'(2A)') 'ftlRegex ERROR: ', errbuf(:index(errbuf, C_NULL_char))
+      write (error_unit,'(2A)') 'ftlRegex ERROR: ', errbuf(:errlen-1)
 
    end subroutine
 
