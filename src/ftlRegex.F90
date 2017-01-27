@@ -34,6 +34,7 @@ module ftlRegexModule
       private
 
       character(len=:,kind=C_char), allocatable :: pattern
+      integer(C_int)                            :: cflags = 0_C_int
 
       type(C_ptr)                     :: preg = C_NULL_ptr
       character(kind=C_char), pointer :: regdata(:) => null()
@@ -41,20 +42,36 @@ module ftlRegexModule
    contains
       private
 
-      procedure         :: NewRaw
-      generic  , public :: New => NewRaw
+      procedure            :: NewRaw
+      procedure            :: NewString
+      generic  , public    :: New => NewRaw, NewString
 
-      procedure, public :: Delete
+      procedure, public    :: Delete
 #ifndef FTL_NO_FINALIZERS
-      final             :: Finalizer
+      final                :: Finalizer
 #endif
 
-      procedure         :: MatchRaw
-      generic  , public :: Match => MatchRaw
+      procedure            :: MatchRaw
+      procedure            :: MatchString
+      generic  , public    :: Match => MatchRaw
+      !procedure            :: MatchAllRaw
+      !generic  , public    :: MatchAll => MatchAllRaw
 
-      procedure         :: PrintError
+      procedure, pass(rhs) :: OpMatchesRaw
+      generic  , public    :: operator(.matches.) => OpMatchesRaw
+
+      procedure            :: PrintError
 
    end type
+
+
+   ! Constructor functions:
+
+   interface ftlRegex
+      module procedure NewRawConstr
+      module procedure NewStringConstr
+   end interface
+
 
    type, public :: ftlRegexGroup
       type(ftlString) :: text
@@ -63,16 +80,29 @@ module ftlRegexModule
    end type
 
    type, public :: ftlRegexMatch
+      logical                          :: matches = .false.
       type(ftlString)                  :: text
       integer                          :: begin = 0
       integer                          :: end   = 0
       type(ftlRegexGroup), allocatable :: group(:)
-   !contains
-      !procedure :: Matches
    end type
 
 
    ! Interfaces for the functions, types, etc. in POSIX regex.h
+   !
+   ! TODO: Somehow determine these values automatically from the libc implementation.
+   !       Their values are not standardized, so this probably doesn't work everywhere.
+
+   integer       , parameter :: sizeof_C_regex_t = 64
+
+   integer(C_int), parameter :: REG_EXTENDED = 1_C_int
+   integer(C_int), parameter :: REG_ICASE    = 2_C_int
+   integer(C_int), parameter :: REG_NEWLINE  = 4_C_int
+   integer(C_int), parameter :: REG_NOSUB    = 8_C_int
+
+   integer(C_int), parameter :: REG_NOTBOL   = 1_C_int
+   integer(C_int), parameter :: REG_NOTEOL   = 2_C_int
+   integer(C_int), parameter :: REG_STARTEND = 4_C_int
 
    type, bind(C) :: C_regmatch_t
       integer(C_int) :: rm_so
@@ -120,10 +150,10 @@ contains
 
 
 
-   subroutine NewRaw(self, pattern, flags)
+   subroutine NewRaw(self, pattern, basic, icase, nosub, newline)
       class(ftlRegex) , intent(inout)           :: self
       character(len=*), intent(in)              :: pattern
-      integer         , intent(in)   , optional :: flags(:)
+      logical         , intent(in)   , optional :: basic, icase, nosub, newline
 
       integer(C_int) :: status
 
@@ -131,15 +161,59 @@ contains
 
       self%pattern = pattern // C_NULL_char
 
-      allocate(self%regdata(64))
-      self%preg = c_loc(self%regdata(1))
-      status = C_regcomp(self%preg, self%pattern, 1_C_int)
-      if (status /= 0) then
-         call self%PrintError(status)
-         stop 'ERROR compiling regex'
+      if (present(basic)) then
+         if (basic) then
+            self%cflags = 0_C_int
+         else
+            self%cflags = ior(0_C_int, REG_EXTENDED)
+         endif
+      else
+         self%cflags = ior(0_C_int, REG_EXTENDED) ! use extended POSIX regexes by default
       endif
 
+      if (present(icase)) then
+         if (icase) self%cflags = ior(self%cflags, REG_ICASE)
+      endif
+
+      if (present(nosub)) then
+         if (nosub) self%cflags = ior(self%cflags, REG_NOSUB)
+      endif
+
+      if (present(newline)) then
+         if (newline) self%cflags = ior(self%cflags, REG_NEWLINE)
+      endif
+
+      allocate(self%regdata(sizeof_C_regex_t))
+      self%preg = c_loc(self%regdata(1))
+      status = C_regcomp(self%preg, self%pattern, self%cflags)
+      if (status /= 0) call self%PrintError(status)
+
    end subroutine
+   !
+   subroutine NewString(self, pattern, basic, icase, nosub, newline)
+      class(ftlRegex), intent(inout)           :: self
+      type(ftlString), intent(in)              :: pattern
+      logical        , intent(in)   , optional :: basic, icase, nosub, newline
+
+      call self%NewRaw(pattern%raw, basic, icase, nosub, newline)
+
+   end subroutine
+
+
+
+   ! Constructor functions:
+   !
+   type(ftlRegex) function NewRawConstr(pattern, basic, icase, nosub, newline) result(regex)
+      character(len=*), intent(in)              :: pattern
+      logical         , intent(in)   , optional :: basic, icase, nosub, newline
+      call regex%NewRaw(pattern, basic, icase, nosub, newline)
+   end function
+   !
+   type(ftlRegex) function NewStringConstr(pattern, basic, icase, nosub, newline) result(regex)
+      type(ftlString), intent(in)              :: pattern
+      logical        , intent(in)   , optional :: basic, icase, nosub, newline
+      call regex%NewRaw(pattern%raw, basic, icase, nosub, newline)
+   end function
 
 
 
@@ -154,7 +228,7 @@ contains
       endif
 
    end subroutine
-
+   !
 #ifndef FTL_NO_FINALIZERS
    subroutine Finalizer(self)
       type(ftlRegex), intent(inout) :: self
@@ -164,10 +238,9 @@ contains
 
 
 
-   type(ftlRegexMatch) function MatchRaw(self, string, flags) result(match)
-      class(ftlRegex) , intent(in)           :: self
-      character(len=*), intent(in)           :: string
-      integer         , intent(in), optional :: flags(:)
+   type(ftlRegexMatch) function MatchRaw(self, string) result(match)
+      class(ftlRegex) , intent(in) :: self
+      character(len=*), intent(in) :: string
 
       character(len=:,kind=C_char), allocatable :: cstring
       integer(C_size_t), parameter :: nmatch = 1024
@@ -176,26 +249,63 @@ contains
 
       integer :: nGroups, iGroup
 
-      cstring = string // C_NULL_char
+      cstring = string // C_NULL_char ! produces a bogus warning with gfortran
       status = C_regexec(self%preg, cstring, nmatch, pmatch, 1_C_int)
-      if (status /= 0 .and. status /= 1) then
-         call self%PrintError(status)
-         stop 'ERROR matching regex'
-      endif
+      if (status /= 0 .and. status /= 1) call self%PrintError(status)
       if (status == 1) return
 
-      match%text  = string(pmatch(1)%rm_so+1:pmatch(1)%rm_eo)
-      match%begin = pmatch(1)%rm_so+1
-      match%end   = pmatch(1)%rm_eo+1
+      match%matches = .true.
+      match%text    = string(pmatch(1)%rm_so+1:pmatch(1)%rm_eo)
+      match%begin   = pmatch(1)%rm_so+1
+      match%end     = pmatch(1)%rm_eo+1
 
-      nGroups = count(pmatch(2:)%rm_so /= -1)
-      if (nGroups == 0) return
+      if (and(self%cflags,REG_NOSUB) == REG_NOSUB) then
+         nGroups = 0
+      else
+         nGroups = count(pmatch(2:)%rm_so /= -1)
+      endif
       allocate(match%group(nGroups))
+      if (nGroups == 0) return
       do iGroup = 1, nGroups
          match%group(iGroup)%text  = string(pmatch(iGroup+1)%rm_so+1:pmatch(iGroup+1)%rm_eo)
          match%group(iGroup)%begin = pmatch(iGroup+1)%rm_so+1
          match%group(iGroup)%end   = pmatch(iGroup+1)%rm_eo+1
       enddo
+
+   end function
+   !
+   type(ftlRegexMatch) function MatchString(self, string) result(match)
+      class(ftlRegex), intent(in) :: self
+      type(ftlString), intent(in) :: string
+
+      match = self%MatchRaw(string%raw)
+
+   end function
+
+
+
+   !function MatchAllRaw(self, string, flags) result(matches)
+   !   class(ftlRegex)    , intent(in)           :: self
+   !   character(len=*)   , intent(in)           :: string
+   !   integer            , intent(in), optional :: flags(:)
+   !   type(ftlRegexMatch), allocatable          :: matches
+   !
+   !   stop 'TODO'
+   !
+   !end function
+
+
+
+   logical function OpMatchesRaw(lhs, rhs) result(matches)
+      character(len=*), intent(in) :: lhs
+      class(ftlRegex) , intent(in) :: rhs
+
+      type(ftlRegexMatch) :: m
+
+      ! TODO: more efficient implementation that ignores regex groups ...
+
+      m = rhs%match(lhs)
+      matches = m%matches
 
    end function
 

@@ -34,7 +34,44 @@ contains
 
       write (*,'(A)') 'Running ftlRegex tests ...'
 
+      call testCompileFlags
       call testCaptureGroups
+
+   end subroutine
+
+
+   subroutine testCompileFlags
+      type(ftlRegex) :: r
+      type(ftlRegexMatch) :: m
+
+      ! the temporary ftlRegexes in these expressions leak with gfortran 6.3.1:
+
+      !ASSERT(     ('blub atest' .matches. ftlRegex('a')))
+      !ASSERT(.not.('blub atest' .matches. ftlRegex('A')))
+      !ASSERT(     ('blub atest' .matches. ftlRegex('A', icase=.true.)))
+
+      ! I believe that's a compiler bug. here is a workaround, so that we don't have a leaking testsuite ...
+
+      call r%New('a')
+      ASSERT('blub atest' .matches. r)
+      call r%New('A')
+      ASSERT(.not.('blub atest' .matches. r))
+      call r%New('A', icase=.true.)
+      ASSERT('blub atest' .matches. r)
+
+      call r%New('([[:digit:]]+)\.([[:digit:]]+)')
+      m = r%Match('some value: 12.436')
+      ASSERT(m%matches)
+      ASSERT(m%text == '12.436')
+      ASSERT(size(m%group) == 2)
+      ASSERT(m%group(1)%text == '12')
+      ASSERT(m%group(2)%text == '436')
+
+      call r%New('([[:digit:]]+)\.([[:digit:]]+)', nosub=.true.)
+      m = r%Match('some value: 12.436')
+      ASSERT(m%matches)
+      ASSERT(m%text == '12.436')
+      ASSERT(size(m%group) == 0)
 
    end subroutine
 
@@ -43,7 +80,9 @@ contains
       type(ftlRegex) :: r
       type(ftlRegexMatch) :: m
 
-      call r%New('(\w{1,})\s{0,}=\s{0,}(\w{1,})')
+      call r%New('(\w+)\s*=\s*(\w+)')
+
+      ASSERT('something = other' .matches. r)
 
       m = r%Match('occupations option=value')
       ASSERT(m%text == 'option=value')

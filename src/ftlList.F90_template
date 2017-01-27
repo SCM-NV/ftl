@@ -302,7 +302,7 @@ contains
       nullify(self%back)
 
    end subroutine
-
+   !
 #ifndef FTL_NO_FINALIZERS
    subroutine Finalizer(self)
       type(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
