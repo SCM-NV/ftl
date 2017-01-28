@@ -50,9 +50,7 @@ module ftlRegexModule
       procedure            :: PrintError
 
       procedure, public    :: Delete
-#ifndef FTL_NO_FINALIZERS
       final                :: Finalizer
-#endif
 
       procedure            :: MatchRaw
       procedure            :: MatchString
@@ -279,12 +277,10 @@ contains
 
    end subroutine
    !
-#ifndef FTL_NO_FINALIZERS
    subroutine Finalizer(self)
       type(ftlRegex), intent(inout) :: self
       call self%Delete()
    end subroutine
-#endif
 
 
 

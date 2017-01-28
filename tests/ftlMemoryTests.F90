@@ -71,10 +71,6 @@ contains
       ASSERT(associated(sp%value))
       ASSERT(sp%value == 5)
 
-#ifdef FTL_NO_FINALIZERS
-      call sp%Delete()
-#endif
-
    end subroutine
 
 
@@ -106,11 +102,6 @@ contains
       ASSERT(sp2%value == 154)
 
       ASSERT(associated(sp1, sp2))
-
-#ifdef FTL_NO_FINALIZERS
-      call sp1%Delete()
-      call sp2%Delete()
-#endif
 
    end subroutine
 
@@ -158,10 +149,6 @@ contains
       ASSERT(associated(sp2%value))
       ASSERT(sp2%value == 291287)
 
-#ifdef FTL_NO_FINALIZERS
-      call sp2%Delete()
-#endif
-
    end subroutine
 
 
@@ -176,10 +163,6 @@ contains
       ASSERT(associated(sp))
       ASSERT(associated(sp%value))
       ASSERT(sp%value == 42)
-
-#ifdef FTL_NO_FINALIZERS
-      call sp%Delete()
-#endif
 
    end subroutine
 
@@ -218,11 +201,6 @@ contains
       ASSERT(associated(sp2))
       ASSERT(associated(sp2%value))
       ASSERT(sp2%value == 42)
-
-#ifdef FTL_NO_FINALIZERS
-      call sp1%Delete()
-      call sp2%Delete()
-#endif
 
    end subroutine
 

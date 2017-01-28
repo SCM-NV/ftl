@@ -61,10 +61,6 @@ contains
       ASSERT(size(um) == 0)
       ASSERT(um%BucketCount() == 100)
 
-#ifdef FTL_NO_FINALIZERS
-      call um%Delete()
-#endif
-
    end subroutine
 
 
@@ -161,10 +157,6 @@ contains
       ASSERT(um%Get('lang') == -11)
       ASSERT(um%Get('rly!') == -13)
 
-#ifdef FTL_NO_FINALIZERS
-      call um%Delete()
-#endif
-
    end subroutine
 
 
@@ -199,10 +191,6 @@ contains
 
       ASSERT(size(um) == 14)
       ASSERT(um%BucketCount() == 5)
-
-#ifdef FTL_NO_FINALIZERS
-      call um%Delete()
-#endif
 
    end subroutine
 
@@ -244,10 +232,6 @@ contains
 
       ASSERT(it == um%End())
 
-#ifdef FTL_NO_FINALIZERS
-      call um%Delete()
-#endif
-
    end subroutine
 
 
@@ -285,10 +269,6 @@ contains
       ASSERT(um%Find('rly!') /= um%End())
 
       ASSERT(um%Find('----') == um%End())
-
-#ifdef FTL_NO_FINALIZERS
-      call um%Delete()
-#endif
 
    end subroutine
 
@@ -358,10 +338,6 @@ contains
       ASSERT(um%Empty())
       ASSERT(size(um) == 0)
 
-#ifdef FTL_NO_FINALIZERS
-      call um%Delete()
-#endif
-
    end subroutine
 
 
@@ -406,10 +382,6 @@ contains
       call um%Erase(it, um%End())
 
       ASSERT(size(um) == 2)
-
-#ifdef FTL_NO_FINALIZERS
-      call um%Delete()
-#endif
 
    end subroutine
 

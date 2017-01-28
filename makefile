@@ -52,11 +52,6 @@ else
   $(error unrecognized BUILD)
 endif
 
-# option to disable the use of finalizers (in case your compiler can't handle them ...)
-ifeq ($(FINALIZERS), skip)
-	FLAGS += -DFTL_NO_FINALIZERS
-endif
-
 
 # Make commands:
 

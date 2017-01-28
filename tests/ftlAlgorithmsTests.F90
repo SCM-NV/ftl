@@ -143,10 +143,6 @@ contains
       call it%Dec()
       ASSERT(ftlNoneOf(l%Begin(),it,IsOdd))
 
-#ifdef FTL_NO_FINALIZERS
-      call l%Delete()
-#endif
-
    end subroutine
 
 
@@ -233,11 +229,6 @@ contains
       call it%Inc()
       ASSERT(it == l%End())
 
-#ifdef FTL_NO_FINALIZERS
-      call l%Delete()
-      call k%Delete()
-#endif
-
    end subroutine
 
 
@@ -279,10 +270,6 @@ contains
 
       ASSERT(ftlCountIf(l%Begin(),it,IsEven) == 5)
       ASSERT(ftlCountIf(l%Begin(),it,IsOdd) == 3)
-
-#ifdef FTL_NO_FINALIZERS
-      call l%Delete()
-#endif
 
    end subroutine
 
@@ -377,11 +364,6 @@ contains
       ASSERT(.not.ftlEqual(l,k))
       ASSERT(ftlEqual(l,k,LastDigitMatches))
 
-#ifdef FTL_NO_FINALIZERS
-      call l%Delete()
-      call k%Delete()
-#endif
-
    end subroutine
 
 
@@ -435,11 +417,6 @@ contains
       ASSERT(.not.ftlIsPermutation(k,l))
       ASSERT(ftlIsPermutation(ftlAdvance(k%Begin(),3),k%End(),ftlAdvance(l%Begin(),3)))
 
-#ifdef FTL_NO_FINALIZERS
-      call l%Delete()
-      call k%Delete()
-#endif
-
    end subroutine
 
 
@@ -473,11 +450,6 @@ contains
       ASSERT(it%value == 875)
       ASSERT(ftlDistance(l%Begin(),it) == 3)
 
-#ifdef FTL_NO_FINALIZERS
-      call l%Delete()
-      call k%Delete()
-#endif
-
    end subroutine
 
 
@@ -491,10 +463,6 @@ contains
       call l%New([2,4,6,8,0,1,3,5,7,9])
       ASSERT(ftlIsPartitioned(l, IsEven))
       ASSERT(.not.ftlIsPartitioned(l, IsOdd))
-
-#ifdef FTL_NO_FINALIZERS
-      call l%Delete()
-#endif
 
    end subroutine
 
@@ -604,10 +572,6 @@ contains
       ASSERT(it%value == 3)
       call it%Inc()
       ASSERT(it == l%End())
-
-#ifdef FTL_NO_FINALIZERS
-      call l%Delete()
-#endif
 
    end subroutine
 

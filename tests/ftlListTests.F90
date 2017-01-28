@@ -42,6 +42,8 @@ contains
 
       call testAssignments
 
+      call testDelete
+
       call testInsertSingle
       call testInsertFill
       call testInsertArray
@@ -73,10 +75,6 @@ contains
       ASSERT(l%Begin() == l%End())
       ASSERT(.not.(l%Begin() /= l%End()))
 
-#ifdef FTL_NO_FINALIZERS
-      call l%Delete()
-#endif
-
    end subroutine
 
 
@@ -94,11 +92,6 @@ contains
       ASSERT(.not.associated(o%front,l%front))
       ASSERT(.not.associated(o%back,l%back))
 
-#ifdef FTL_NO_FINALIZERS
-      call l%Delete()
-      call o%Delete()
-#endif
-
    end subroutine
 
 
@@ -113,10 +106,6 @@ contains
       ASSERT(l%front == 72)
       ASSERT(l%back == 72)
 
-#ifdef FTL_NO_FINALIZERS
-      call l%Delete()
-#endif
-
    end subroutine
 
 
@@ -130,10 +119,6 @@ contains
       ASSERT(Size(l) == 7)
       ASSERT(l%front == 5)
       ASSERT(l%back == 88)
-
-#ifdef FTL_NO_FINALIZERS
-      call l%Delete()
-#endif
 
    end subroutine
 
@@ -151,11 +136,6 @@ contains
       ASSERT(l%back == 88)
       ASSERT(.not.associated(o%front,l%front))
       ASSERT(.not.associated(o%back,l%back))
-
-#ifdef FTL_NO_FINALIZERS
-      call l%Delete()
-      call o%Delete()
-#endif
 
    end subroutine
 
@@ -200,10 +180,19 @@ contains
       ASSERT(l%front == 23)
       ASSERT(l%back == 3)
 
-#ifdef FTL_NO_FINALIZERS
+   end subroutine
+
+
+   subroutine testDelete
+      type(ftlListInt) :: l
+
+      call l%New([5,13,41,97,17,10,88])
       call l%Delete()
-      call o%Delete()
-#endif
+
+      ASSERT(size(l) == 0)
+      ASSERT(l%Empty())
+      ASSERT(.not.associated(l%front))
+      ASSERT(.not.associated(l%back))
 
    end subroutine
 
@@ -223,10 +212,6 @@ contains
       ASSERT(it%value == 42)
       call it%Dec()
       ASSERT(it%value == 23)
-
-#ifdef FTL_NO_FINALIZERS
-      call l%Delete()
-#endif
 
    end subroutine
 
@@ -257,10 +242,6 @@ contains
       ASSERT(l%front == 42)
       ASSERT(l%back == 42)
 
-#ifdef FTL_NO_FINALIZERS
-      call l%Delete()
-#endif
-
    end subroutine
 
 
@@ -290,10 +271,6 @@ contains
       ASSERT(l%Size() == 4)
       ASSERT(l%front == 4)
       ASSERT(l%back == 7)
-
-#ifdef FTL_NO_FINALIZERS
-      call l%Delete()
-#endif
 
    end subroutine
 
@@ -329,11 +306,6 @@ contains
       ASSERT(it /= l%End())
       call it%Inc()
       ASSERT(it == l%End())
-
-#ifdef FTL_NO_FINALIZERS
-      call l%Delete()
-      call o%Delete()
-#endif
 
    end subroutine
 
@@ -376,10 +348,6 @@ contains
       ASSERT(l%Empty())
       ASSERT(l%Size() == 0)
 
-#ifdef FTL_NO_FINALIZERS
-      call l%Delete()
-#endif
-
    end subroutine
 
 
@@ -420,10 +388,6 @@ contains
       ASSERT(l%Empty())
       ASSERT(l%Size() == 0)
 
-#ifdef FTL_NO_FINALIZERS
-      call l%Delete()
-#endif
-
    end subroutine
 
 
@@ -452,10 +416,6 @@ contains
       call l%Erase(l%Begin())
       ASSERT(l%Size() == 2)
       ASSERT(l%front == 5)
-
-#ifdef FTL_NO_FINALIZERS
-      call l%Delete()
-#endif
 
    end subroutine
 
@@ -487,10 +447,6 @@ contains
       call l%New([12,23,34,45,56,76])
       call l%Erase(l%Begin(),l%End())
       ASSERT(l%Empty())
-
-#ifdef FTL_NO_FINALIZERS
-      call l%Delete()
-#endif
 
    end subroutine
 
@@ -532,11 +488,6 @@ contains
       call it%Inc()
       ASSERT(it == o%End())
 
-#ifdef FTL_NO_FINALIZERS
-      call l%Delete()
-      call o%Delete()
-#endif
-
    end subroutine
 
 
@@ -562,10 +513,6 @@ contains
 
       ASSERT(it%value == 66)
 
-#ifdef FTL_NO_FINALIZERS
-      call l%Delete()
-#endif
-
    end subroutine
 
 
@@ -578,10 +525,6 @@ contains
       ASSERT(l%Empty())
       ASSERT(l%Size() == 0)
       ASSERT(l%Begin() == l%End())
-
-#ifdef FTL_NO_FINALIZERS
-      call l%Delete()
-#endif
 
    end subroutine
 
