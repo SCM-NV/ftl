@@ -53,12 +53,17 @@ module ftlRegexModule
 
       procedure            :: MatchRaw
       procedure            :: MatchString
-      generic  , public    :: Match => MatchRaw
-      !procedure            :: MatchAllRaw
-      !generic  , public    :: MatchAll => MatchAllRaw
+      generic  , public    :: Match => MatchRaw, MatchString
+      procedure            :: NumMatchesRaw
+      procedure            :: NumMatchesString
+      generic  , public    :: NumMatches => NumMatchesRaw, NumMatchesString
+      procedure            :: MatchAllRaw
+      procedure            :: MatchAllString
+      generic  , public    :: MatchAll => MatchAllRaw, MatchAllString
 
       procedure, pass(rhs) :: OpMatchesRaw
-      generic  , public    :: operator(.matches.) => OpMatchesRaw
+      procedure, pass(rhs) :: OpMatchesString
+      generic  , public    :: operator(.matches.) => OpMatchesRaw, OpMatchesString
 
       procedure            :: PrintError
 
@@ -93,7 +98,7 @@ module ftlRegexModule
    ! TODO: Somehow determine these values automatically from the libc implementation.
    !       Their values are not standardized, so this probably doesn't work everywhere.
 
-   integer       , parameter :: sizeof_C_regex_t = 64
+   integer, parameter :: sizeof_C_regex_t = 64
 
    integer(C_int), parameter :: REG_EXTENDED = 1_C_int
    integer(C_int), parameter :: REG_ICASE    = 2_C_int
@@ -255,13 +260,13 @@ contains
       if (status == 1) return
 
       match%matches = .true.
-      match%text    = string(pmatch(1)%rm_so+1:pmatch(1)%rm_eo)
-      match%begin   = pmatch(1)%rm_so+1
-      match%end     = pmatch(1)%rm_eo+1
 
       if (and(self%cflags,REG_NOSUB) == REG_NOSUB) then
          nGroups = 0
       else
+         match%text    = string(pmatch(1)%rm_so+1:pmatch(1)%rm_eo)
+         match%begin   = pmatch(1)%rm_so+1
+         match%end     = pmatch(1)%rm_eo+1
          nGroups = count(pmatch(2:)%rm_so /= -1)
       endif
       allocate(match%group(nGroups))
@@ -284,15 +289,67 @@ contains
 
 
 
-   !function MatchAllRaw(self, string, flags) result(matches)
-   !   class(ftlRegex)    , intent(in)           :: self
-   !   character(len=*)   , intent(in)           :: string
-   !   integer            , intent(in), optional :: flags(:)
-   !   type(ftlRegexMatch), allocatable          :: matches
+   integer function NumMatchesRaw(self, string) result (numMatches)
+      class(ftlRegex) , intent(in) :: self
+      character(len=*), intent(in) :: string
+
+      type(ftlRegexMatch) :: m
+      integer :: begin
+
+      begin = 1
+      numMatches = 0
+      do while (begin <= len(string))
+         m = self%Match(string(begin:))
+         if (.not.m%matches) exit
+         numMatches = numMatches + 1
+         begin = begin + m%end - 1
+      enddo
+
+   end function
    !
-   !   stop 'TODO'
+   integer function NumMatchesString(self, string) result (numMatches)
+      class(ftlRegex), intent(in) :: self
+      type(ftlString), intent(in) :: string
+
+      numMatches = self%NumMatches(string%raw)
+
+   end function
+
+
+
+
+   function MatchAllRaw(self, string) result(matches)
+      class(ftlRegex)    , intent(in)  :: self
+      character(len=*)   , intent(in)  :: string
+      type(ftlRegexMatch), allocatable :: matches(:)
+
+      integer :: begin, iMatch, iGroup
+
+      allocate(matches(self%numMatches(string)))
+      begin = 1
+      do iMatch = 1, size(matches)
+         matches(iMatch) = self%Match(string(begin:))
+         matches(iMatch)%begin = matches(iMatch)%begin + begin - 1
+         matches(iMatch)%end   = matches(iMatch)%end + begin - 1
+         if (allocated(matches(iMatch)%group)) then
+            do iGroup = 1, size(matches(iMatch)%group)
+               matches(iMatch)%group(iGroup)%begin = matches(iMatch)%group(iGroup)%begin + begin - 1
+               matches(iMatch)%group(iGroup)%end   = matches(iMatch)%group(iGroup)%end + begin - 1
+            enddo
+         endif
+         begin = begin + matches(iMatch)%end - 1
+      enddo
+
+   end function
    !
-   !end function
+   function MatchAllString(self, string) result(matches)
+      class(ftlRegex)    , intent(in)  :: self
+      type(ftlString)    , intent(in)  :: string
+      type(ftlRegexMatch), allocatable :: matches(:)
+
+      matches = self%MatchAll(string%raw)
+
+   end function
 
 
 
@@ -302,10 +359,16 @@ contains
 
       type(ftlRegexMatch) :: m
 
-      ! TODO: more efficient implementation that ignores regex groups ...
-
       m = rhs%match(lhs)
       matches = m%matches
+
+   end function
+   !
+   logical function OpMatchesString(lhs, rhs) result(matches)
+      type(ftlString), intent(in) :: lhs
+      class(ftlRegex), intent(in) :: rhs
+
+      matches = lhs%raw .matches. rhs
 
    end function
 

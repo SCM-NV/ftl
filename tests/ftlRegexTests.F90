@@ -20,6 +20,7 @@
 
 module ftlRegexTestsModule
 
+   use ftlStringModule
    use ftlTestToolsModule
    use ftlRegexModule
 
@@ -36,6 +37,8 @@ contains
 
       call testCompileFlags
       call testCaptureGroups
+      call testNumMatches
+      call testMatchAll
 
    end subroutine
 
@@ -70,7 +73,6 @@ contains
       call r%New('([[:digit:]]+)\.([[:digit:]]+)', nosub=.true.)
       m = r%Match('some value: 12.436')
       ASSERT(m%matches)
-      ASSERT(m%text == '12.436')
       ASSERT(size(m%group) == 0)
 
    end subroutine
@@ -95,6 +97,52 @@ contains
       ASSERT(m%group(2)%text == 'value')
       ASSERT(m%group(2)%begin == 20)
       ASSERT(m%group(2)%end == 25)
+
+   end subroutine
+
+
+   subroutine testNumMatches
+      type(ftlRegex) :: r
+
+      call r%New('a')
+
+      ASSERT(r%NumMatches('aaa') == 3)
+      ASSERT(r%NumMatches('a test sentence containing 3 times the letter a') == 3)
+      ASSERT(r%NumMatches('bbb') == 0)
+
+   end subroutine
+
+
+   subroutine testMatchAll
+      type(ftlString) :: line
+      type(ftlRegex) :: r
+      type(ftlRegexMatch), allocatable :: m(:)
+
+      line = 'keyword option1=value option2=othervalue'
+      call r%New('(\w+)\s*=\s*(\w+)')
+      m = r%MatchAll(line)
+
+      ASSERT(m(1)%text == 'option1=value')
+      ASSERT(m(1)%begin == 9)
+      ASSERT(m(1)%end == 22)
+      ASSERT(size(m(1)%group) == 2)
+      ASSERT(m(1)%group(1)%text == 'option1')
+      ASSERT(m(1)%group(1)%begin == 9)
+      ASSERT(m(1)%group(1)%end == 16)
+      ASSERT(m(1)%group(2)%text == 'value')
+      ASSERT(m(1)%group(2)%begin == 17)
+      ASSERT(m(1)%group(2)%end == 22)
+
+      ASSERT(m(2)%text == 'option2=othervalue')
+      ASSERT(m(2)%begin == 23)
+      ASSERT(m(2)%end == 41)
+      ASSERT(size(m(2)%group) == 2)
+      ASSERT(m(2)%group(1)%text == 'option2')
+      ASSERT(m(2)%group(1)%begin == 23)
+      ASSERT(m(2)%group(1)%end == 30)
+      ASSERT(m(2)%group(2)%text == 'othervalue')
+      ASSERT(m(2)%group(2)%begin == 31)
+      ASSERT(m(2)%group(2)%end == 41)
 
    end subroutine
 
