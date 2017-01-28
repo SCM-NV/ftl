@@ -42,9 +42,12 @@ module ftlRegexModule
    contains
       private
 
+      procedure            :: NewCopyOther
       procedure            :: NewRaw
       procedure            :: NewString
       generic  , public    :: New => NewRaw, NewString
+      procedure            :: Compile
+      procedure            :: PrintError
 
       procedure, public    :: Delete
 #ifndef FTL_NO_FINALIZERS
@@ -65,7 +68,12 @@ module ftlRegexModule
       procedure, pass(rhs) :: OpMatchesString
       generic  , public    :: operator(.matches.) => OpMatchesRaw, OpMatchesString
 
-      procedure            :: PrintError
+      generic  , public    :: assignment(=) => NewCopyOther
+
+      procedure            :: OpEqualOther
+      generic  , public    :: operator(==) => OpEqualOther
+      procedure            :: OpUnequalOther
+      generic  , public    :: operator(/=) => OpUnequalOther
 
    end type
 
@@ -155,12 +163,25 @@ contains
 
 
 
+   subroutine NewCopyOther(self, other)
+      class(ftlRegex), intent(inout) :: self
+       type(ftlRegex), intent(in)    :: other
+
+      call self%Delete()
+
+      if (.not.allocated(other%pattern)) return
+
+      self%pattern = other%pattern
+      self%cflags = other%cflags
+
+      call self%Compile()
+
+   end subroutine
+   !
    subroutine NewRaw(self, pattern, basic, icase, nosub, newline)
       class(ftlRegex) , intent(inout)           :: self
       character(len=*), intent(in)              :: pattern
       logical         , intent(in)   , optional :: basic, icase, nosub, newline
-
-      integer(C_int) :: status
 
       call self%Delete()
 
@@ -188,10 +209,7 @@ contains
          if (newline) self%cflags = ior(self%cflags, REG_NEWLINE)
       endif
 
-      allocate(self%regdata(sizeof_C_regex_t))
-      self%preg = c_loc(self%regdata(1))
-      status = C_regcomp(self%preg, self%pattern, self%cflags)
-      if (status /= 0) call self%PrintError(status)
+      call self%Compile()
 
    end subroutine
    !
@@ -201,6 +219,33 @@ contains
       logical        , intent(in)   , optional :: basic, icase, nosub, newline
 
       call self%NewRaw(pattern%raw, basic, icase, nosub, newline)
+
+   end subroutine
+
+
+
+   subroutine Compile(self)
+      class(ftlRegex), intent(inout) :: self
+
+      integer :: status
+
+      allocate(self%regdata(sizeof_C_regex_t))
+      self%preg = c_loc(self%regdata(1))
+      status = C_regcomp(self%preg, self%pattern, self%cflags)
+      if (status /= 0) call self%PrintError(status)
+
+   end subroutine
+   !
+   subroutine PrintError(self, status)
+      use, intrinsic :: iso_fortran_env, only: error_unit
+      class(ftlRegex), intent(in) :: self
+      integer(C_int) , intent(in) :: status
+
+      character(len=1024,kind=C_char) :: errbuf
+      integer(C_size_t) :: errlen
+
+      errlen = C_regerror(status, self%preg, errbuf, int(len(errbuf), C_size_t))
+      write (error_unit,'(2A)') 'ftlRegex ERROR: ', errbuf(:errlen-1)
 
    end subroutine
 
@@ -374,18 +419,22 @@ contains
 
 
 
-   subroutine PrintError(self, status)
-      use, intrinsic :: iso_fortran_env, only: error_unit
+   logical function OpEqualOther(self, other) result(equal)
       class(ftlRegex), intent(in) :: self
-      integer(C_int) , intent(in) :: status
+       type(ftlRegex), intent(in) :: other
 
-      character(len=1024,kind=C_char) :: errbuf
-      integer(C_size_t) :: errlen
+      equal = (self%pattern == other%pattern) .and. (self%cflags == other%cflags)
 
-      errlen = C_regerror(status, self%preg, errbuf, int(len(errbuf), C_size_t))
-      write (error_unit,'(2A)') 'ftlRegex ERROR: ', errbuf(:errlen-1)
+   end function
+   !
+   logical function OpUnequalOther(self, other) result(unequal)
+      class(ftlRegex), intent(in) :: self
+       type(ftlRegex), intent(in) :: other
 
-   end subroutine
+      unequal = .not.(self == other)
+
+   end function
+
 
 
 end module

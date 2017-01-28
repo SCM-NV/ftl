@@ -36,6 +36,7 @@ contains
       write (*,'(A)') 'Running ftlRegex tests ...'
 
       call testCompileFlags
+      call testComparison
       call testCaptureGroups
       call testNumMatches
       call testMatchAll
@@ -74,6 +75,33 @@ contains
       m = r%Match('some value: 12.436')
       ASSERT(m%matches)
       ASSERT(size(m%group) == 0)
+
+   end subroutine
+
+
+   subroutine testComparison
+      type(ftlRegex) :: r1, r2
+
+      call r1%New('pattern')
+      call r2%New('pattern')
+
+      ASSERT(r1 == r2)
+      ASSERT(.not.(r1 /= r2))
+
+      call r2%New('other')
+
+      ASSERT(r1 /= r2)
+      ASSERT(.not.(r1 == r2))
+
+      call r2%New('pattern', icase=.true.)
+
+      ASSERT(r1 /= r2)
+      ASSERT(.not.(r1 == r2))
+
+      r2 = r1
+
+      ASSERT(r1 == r2)
+      ASSERT(.not.(r1 /= r2))
 
    end subroutine
 
