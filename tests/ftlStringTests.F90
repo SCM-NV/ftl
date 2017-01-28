@@ -107,6 +107,8 @@ contains
    subroutine testAssignOther
       type(ftlString) :: s1, s2
 
+      s1 = s2 ! assignment of uninitialized strings (should not cause a debug build to freak out)
+
       s1 = 'testme'
       s2 = s1
 

@@ -354,7 +354,11 @@ contains
 
       ! Constructs a copy of other.
 
-      self%raw = other%raw
+      if (allocated(other%raw)) then
+         self%raw = other%raw
+      else
+         if (allocated(self%raw)) deallocate(self%raw)
+      endif
 
    end subroutine
    !
