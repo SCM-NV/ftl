@@ -799,12 +799,15 @@ contains
    subroutine ftlIterSwapPrivate(it1, it2)
       type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: it1, it2
 
+#ifdef FTL_TEMPLATE_TYPE_PROVIDES_FTLSWAP
+      call ftlSwap(it1%value, it2%value)
+#else
       FTL_TEMPLATE_TYPE_WRAP :: tmp
 
       tmp = it1%value
       it1%value = it2%value
       it2%value = tmp
-
+#endif
    end subroutine
 
 

@@ -42,6 +42,7 @@ contains
       call testIteratorWriting
 
       call testHash
+      call testSwap
 
       call testStringFromNumeric
       call testStringToNumeric
@@ -159,6 +160,25 @@ contains
       ASSERT(ftlHash(ftlString('and another')) == ftlHash('and another'))
       ASSERT(ftlHash(ftlString('number 4')) == ftlHash('number 4'))
       ASSERT(ftlHash(ftlString('the last')) == ftlHash('the last'))
+
+   end subroutine
+
+
+   subroutine testSwap
+      type(ftlString) :: s1, s2, uninit
+
+      s1 = 'one string'
+      s2 = 'other string'
+
+      call ftlSwap(s1, s2)
+
+      ASSERT(s1 == 'other string')
+      ASSERT(s2 == 'one string')
+
+      call ftlSwap(s1, uninit)
+
+      ASSERT(s1 == '')
+      ASSERT(uninit == 'other string')
 
    end subroutine
 

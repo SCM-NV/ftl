@@ -68,6 +68,8 @@ contains
 
       call testClear
 
+      call testSwap
+
       ! Tests of its iterators:
 
       call testNewItDefault
@@ -475,6 +477,34 @@ contains
 
       ASSERT(v%Empty())
       ASSERT(v%Size() == 0)
+
+   end subroutine
+
+
+   subroutine testSwap
+      type(ftlDynArrayInt) :: v, u, uninit
+
+      v = [42,34,67,8,3,5]
+      u = [3,4,41,2]
+
+      call ftlSwap(v,u)
+
+      ASSERT(all(v%data == [3,4,41,2]))
+      ASSERT(size(v) == 4)
+      ASSERT(v%front == 3)
+      ASSERT(v%back == 2)
+      ASSERT(all(u%data == [42,34,67,8,3,5]))
+      ASSERT(size(u) == 6)
+      ASSERT(u%front == 42)
+      ASSERT(u%back == 5)
+
+      call ftlSwap(v, uninit)
+
+      ASSERT(v%Empty())
+      ASSERT(all(uninit%data == [3,4,41,2]))
+      ASSERT(size(uninit) == 4)
+      ASSERT(uninit%front == 3)
+      ASSERT(uninit%back == 2)
 
    end subroutine
 

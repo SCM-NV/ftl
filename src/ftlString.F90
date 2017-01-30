@@ -267,6 +267,11 @@ module ftlStringModule
       module procedure ftlHashString
    end interface
 
+   public :: ftlSwap
+   interface ftlSwap
+      module procedure ftlSwapString
+   end interface
+
 
 ! ====== Type of an iterator over a ftlString container ==========================================================================
 
@@ -1447,6 +1452,18 @@ contains
 
    end function
 
+
+
+   subroutine ftlSwapString(str1, str2)
+      type(ftlString), intent(inout) :: str1, str2
+
+      character(len=:), allocatable  :: tmp
+
+      call move_alloc(str1%raw, tmp)
+      call move_alloc(str2%raw, str1%raw)
+      call move_alloc(tmp, str2%raw)
+
+   end subroutine
 
 
 

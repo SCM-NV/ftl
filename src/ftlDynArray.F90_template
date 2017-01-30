@@ -130,6 +130,14 @@ module CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Module)
    end interface
 
 
+   ! FTL methods:
+
+   public :: ftlSwap
+   interface ftlSwap
+      module procedure ftlSwapDynArray
+   end interface
+
+
 ! ====== Type of an iterator over a ftlDynArray container ==========================================================================
 
    type, public :: CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)
@@ -600,6 +608,31 @@ contains
       class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
 
       call self%changeCapacity(max(2 * self%Capacity(), 1))
+
+   end subroutine
+
+
+
+   ! =============> FTL methods:
+
+
+
+   subroutine ftlSwapDynArray(dArr1, dArr2)
+      type(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: dArr1, dArr2
+
+      FTL_TEMPLATE_TYPE_WRAP, allocatable :: tmpstorage(:)
+      integer :: tmppsize
+
+      call move_alloc(dArr1%storage, tmpstorage)
+      call move_alloc(dArr2%storage, dArr1%storage)
+      call move_alloc(tmpstorage, dArr2%storage)
+
+      tmppsize = dArr1%psize
+      dArr1%psize = dArr2%psize
+      dArr2%psize = tmppsize
+
+      call dArr1%FixValuePtrs()
+      call dArr2%FixValuePtrs()
 
    end subroutine
 
