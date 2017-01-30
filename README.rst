@@ -125,6 +125,11 @@ ftlString
    single characters. However, since the std::string interface is in practice a
    bit basic, it also offers Python's string manipulation methods.
 
+ftlRegex
+   A convenient Fortran wrapper around the POSIX regular expression
+   functionality in the C standard library (aka ``regex.h``). It's nicely
+   integrated with the ftlString type. ftlRegex is not a template.
+
 ftlAlgorithms
    A library of generic algorithms that work on all FTL containers. *Exactly* the
    same as C++'s std::algorithm header.
@@ -164,9 +169,6 @@ Definitely on the TODO list are:
   is essentially a hash table without a value associated with the keys.
 
 These things might be nice:
-
-+ A regular expression library. Probably best to just make a Fortran interface
-  to the C regex library ...
 
 + Random number generators and distributions like in std::random.
 
