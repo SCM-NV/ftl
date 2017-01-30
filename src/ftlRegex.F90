@@ -52,15 +52,20 @@ module ftlRegexModule
       procedure, public    :: Delete
       final                :: Finalizer
 
-      procedure            :: MatchRaw
-      procedure            :: MatchString
-      generic  , public    :: Match => MatchRaw, MatchString
       procedure            :: NumMatchesRaw
       procedure            :: NumMatchesString
       generic  , public    :: NumMatches => NumMatchesRaw, NumMatchesString
-      procedure            :: MatchAllRaw
-      procedure            :: MatchAllString
-      generic  , public    :: MatchAll => MatchAllRaw, MatchAllString
+      procedure            :: MatchFirstRaw
+      procedure            :: MatchFirstString
+      generic  , public    :: MatchFirst => MatchFirstRaw, MatchFirstString
+      procedure            :: MatchRaw
+      procedure            :: MatchString
+      generic  , public    :: Match => MatchRaw, MatchString
+      procedure            :: ReplaceRawWithRaw
+      procedure            :: ReplaceStringWithRaw
+      procedure            :: ReplaceRawWithString
+      procedure            :: ReplaceStringWithString
+      generic  , public    :: Replace => ReplaceRawWithRaw, ReplaceStringWithRaw, ReplaceRawWithString, ReplaceStringWithString
 
       procedure, pass(rhs) :: OpMatchesRaw
       procedure, pass(rhs) :: OpMatchesString
@@ -284,7 +289,35 @@ contains
 
 
 
-   type(ftlRegexMatch) function MatchRaw(self, string) result(match)
+   integer function NumMatchesRaw(self, string) result (numMatches)
+      class(ftlRegex) , intent(in) :: self
+      character(len=*), intent(in) :: string
+
+      type(ftlRegexMatch) :: m
+      integer :: begin
+
+      begin = 1
+      numMatches = 0
+      do while (begin <= len(string))
+         m = self%MatchFirst(string(begin:))
+         if (.not.m%matches) exit
+         numMatches = numMatches + 1
+         begin = begin + m%end - 1
+      enddo
+
+   end function
+   !
+   integer function NumMatchesString(self, string) result (numMatches)
+      class(ftlRegex), intent(in) :: self
+      type(ftlString), intent(in) :: string
+
+      numMatches = self%NumMatches(string%raw)
+
+   end function
+
+
+
+   type(ftlRegexMatch) function MatchFirstRaw(self, string) result(match)
       class(ftlRegex) , intent(in) :: self
       character(len=*), intent(in) :: string
 
@@ -320,56 +353,27 @@ contains
 
    end function
    !
-   type(ftlRegexMatch) function MatchString(self, string) result(match)
+   type(ftlRegexMatch) function MatchFirstString(self, string) result(match)
       class(ftlRegex), intent(in) :: self
       type(ftlString), intent(in) :: string
 
-      match = self%MatchRaw(string%raw)
+      match = self%MatchFirstRaw(string%raw)
 
    end function
 
 
 
-   integer function NumMatchesRaw(self, string) result (numMatches)
-      class(ftlRegex) , intent(in) :: self
-      character(len=*), intent(in) :: string
-
-      type(ftlRegexMatch) :: m
-      integer :: begin
-
-      begin = 1
-      numMatches = 0
-      do while (begin <= len(string))
-         m = self%Match(string(begin:))
-         if (.not.m%matches) exit
-         numMatches = numMatches + 1
-         begin = begin + m%end - 1
-      enddo
-
-   end function
-   !
-   integer function NumMatchesString(self, string) result (numMatches)
-      class(ftlRegex), intent(in) :: self
-      type(ftlString), intent(in) :: string
-
-      numMatches = self%NumMatches(string%raw)
-
-   end function
-
-
-
-
-   function MatchAllRaw(self, string) result(matches)
+   function MatchRaw(self, string) result(matches)
       class(ftlRegex)    , intent(in)  :: self
       character(len=*)   , intent(in)  :: string
       type(ftlRegexMatch), allocatable :: matches(:)
 
       integer :: begin, iMatch, iGroup
 
-      allocate(matches(self%numMatches(string)))
+      allocate(matches(self%NumMatches(string)))
       begin = 1
       do iMatch = 1, size(matches)
-         matches(iMatch) = self%Match(string(begin:))
+         matches(iMatch) = self%MatchFirst(string(begin:))
          matches(iMatch)%begin = matches(iMatch)%begin + begin - 1
          matches(iMatch)%end   = matches(iMatch)%end + begin - 1
          if (allocated(matches(iMatch)%group)) then
@@ -378,17 +382,74 @@ contains
                matches(iMatch)%group(iGroup)%end   = matches(iMatch)%group(iGroup)%end + begin - 1
             enddo
          endif
-         begin = begin + matches(iMatch)%end - 1
+         begin = matches(iMatch)%end
       enddo
 
    end function
    !
-   function MatchAllString(self, string) result(matches)
+   function MatchString(self, string) result(matches)
       class(ftlRegex)    , intent(in)  :: self
       type(ftlString)    , intent(in)  :: string
       type(ftlRegexMatch), allocatable :: matches(:)
 
-      matches = self%MatchAll(string%raw)
+      matches = self%MatchRaw(string%raw)
+
+   end function
+
+
+
+   type(ftlString) function ReplaceRawWithRaw(self, string, sub) result(replaced)
+      class(ftlRegex) , intent(in) :: self
+      character(len=*), intent(in) :: string
+      character(len=*), intent(in) :: sub
+
+      type(ftlRegexMatch), allocatable :: matches(:)
+      integer :: iMatch, begin, end
+
+      matches = self%MatchRaw(string)
+      if (size(matches) == 0) then
+         replaced%raw = string
+         return
+      endif
+
+      replaced%raw = ''
+      do iMatch = 1, size(matches)
+         if (iMatch == 1) then
+            begin = 1
+         else
+            begin = matches(iMatch-1)%end
+         endif
+         end = matches(iMatch)%begin
+         replaced%raw = replaced%raw // string(begin:end-1) // sub
+      enddo
+      replaced%raw = replaced%raw // string(matches(size(matches))%end:)
+
+   end function
+   !
+   type(ftlString) function ReplaceStringWithRaw(self, string, sub) result(replaced)
+      class(ftlRegex) , intent(in) :: self
+      type(ftlString) , intent(in) :: string
+      character(len=*), intent(in) :: sub
+
+      replaced = self%ReplaceRawWithRaw(string%raw, sub)
+
+   end function
+   !
+   type(ftlString) function ReplaceRawWithString(self, string, sub) result(replaced)
+      class(ftlRegex) , intent(in) :: self
+      character(len=*), intent(in) :: string
+      type(ftlString) , intent(in) :: sub
+
+       replaced = self%ReplaceRawWithRaw(string, sub%raw)
+
+   end function
+   !
+   type(ftlString) function ReplaceStringWithString(self, string, sub) result(replaced)
+      class(ftlRegex), intent(in) :: self
+      type(ftlString), intent(in) :: string
+      type(ftlString), intent(in) :: sub
+
+      replaced = self%ReplaceRawWithRaw(string%raw, sub%raw)
 
    end function
 
@@ -400,7 +461,7 @@ contains
 
       type(ftlRegexMatch) :: m
 
-      m = rhs%match(lhs)
+      m = rhs%MatchFirst(lhs)
       matches = m%matches
 
    end function

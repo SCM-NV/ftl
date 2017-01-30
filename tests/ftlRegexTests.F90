@@ -39,7 +39,8 @@ contains
       call testComparison
       call testCaptureGroups
       call testNumMatches
-      call testMatchAll
+      call testMatch
+      call testReplace
 
    end subroutine
 
@@ -64,7 +65,7 @@ contains
       ASSERT('blub atest' .matches. r)
 
       call r%New('([[:digit:]]+)\.([[:digit:]]+)')
-      m = r%Match('some value: 12.436')
+      m = r%MatchFirst('some value: 12.436')
       ASSERT(m%matches)
       ASSERT(m%text == '12.436')
       ASSERT(size(m%group) == 2)
@@ -72,7 +73,7 @@ contains
       ASSERT(m%group(2)%text == '436')
 
       call r%New('([[:digit:]]+)\.([[:digit:]]+)', nosub=.true.)
-      m = r%Match('some value: 12.436')
+      m = r%MatchFirst('some value: 12.436')
       ASSERT(m%matches)
       ASSERT(size(m%group) == 0)
 
@@ -114,7 +115,7 @@ contains
 
       ASSERT('something = other' .matches. r)
 
-      m = r%Match('occupations option=value')
+      m = r%MatchFirst('occupations option=value')
       ASSERT(m%text == 'option=value')
       ASSERT(m%begin == 13)
       ASSERT(m%end == 25)
@@ -141,14 +142,14 @@ contains
    end subroutine
 
 
-   subroutine testMatchAll
+   subroutine testMatch
       type(ftlString) :: line
       type(ftlRegex) :: r
       type(ftlRegexMatch), allocatable :: m(:)
 
       line = 'keyword option1=value option2=othervalue'
       call r%New('(\w+)\s*=\s*(\w+)')
-      m = r%MatchAll(line)
+      m = r%Match(line)
 
       ASSERT(m(1)%text == 'option1=value')
       ASSERT(m(1)%begin == 9)
@@ -171,6 +172,25 @@ contains
       ASSERT(m(2)%group(2)%text == 'othervalue')
       ASSERT(m(2)%group(2)%begin == 31)
       ASSERT(m(2)%group(2)%end == 41)
+
+   end subroutine
+
+
+   subroutine testReplace
+      type(ftlString) :: line
+      type(ftlRegex) :: r
+
+      call r%New('\s*=\s*')
+
+      line = 'keyword option1  = value option2 =othervalue'
+      ASSERT(r%Replace(line, '=') == 'keyword option1=value option2=othervalue')
+      ASSERT(r%Replace(line, '') == 'keyword option1value option2othervalue')
+
+      line = 'c   = = holla  = '
+      ASSERT(r%Replace(line, '') == 'cholla')
+
+      line = '   = = = '
+      ASSERT(r%Replace(line, '') == '')
 
    end subroutine
 
