@@ -41,6 +41,7 @@ contains
       call testNumMatches
       call testMatch
       call testReplace
+      call testReplaceGroupSub
 
    end subroutine
 
@@ -191,6 +192,21 @@ contains
 
       line = '   = = = '
       ASSERT(r%Replace(line, '') == '')
+
+   end subroutine
+
+
+   subroutine testReplaceGroupSub
+      type(ftlString) :: line
+      type(ftlRegex) :: r
+
+      call r%New('(\w+)\s*=\s*(\w+)')
+      line = 'Element: mass=12 Z=6 symbol=C name=Carbon'
+
+      ASSERT(r%Replace(line, '\2->\1', doGroupSub=.true.) == 'Element: 12->mass 6->Z C->symbol Carbon->name')
+      ASSERT(r%Replace(line, '\2', doGroupSub=.true.) == 'Element: 12 6 C Carbon')
+      ASSERT(r%Replace(line, 'XXX', doGroupSub=.true.) == 'Element: XXX XXX XXX XXX')
+      ASSERT(r%Replace(line, '\2->\1\1', doGroupSub=.true.) == 'Element: 12->massmass 6->ZZ C->symbolsymbol Carbon->namename')
 
    end subroutine
 

@@ -398,19 +398,29 @@ contains
 
 
 
-   type(ftlString) function ReplaceRawWithRaw(self, string, sub) result(replaced)
-      class(ftlRegex) , intent(in) :: self
-      character(len=*), intent(in) :: string
-      character(len=*), intent(in) :: sub
+   type(ftlString) function ReplaceRawWithRaw(self, string, sub, doGroupSub) result(replaced)
+      class(ftlRegex) , intent(in)           :: self
+      character(len=*), intent(in)           :: string
+      character(len=*), intent(in)           :: sub
+      logical         , intent(in), optional :: doGroupSub
 
       type(ftlRegexMatch), allocatable :: matches(:)
-      integer :: iMatch, begin, end
+      integer :: iMatch, iGroup, begin, end
+      type(ftlString) :: thisMatchSub
+      logical :: doGroupSub_
+
+      doGroupSub_ = .false.
+      if (present(doGroupSub)) then
+         doGroupSub_ = doGroupSub
+      endif
 
       matches = self%MatchRaw(string)
       if (size(matches) == 0) then
          replaced%raw = string
          return
       endif
+
+      ! TODO: avoid slowly growing the string (for performance reasons ...)
 
       replaced%raw = ''
       do iMatch = 1, size(matches)
@@ -420,36 +430,47 @@ contains
             begin = matches(iMatch-1)%end
          endif
          end = matches(iMatch)%begin
-         replaced%raw = replaced%raw // string(begin:end-1) // sub
+         if (doGroupSub_) then
+            thisMatchSub = sub
+            do iGroup = 1, size(matches(iMatch)%group)
+               thisMatchSub = thisMatchSub%Replace('\'//ftlString(iGroup), matches(iMatch)%group(iGroup)%text%raw)
+            enddo
+            replaced%raw = replaced%raw // string(begin:end-1) // thisMatchSub%raw
+         else
+            replaced%raw = replaced%raw // string(begin:end-1) // sub
+         endif
       enddo
       replaced%raw = replaced%raw // string(matches(size(matches))%end:)
 
    end function
    !
-   type(ftlString) function ReplaceStringWithRaw(self, string, sub) result(replaced)
-      class(ftlRegex) , intent(in) :: self
-      type(ftlString) , intent(in) :: string
-      character(len=*), intent(in) :: sub
+   type(ftlString) function ReplaceStringWithRaw(self, string, sub, doGroupSub) result(replaced)
+      class(ftlRegex) , intent(in)           :: self
+      type(ftlString) , intent(in)           :: string
+      character(len=*), intent(in)           :: sub
+      logical         , intent(in), optional :: doGroupSub
 
-      replaced = self%ReplaceRawWithRaw(string%raw, sub)
-
-   end function
-   !
-   type(ftlString) function ReplaceRawWithString(self, string, sub) result(replaced)
-      class(ftlRegex) , intent(in) :: self
-      character(len=*), intent(in) :: string
-      type(ftlString) , intent(in) :: sub
-
-       replaced = self%ReplaceRawWithRaw(string, sub%raw)
+      replaced = self%ReplaceRawWithRaw(string%raw, sub, doGroupSub)
 
    end function
    !
-   type(ftlString) function ReplaceStringWithString(self, string, sub) result(replaced)
-      class(ftlRegex), intent(in) :: self
-      type(ftlString), intent(in) :: string
-      type(ftlString), intent(in) :: sub
+   type(ftlString) function ReplaceRawWithString(self, string, sub, doGroupSub) result(replaced)
+      class(ftlRegex) , intent(in)           :: self
+      character(len=*), intent(in)           :: string
+      type(ftlString) , intent(in)           :: sub
+      logical         , intent(in), optional :: doGroupSub
 
-      replaced = self%ReplaceRawWithRaw(string%raw, sub%raw)
+      replaced = self%ReplaceRawWithRaw(string, sub%raw, doGroupSub)
+
+   end function
+   !
+   type(ftlString) function ReplaceStringWithString(self, string, sub, doGroupSub) result(replaced)
+      class(ftlRegex), intent(in)           :: self
+      type(ftlString), intent(in)           :: string
+      type(ftlString), intent(in)           :: sub
+      logical        , intent(in), optional :: doGroupSub
+
+      replaced = self%ReplaceRawWithRaw(string%raw, sub%raw, doGroupSub)
 
    end function
 
