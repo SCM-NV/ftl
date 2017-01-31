@@ -25,6 +25,8 @@
 ! that operate on strings. These are mostly taken from the Python string, which provides a more convenient interface than
 ! C++'s std::string.
 
+! TODO: consistent behaviour for uninitialized ftlStrings (should behave like '')
+
 #define FTL_CONTAINER ftlString
 #define FTL_CONTAINER_PROVIDES_RANDOM_ACCESS_ITERATOR
 
@@ -539,7 +541,15 @@ contains
       class(ftlString), intent(in) :: lhs
        type(ftlString), intent(in) :: rhs
 
-      equal = (lhs%raw == rhs%raw)
+      if (allocated(lhs%raw) .and. allocated(rhs%raw)) then
+         equal = (lhs%raw == rhs%raw)
+      else if (allocated(lhs%raw)) then
+         equal = (lhs%raw == '')
+      else if (allocated(rhs%raw)) then
+         equal = (rhs%raw == '')
+      else
+         equal = .true.
+      endif
 
    end function
    !
@@ -547,7 +557,11 @@ contains
       class(ftlString), intent(in) :: lhs
       character(len=*), intent(in) :: rhs
 
-      equal = (lhs%raw == rhs)
+      if (allocated(lhs%raw)) then
+         equal = (lhs%raw == rhs)
+      else
+         equal = (rhs == '')
+      endif
 
    end function
    !
@@ -555,7 +569,11 @@ contains
       character(len=*), intent(in) :: lhs
       class(ftlString), intent(in) :: rhs
 
-      equal = (lhs == rhs%raw)
+      if (allocated(rhs%raw)) then
+         equal = (lhs == rhs%raw)
+      else
+         equal = (lhs == '')
+      endif
 
    end function
 
@@ -567,7 +585,7 @@ contains
       class(ftlString), intent(in) :: lhs
        type(ftlString), intent(in) :: rhs
 
-      unequal = (lhs%raw /= rhs%raw)
+      unequal = .not.(lhs == rhs)
 
    end function
    !
@@ -575,7 +593,7 @@ contains
       class(ftlString), intent(in) :: lhs
       character(len=*), intent(in) :: rhs
 
-      unequal = (lhs%raw /= rhs)
+      unequal = .not.(lhs == rhs)
 
    end function
    !
@@ -583,7 +601,7 @@ contains
       character(len=*), intent(in) :: lhs
       class(ftlString), intent(in) :: rhs
 
-      unequal = (lhs /= rhs%raw)
+      unequal = .not.(lhs == rhs)
 
    end function
 
