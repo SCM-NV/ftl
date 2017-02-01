@@ -24,6 +24,9 @@ PLATFORM ?= gnu
 BUILD ?= debug
 BUILDDIR = build.$(PLATFORM).$(BUILD)
 
+INCLUDES = -Isrc -Itests
+DEFINES =
+
 ifeq ($(PLATFORM), gnu)
 	COMPILER = gfortran
 	FLAGS = -std=f2003 -fall-intrinsics -ffree-line-length-none -Wall -Wextra -Wpedantic -Wno-target-lifetime -Wno-surprising -Wno-compare-reals -J$(BUILDDIR)
@@ -38,8 +41,11 @@ else
   $(error unrecognized PLATFORM)
 endif
 
-#LDFLAGS = -lpcreposix -lpcre
-INCLUDES = -Isrc -Itests
+USE_PCRE ?= true
+ifeq ($(USE_PCRE), true)
+	DEFINES += -DUSE_PCRE
+	LDFLAGS = -lpcreposix -lpcre
+endif
 
 ifeq ($(PLATFORM)$(BUILD), gnudebug)
 	FLAGS += -g -O0 -fcheck=bounds,do,mem,pointer,recursion
@@ -75,106 +81,111 @@ clean:
 	rm -rf $(BUILDDIR)
 
 cleanall:
-	rm -rf build.*
+	rm -rf build.* src/configure_ftlRegex.inc
 
 
 # Unit tests:
 
 $(BUILDDIR)/tests: tests/tests.F90 $(BUILDDIR)/ftlTestTools.o $(BUILDDIR)/ftlDynArrayTests.o $(BUILDDIR)/ftlListTests.o $(BUILDDIR)/ftlHashMapTests.o $(BUILDDIR)/ftlAlgorithmsTests.o $(BUILDDIR)/ftlMemoryTests.o $(BUILDDIR)/ftlStringTests.o $(BUILDDIR)/ftlRegexTests.o | $(BUILDDIR)
-	$(COMPILER) $(FLAGS) $(INCLUDES) $< $(BUILDDIR)/*.o $(LDFLAGS) -o $@
+	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) $< $(BUILDDIR)/*.o $(LDFLAGS) -o $@
 
 $(BUILDDIR)/ftlTestTools.o: tests/ftlTestTools.F90 tests/ftlTestTools.inc | $(BUILDDIR)
-	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
+	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
 $(BUILDDIR)/ftlDynArrayTests.o: tests/ftlDynArrayTests.F90 $(BUILDDIR)/ftlDynArrayInt.o $(BUILDDIR)/ftlDynArrayPoint2D.o | $(BUILDDIR)
-	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
+	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
 $(BUILDDIR)/ftlListTests.o: tests/ftlListTests.F90 $(BUILDDIR)/ftlListInt.o | $(BUILDDIR)
-	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
+	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
 $(BUILDDIR)/ftlHashMapTests.o: tests/ftlHashMapTests.F90 $(BUILDDIR)/ftlHashMapStrInt.o $(BUILDDIR)/ftlHashMapStringInt.o | $(BUILDDIR)
-	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
+	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
 $(BUILDDIR)/ftlAlgorithmsTests.o: tests/ftlAlgorithmsTests.F90 $(BUILDDIR)/ftlDynArrayIntAlgorithms.o $(BUILDDIR)/ftlDynArrayPoint2DAlgorithms.o $(BUILDDIR)/ftlListIntAlgorithms.o $(BUILDDIR)/ftlStringAlgorithms.o | $(BUILDDIR)
-	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
+	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
 $(BUILDDIR)/ftlMemoryTests.o: tests/ftlMemoryTests.F90 $(BUILDDIR)/ftlMemoryInt.o | $(BUILDDIR)
-	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
+	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
 $(BUILDDIR)/ftlStringTests.o: tests/ftlStringTests.F90 $(BUILDDIR)/ftlString.o $(BUILDDIR)/ftlDynArrayString.o | $(BUILDDIR)
-	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
+	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
 $(BUILDDIR)/ftlRegexTests.o: tests/ftlRegexTests.F90 $(BUILDDIR)/ftlRegex.o | $(BUILDDIR)
-	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
+	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
 
 # Individual performance tests:
 
 $(BUILDDIR)/perftest_sortDynArrayInt: perftests/sortDynArrayInt.F90 $(BUILDDIR)/ftlTestTools.o $(BUILDDIR)/ftlDynArrayIntAlgorithms.o | $(BUILDDIR)
-	$(COMPILER) $(FLAGS) $(INCLUDES) $< $(BUILDDIR)/*.o $(LDFLAGS) -o $@
+	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) $< $(BUILDDIR)/*.o $(LDFLAGS) -o $@
 
 $(BUILDDIR)/perftest_sortDynArrayInt_ref: perftests/sortDynArrayInt.cpp | $(BUILDDIR)
-	$(CXXCOMPILER) $(CXXFLAGS) $< -o $@
+	$(CXXCOMPILER) $(CXXFLAGS) $(DEFINES) $< -o $@
 
 $(BUILDDIR)/perftest_countDistinctWords: perftests/countDistinctWords.F90 $(BUILDDIR)/ftlString.o $(BUILDDIR)/ftlHashMapStringInt.o | $(BUILDDIR)
-	$(COMPILER) $(FLAGS) $(INCLUDES) $< $(BUILDDIR)/*.o $(LDFLAGS) -o $@
+	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) $< $(BUILDDIR)/*.o $(LDFLAGS) -o $@
 
 
 # Container instantiations:
 
 $(BUILDDIR)/ftlDynArrayInt.o: instantiations/ftlDynArrayInt.F90 src/ftlDynArray.F90_template | $(BUILDDIR)
-	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
+	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
 $(BUILDDIR)/ftlDynArrayPoint2D.o: instantiations/ftlDynArrayPoint2D.F90 src/ftlDynArray.F90_template $(BUILDDIR)/Point2D.o | $(BUILDDIR)
-	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
+	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
 $(BUILDDIR)/ftlDynArrayString.o: src/instantiations/ftlDynArrayString.F90 src/ftlDynArray.F90_template $(BUILDDIR)/ftlString.o | $(BUILDDIR)
-	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
+	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
 $(BUILDDIR)/ftlListInt.o: instantiations/ftlListInt.F90 src/ftlList.F90_template | $(BUILDDIR)
-	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
+	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
 $(BUILDDIR)/ftlHashMapStrInt.o: instantiations/ftlHashMapStrInt.F90 src/ftlHashMap.F90_template $(BUILDDIR)/ftlHash.o | $(BUILDDIR)
-	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
+	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
 $(BUILDDIR)/ftlHashMapStringInt.o: instantiations/ftlHashMapStringInt.F90 src/ftlHashMap.F90_template $(BUILDDIR)/ftlHash.o $(BUILDDIR)/ftlString.o | $(BUILDDIR)
-	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
+	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
 
 # ftlAlgorithms instantiations:
 
 $(BUILDDIR)/ftlDynArrayIntAlgorithms.o: instantiations/ftlDynArrayIntAlgorithms.F90 src/ftlAlgorithms.F90_template $(BUILDDIR)/ftlDynArrayInt.o | $(BUILDDIR)
-	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
+	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
 $(BUILDDIR)/ftlDynArrayPoint2DAlgorithms.o: instantiations/ftlDynArrayPoint2DAlgorithms.F90 src/ftlAlgorithms.F90_template $(BUILDDIR)/ftlDynArrayPoint2D.o | $(BUILDDIR)
-	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
+	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
 $(BUILDDIR)/ftlListIntAlgorithms.o: instantiations/ftlListIntAlgorithms.F90 src/ftlAlgorithms.F90_template $(BUILDDIR)/ftlListInt.o | $(BUILDDIR)
-	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
+	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
 $(BUILDDIR)/ftlStringAlgorithms.o: src/instantiations/ftlStringAlgorithms.F90 src/ftlAlgorithms.F90_template $(BUILDDIR)/ftlString.o | $(BUILDDIR)
-	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
+	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
 
 # ftlMemory instantiations:
 
 $(BUILDDIR)/ftlMemoryInt.o: instantiations/ftlMemoryInt.F90 src/ftlMemory.F90_template | $(BUILDDIR)
-	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
+	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
 
 # Non-template FTL modules:
 
 $(BUILDDIR)/ftlHash.o: src/ftlHash.F90 | $(BUILDDIR)
-	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
+	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
 $(BUILDDIR)/ftlString.o: src/ftlString.F90 $(BUILDDIR)/ftlHash.o | $(BUILDDIR)
-	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
+	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
-$(BUILDDIR)/ftlRegex.o: src/ftlRegex.F90 $(BUILDDIR)/ftlString.o | $(BUILDDIR)
-	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
+$(BUILDDIR)/ftlRegex.o: src/ftlRegex.F90 src/configure_ftlRegex.inc $(BUILDDIR)/ftlString.o | $(BUILDDIR)
+	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
+
+src/configure_ftlRegex.inc: configure/configure_ftlRegex.c
+	$(CXXCOMPILER) $(DEFINES) configure/configure_ftlRegex.c -o configure/configure_ftlRegex
+	./configure/configure_ftlRegex | tee src/configure_ftlRegex.inc
+	rm configure/configure_ftlRegex
 
 
 # Example derived types:
 
 $(BUILDDIR)/Point2D.o: instantiations/derived_types/Point2D.F90 | $(BUILDDIR)
-	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
+	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
