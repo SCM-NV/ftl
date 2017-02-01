@@ -105,20 +105,8 @@ module ftlRegexModule
 
 
    ! Interfaces for the functions, types, etc. in POSIX regex.h
-   !
-   ! TODO: Somehow determine these values automatically from the libc implementation.
-   !       Their values are not standardized, so this probably doesn't work everywhere.
 
-   integer, parameter :: sizeof_C_regex_t = 64
-
-   integer(C_int), parameter :: REG_EXTENDED = 1_C_int
-   integer(C_int), parameter :: REG_ICASE    = 2_C_int
-   integer(C_int), parameter :: REG_NEWLINE  = 4_C_int
-   integer(C_int), parameter :: REG_NOSUB    = 8_C_int
-
-   integer(C_int), parameter :: REG_NOTBOL   = 1_C_int
-   integer(C_int), parameter :: REG_NOTEOL   = 2_C_int
-   integer(C_int), parameter :: REG_STARTEND = 4_C_int
+#include "configure_ftlRegex.inc"
 
    type, bind(C) :: C_regmatch_t
       integer(C_int) :: rm_so
@@ -330,8 +318,8 @@ contains
 
       cstring = string // C_NULL_char ! produces a bogus warning with gfortran
       status = C_regexec(self%preg, cstring, nmatch, pmatch, 1_C_int)
-      if (status /= 0 .and. status /= 1) call self%PrintError(status)
-      if (status == 1) return
+      if (status /= 0 .and. status /= REG_NOMATCH) call self%PrintError(status)
+      if (status == REG_NOMATCH) return
 
       match%matches = .true.
 

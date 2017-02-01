@@ -38,6 +38,7 @@ else
   $(error unrecognized PLATFORM)
 endif
 
+#LDFLAGS = -lpcreposix -lpcre
 INCLUDES = -Isrc -Itests
 
 ifeq ($(PLATFORM)$(BUILD), gnudebug)
@@ -80,7 +81,7 @@ cleanall:
 # Unit tests:
 
 $(BUILDDIR)/tests: tests/tests.F90 $(BUILDDIR)/ftlTestTools.o $(BUILDDIR)/ftlDynArrayTests.o $(BUILDDIR)/ftlListTests.o $(BUILDDIR)/ftlHashMapTests.o $(BUILDDIR)/ftlAlgorithmsTests.o $(BUILDDIR)/ftlMemoryTests.o $(BUILDDIR)/ftlStringTests.o $(BUILDDIR)/ftlRegexTests.o | $(BUILDDIR)
-	$(COMPILER) $(FLAGS) $(INCLUDES) $< $(BUILDDIR)/*.o -o $@
+	$(COMPILER) $(FLAGS) $(INCLUDES) $< $(BUILDDIR)/*.o $(LDFLAGS) -o $@
 
 $(BUILDDIR)/ftlTestTools.o: tests/ftlTestTools.F90 tests/ftlTestTools.inc | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) -c $< -o $@
@@ -110,13 +111,13 @@ $(BUILDDIR)/ftlRegexTests.o: tests/ftlRegexTests.F90 $(BUILDDIR)/ftlRegex.o | $(
 # Individual performance tests:
 
 $(BUILDDIR)/perftest_sortDynArrayInt: perftests/sortDynArrayInt.F90 $(BUILDDIR)/ftlTestTools.o $(BUILDDIR)/ftlDynArrayIntAlgorithms.o | $(BUILDDIR)
-	$(COMPILER) $(FLAGS) $(INCLUDES) $< $(BUILDDIR)/*.o -o $@
+	$(COMPILER) $(FLAGS) $(INCLUDES) $< $(BUILDDIR)/*.o $(LDFLAGS) -o $@
 
 $(BUILDDIR)/perftest_sortDynArrayInt_ref: perftests/sortDynArrayInt.cpp | $(BUILDDIR)
 	$(CXXCOMPILER) $(CXXFLAGS) $< -o $@
 
 $(BUILDDIR)/perftest_countDistinctWords: perftests/countDistinctWords.F90 $(BUILDDIR)/ftlString.o $(BUILDDIR)/ftlHashMapStringInt.o | $(BUILDDIR)
-	$(COMPILER) $(FLAGS) $(INCLUDES) $< $(BUILDDIR)/*.o -o $@
+	$(COMPILER) $(FLAGS) $(INCLUDES) $< $(BUILDDIR)/*.o $(LDFLAGS) -o $@
 
 
 # Container instantiations:
