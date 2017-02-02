@@ -178,6 +178,21 @@ module ftlStringModule
    end interface
 
 
+#if !(defined(__GFORTRAN__) && __GNUC__ < 7)
+   ! Derived-type IO
+
+   public :: write(formatted)
+   interface write(formatted)
+      module procedure writeFormatted
+   end interface
+
+   public :: write(unformatted)
+   interface write(unformatted)
+      module procedure writeUnformatted
+   end interface
+#endif
+
+
    ! Free versions of some type-bound procedures:
 
    public :: Begin
@@ -514,6 +529,44 @@ contains
 
    end subroutine
 
+
+
+#if !(defined(__GFORTRAN__) && __GNUC__ < 7)
+
+   ! =============> Derived-type IO:
+
+
+   subroutine writeUnformatted(self, unit, iostat, iomsg)
+      class(ftlString), intent(in)    :: self
+      integer         , intent(in)    :: unit
+      integer         , intent(out)   :: iostat
+      character(len=*), intent(inout) :: iomsg
+
+      if (allocated(self%raw)) then
+         write (unit, iostat=iostat, iomsg=iomsg) self%raw
+      else
+         write (unit, iostat=iostat, iomsg=iomsg) ''
+      endif
+
+   end subroutine
+   !
+   subroutine writeFormatted(self, unit, iotype, v_list, iostat, iomsg)
+      class(ftlString), intent(in)    :: self
+      integer         , intent(in)    :: unit
+      character(len=*), intent(in)    :: iotype
+      integer         , intent(in)    :: v_list(:)
+      integer         , intent(out)   :: iostat
+      character(len=*), intent(inout) :: iomsg
+
+      if (allocated(self%raw)) then
+         write (unit, '(A)', iostat=iostat, iomsg=iomsg) self%raw
+      else
+         write (unit, '(A)', iostat=iostat, iomsg=iomsg) ''
+      endif
+
+   end subroutine
+
+#endif
 
 
    ! =============> Character wise access:

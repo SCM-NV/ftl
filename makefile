@@ -35,7 +35,7 @@ ifeq ($(PLATFORM), gnu)
 else ifeq ($(PLATFORM), intel)
 	COMPILER = ifort
 	FLAGS = -stand f03 -assume realloc_lhs -warn -diag-disable=5268 -module $(BUILDDIR)
-	CXXCOMPILER = icpc
+	CXXCOMPILER = g++
 	CXXFLAGS = -std=c++11 -fast -xHost
 else
   $(error unrecognized PLATFORM)

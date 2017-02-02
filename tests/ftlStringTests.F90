@@ -39,6 +39,10 @@ contains
       call testAssignraw
       call testAssignOther
 
+#if !(defined(__GFORTRAN__) && __GNUC__ < 7)
+      call testDerivedTypeIO
+#endif
+
       call testIteratorWriting
 
       call testHash
@@ -124,6 +128,26 @@ contains
       ASSERT(s1 /= s2)
 
    end subroutine
+
+
+#if !(defined(__GFORTRAN__) && __GNUC__ < 7)
+   subroutine testDerivedTypeIO
+      type(ftlString) :: s
+
+      ! TODO: make a test that doesn't print to stdout and is checked automatically ...
+
+      s = 'this is the test string that should always look the same on stdout'
+
+      write (*,'(A)') 'Testing ftlString unformatted derived-type IO:'
+      write (*,*) s%raw
+      write (*,*) s
+
+      write (*,'(A)') 'Testing ftlString formatted derived-type IO:'
+      write (*,'(A)')  s%raw
+      write (*,'(DT)') s
+
+   end subroutine
+#endif
 
 
    subroutine testIteratorWriting
