@@ -15,25 +15,6 @@
 ! You should have received a copy of the GNU Lesser General Public License along
 ! with the Fortran Template Library.  If not, see <http://www.gnu.org/licenses/>.
 
-
-!   ftlHashMap
-!   ==========
-!
-! Unordered maps are associative containers that store elements formed by the combination of a key value and a mapped
-! value, and which allows for fast retrieval of individual elements based on their keys.
-!
-! In a ftlHashMap, the key value is generally used to uniquely identify the element, while the mapped value is an
-! object with the content associated to this key. Types of key and mapped value may differ.
-!
-! Internally, the elements in the ftlHashMap are not sorted in any particular order with respect to either their key or
-! mapped values, but organized into buckets depending on their hash values to allow for fast access to individual elements
-! directly by their key values (with a constant average time complexity on average).
-!
-! ftlHashMap containers are faster than map containers to access individual elements by their key, although they are
-! generally less efficient for range iteration through a subset of their elements.
-!
-! Iterators in the container are at least forward iterators.
-
 #define FTL_CONTAINER ftlHashMap
 #define FTL_CONTAINER_PROVIDES_FORWARD_ITERATOR
 
@@ -231,8 +212,6 @@ contains
 ! ====== Implementation of ftlHashMap methods ====================================================================================
 
 
-   ! Constructs an unordered_map container object, initializing its contents depending on the constructor version used:
-   !
    subroutine NewDefault(self, n)
       class(CAT3(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
       integer                                                                 , intent(in)    :: n
@@ -243,9 +222,6 @@ contains
    end subroutine
 
 
-   ! Destructs the container object. This calls each of the contained element's destructors, and deallocates all the
-   ! storage capacity allocated by the unordered_map container.
-   !
    subroutine Delete(self)
       class(CAT3(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME)), intent(inout), target :: self
 
@@ -346,8 +322,6 @@ contains
 
 
 
-   ! Sets the entry with key to value. If no entry with key exists, a new entry will be added.
-   !
    subroutine SetStandard(self, key, value)
       class(CAT3(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME)), intent(inout), target :: self
       FTL_TEMPLATE_KEYTYPE_WRAP                                               , intent(in)            :: key
@@ -387,8 +361,6 @@ contains
 
 
 
-   ! Get a pointer to the value stored for key. If no entry with key exists a null pointer is returned.
-   !
    function GetStandard(self, key) result(value)
       class(CAT3(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME)), intent(in), target :: self
       FTL_TEMPLATE_KEYTYPE_WRAP                                               , intent(in)         :: key
@@ -416,8 +388,6 @@ contains
 
 
 
-   ! Checks whether the hash map has an entry for key.
-   !
    logical function HasStandard(self, key) result(Has)
       class(CAT3(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME)), intent(in), target :: self
       FTL_TEMPLATE_KEYTYPE_WRAP                                               , intent(in)         :: key
@@ -451,13 +421,6 @@ contains
 
 
 
-   ! Searches the container for an element with key and returns an iterator to it if found, otherwise it returns an
-   ! iterator to ftlHashMap%End (the element past the end of the container).
-   !
-   ! Another member function, ftlHashMap%Has, can be used to just check whether a particular key exists.
-   !
-   ! The mapped value can also be accessed directly by using member function ftlHashMap%Get.
-   !
    type(CAT4(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME,Iterator)) function FindStandard(self, key) result(Find)
       class(CAT3(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME)), intent(in), target :: self
       FTL_TEMPLATE_KEYTYPE_WRAP                                               , intent(in)         :: key
@@ -488,10 +451,6 @@ contains
 
 
 
-   ! Removes from the ftlHashMap container either a single element or a range of elements ([first,last)).
-   !
-   ! This effectively reduces the container size by the number of elements removed.
-   !
    subroutine EraseKey(self, key)
       class(CAT3(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
       FTL_TEMPLATE_KEYTYPE_WRAP                                               , intent(in)    :: key
@@ -555,8 +514,6 @@ contains
 
 
 
-   ! All the elements in the ftlHashMap are removed from the container, leaving it with a size of 0.
-   !
    subroutine Clear(self)
       class(CAT3(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME)), intent(inout), target :: self
 
@@ -589,15 +546,6 @@ contains
 
 
 
-   ! Returns the number of buckets in the ftlHashMap container.
-   !
-   ! A bucket is a slot in the container's internal hash table to which elements are assigned based on the hash value of
-   ! their key.
-   !
-   ! The number of buckets influences directly the load factor of the container's hash table (and thus the probability of
-   ! collision). The container automatically increases the number of buckets to keep the load factor below a specific
-   ! threshold (its maxLoadFactor), causing a rehash each time the number of buckets needs to be increased.
-   !
    pure integer function BucketCount(self)
       class(CAT3(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: self
 
@@ -607,15 +555,6 @@ contains
 
 
 
-   ! Returns the number of elements in bucket n.
-   !
-   ! A bucket is a slot in the container's internal hash table to which elements are assigned based on the hash value of
-   ! their key.
-   !
-   ! The number of elements in a bucket influences the time it takes to access a particular element in the bucket. The
-   ! container automatically increases the number of buckets to keep the load factor (which is the average bucket size)
-   ! below its maxLoadFactor.
-   !
    integer function BucketSize(self, n)
       class(CAT3(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME)), intent(in), target :: self
       integer                                                                 , intent(in)         :: n
@@ -633,14 +572,6 @@ contains
 
 
 
-   ! Returns the bucket number where the element with key is located.
-   !
-   ! A bucket is a slot in the container's internal hash table to which elements are assigned based on the hash value of
-   ! their key. Buckets are numbered from 1 to bucket_count.
-   !
-   ! Individual elements in a bucket can be accessed by means of the range iterators returned by ftlHashMap%Begin()
-   ! and ftlHashMap%End().
-   !
    pure integer function BucketStandard(self, key) result(Bucket)
       class(CAT3(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: self
       FTL_TEMPLATE_KEYTYPE_WRAP                                               , intent(in) :: key
@@ -720,6 +651,7 @@ contains
       class(BaseEntry), pointer :: eorg, edel, enew
       integer :: borg
 
+      ! TODO: do this without copying! -> faster and pointers remain valid
 
       if (n <= 0) return
 

@@ -46,7 +46,7 @@ contains
       call testEraseKey
       call testEraseIterators
 
-      call testStringingSpecialization
+      call testStringSpecialization
 
    end subroutine
 
@@ -386,7 +386,7 @@ contains
    end subroutine
 
 
-   subroutine testStringingSpecialization
+   subroutine testStringSpecialization
       type(ftlHashMapStringInt) :: um
 
       call um%New(10)
