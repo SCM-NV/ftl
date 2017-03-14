@@ -92,7 +92,7 @@ $(BUILDDIR)/tests: tests/tests.F90 $(BUILDDIR)/ftlTestTools.o $(BUILDDIR)/ftlDyn
 $(BUILDDIR)/ftlTestTools.o: tests/ftlTestTools.F90 tests/ftlTestTools.inc | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
-$(BUILDDIR)/ftlDynArrayTests.o: tests/ftlDynArrayTests.F90 $(BUILDDIR)/ftlDynArrayInt.o $(BUILDDIR)/ftlDynArrayPoint2D.o | $(BUILDDIR)
+$(BUILDDIR)/ftlDynArrayTests.o: tests/ftlDynArrayTests.F90 $(BUILDDIR)/ftlDynArrayInt.o $(BUILDDIR)/ftlDynArrayPoint2D.o $(BUILDDIR)/ftlDynArrayLeaky.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
 $(BUILDDIR)/ftlListTests.o: tests/ftlListTests.F90 $(BUILDDIR)/ftlListInt.o | $(BUILDDIR)
@@ -132,6 +132,9 @@ $(BUILDDIR)/ftlDynArrayInt.o: instantiations/ftlDynArrayInt.F90 src/ftlDynArray.
 	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
 $(BUILDDIR)/ftlDynArrayPoint2D.o: instantiations/ftlDynArrayPoint2D.F90 src/ftlDynArray.F90_template $(BUILDDIR)/Point2D.o | $(BUILDDIR)
+	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
+
+$(BUILDDIR)/ftlDynArrayLeaky.o: instantiations/ftlDynArrayLeaky.F90 src/ftlDynArray.F90_template $(BUILDDIR)/Leaky.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
 $(BUILDDIR)/ftlDynArrayString.o: src/instantiations/ftlDynArrayString.F90 src/ftlDynArray.F90_template $(BUILDDIR)/ftlString.o | $(BUILDDIR)
@@ -188,4 +191,7 @@ src/configure_ftlRegex.inc: configure/configure_ftlRegex.c
 # Example derived types:
 
 $(BUILDDIR)/Point2D.o: instantiations/derived_types/Point2D.F90 | $(BUILDDIR)
+	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
+
+$(BUILDDIR)/Leaky.o: instantiations/derived_types/Leaky.F90 | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
