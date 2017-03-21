@@ -181,15 +181,16 @@ module ftlStringModule
 #if !(defined(__GFORTRAN__) && __GNUC__ < 7)
    ! Derived-type IO
 
-   public :: write(formatted)
    interface write(formatted)
       module procedure writeFormatted
    end interface
+   public :: write(formatted) ! has to be after the interface block for gfortran 7 ... compiler bug?
 
-   public :: write(unformatted)
    interface write(unformatted)
       module procedure writeUnformatted
    end interface
+   public :: write(unformatted) ! has to be after the interface block for gfortran 7 ... compiler bug?
+
 #endif
 
 
