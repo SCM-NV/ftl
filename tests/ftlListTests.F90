@@ -145,12 +145,7 @@ contains
       type(ftlListIntIterator) :: it
 
       call o%New([5,13,41,97,17,10,88])
-#ifdef __INTEL_COMPILER
-      !l = o ! <-- just an alias for l%AssignOther(o) but causes infinite loop with ifort 15.0.3. compiler bug?
-      call l%Assign(o)
-#else
       l = o
-#endif
 
       ASSERT(.not.l%Empty())
       ASSERT(l%Size() == 7)
