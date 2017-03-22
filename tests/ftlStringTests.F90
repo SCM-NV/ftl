@@ -635,7 +635,7 @@ contains
       ASSERT(s%StartsWith(ftlString('another')))
 
       ! the following two lines leak memory with gfortran, see: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=79053
-      !ASSERT(s%StartsWith())
+      !ASSERT(s%StartsWith([ftlString('Test'),ftlString('anot')]))
       !ASSERT(.not.s%StartsWith([ftlString('Test'),ftlString('not there')]))
 
       ! this is a workaround that does not leak ...
