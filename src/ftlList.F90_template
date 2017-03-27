@@ -16,29 +16,6 @@
 ! with the Fortran Template Library.  If not, see <http://www.gnu.org/licenses/>.
 
 
-!   ftlList
-!   =======
-!
-! Lists are sequence containers that allow constant time insert and erase operations anywhere within the sequence, and
-! iteration in both directions.
-!
-! List containers are implemented as doubly-linked lists; Doubly linked lists can store each of the elements they contain
-! in different and unrelated storage locations. The ordering is kept internally by the association to each element of a
-! link to the element preceding it and a link to the element following it.
-!
-! They are very similar to forward_list: The main difference being that forward_list objects are single-linked lists, and
-! thus they can only be iterated forwards, in exchange for being somewhat smaller and more efficient.
-!
-! Compared to other base standard sequence containers (array, vector and deque), lists perform generally better in
-! Cinserting, extracting and moving elements in any position within the container for which an iterator has already been
-! Cobtained, and therefore also in algorithms that make intensive use of these, like sorting algorithms.
-!
-! The main drawback of lists and forward_lists compared to these other sequence containers is that they lack direct access
-! to the elements by their position; For example, to access the sixth element in a list, one has to iterate from a known
-! position (like the beginning or the end) to that position, which takes linear time in the distance between these. They
-! also consume some extra memory to keep the linking information associated to each element (which may be an important
-! factor for large lists of small-sized elements).
-
 #define FTL_CONTAINER ftlList
 #define FTL_CONTAINER_PROVIDES_BIDIRECTIONAL_ITERATOR
 
@@ -114,10 +91,7 @@ module CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Module)
       procedure, public :: Empty
 
       procedure         :: AssignOther
-      procedure         :: AssignIteratorPair
-      procedure         :: AssignFill
       procedure         :: AssignArray
-      generic  , public :: Assign => AssignOther, AssignIteratorPair, AssignFill, AssignArray
       generic  , public :: assignment(=) => AssignOther, AssignArray
 
       procedure         :: InsertSingle
@@ -134,8 +108,6 @@ module CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Module)
       procedure, public :: PopFront
       procedure, public :: PushBack
       procedure, public :: PopBack
-
-      procedure, public :: Swap
 
       procedure, public :: Resize
 
@@ -162,7 +134,7 @@ module CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Module)
 
    public :: ftlSwap
    interface ftlSwap
-      module procedure Swap
+      module procedure SwapList
    end interface
 
 
@@ -204,12 +176,8 @@ contains
 ! ====== Implementation of ftlList methods =======================================================================================
 
 
-   ! Constructs a list container object, initializing its contents depending on the constructor version used:
-   !
    subroutine NewDefault(self)
       class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(inout), target :: self
-
-      ! Constructs an empty list, with no elements.
 
       call self%Delete()
 
@@ -223,8 +191,6 @@ contains
       class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(in)    :: other
 
       type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: it
-
-      ! Constructs a list as a copy of another list.
 
       call self%New()
 
@@ -241,23 +207,23 @@ contains
       integer                                   , intent(in)           :: n
       FTL_TEMPLATE_TYPE_WRAP                    , intent(in), optional :: val
 
-      ! Constructs a container with n elements. Each element is a copy of val (if present).
-
       integer :: i
 
       call self%New()
 
-      do i = 1, n
-         call self%PushBack(val)
-      enddo
+      if (present(val)) then
+         do i = 1, n
+            call self%PushBack(val)
+         enddo
+      else
+         stop 'TODO: Implement ftlList%NewFill without val'
+      endif
 
    end subroutine
    !
    subroutine NewFromArray(self, array)
       class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
       FTL_TEMPLATE_TYPE_WRAP                    , intent(in)    :: array(:)
-
-      ! Constructs a container with a copy of each of the elements in array, in the same order.
 
       integer :: i
 
@@ -312,13 +278,6 @@ contains
 
 
 
-   ! Returns an iterator pointing to the first element in the list container.
-   !
-   ! Notice that, unlike member list%front, which returns a reference to the first element, this function returns a bidirectional
-   ! iterator pointing to it.
-   !
-   ! If the container is empty, the returned iterator value shall not be dereferenced.
-   !
    type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)) function BeginList(self) result(Begin)
       class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(in), target :: self
 
@@ -332,17 +291,6 @@ contains
 
 
 
-   ! Returns an iterator referring to the past-the-end element in the list container.
-   !
-   ! The past-the-end element is the theoretical element that would follow the last element in the list container. It does
-   ! not point to any element, and thus shall not be dereferenced.
-   !
-   ! Because the ranges used by functions of the standard library do not include the element pointed by their closing
-   ! iterator, this function is often used in combination with list%begin to specify a range including all the elements in
-   ! the container.
-   !
-   ! If the container is empty, this function returns the same as list%begin.
-   !
    type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)) function EndList(self) result(End)
       class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(in), target :: self
 
@@ -356,8 +304,6 @@ contains
 
 
 
-   ! Returns the number of elements in the list.
-   !
    pure integer function SizeList(self) result(Size)
       class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: self
 
@@ -366,10 +312,6 @@ contains
    end function
 
 
-   ! Returns whether the list is empty (i.e. whether its size is 0).
-   !
-   ! This function does not modify the container in any way. To clear the content of a list, see ftlList%clear.
-   !
    pure logical function Empty(self)
       class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: self
 
@@ -383,31 +325,11 @@ contains
 
 
 
-   ! Assigns new contents to the list container, replacing its current contents, and modifying its size accordingly.
-   !
    subroutine AssignOther(self, other)
       class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
       class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(in)    :: other
 
       call self%New(other)
-
-   end subroutine
-   !
-   subroutine AssignFill(self, n, val)
-      class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
-      integer                                   , intent(in)    :: n
-      FTL_TEMPLATE_TYPE_WRAP                    , intent(in)    :: val
-
-      call self%New(n, val)
-
-   end subroutine
-   !
-   subroutine AssignIteratorPair(self, first, last)
-      class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME))         , intent(inout) :: self
-      type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)    :: first
-      type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)    :: last
-
-      call self%New(first, last)
 
    end subroutine
    !
@@ -421,15 +343,6 @@ contains
 
 
 
-   ! The container is extended by inserting new elements before the element at the specified position.
-   !
-   ! This effectively increases the list size by the amount of elements inserted.
-   !
-   ! Unlike other standard sequence containers, list and forward_list objects are specifically designed to be efficient
-   ! inserting and removing elements in any position, even in the middle of the sequence.
-   !
-   ! The arguments determine how many elements are inserted and to which values they are initialized.
-   !
    subroutine InsertSingle(self, position, val)
       class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME))         , intent(inout) :: self
       type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator))                :: position
@@ -487,12 +400,6 @@ contains
 
 
 
-
-   ! Inserts a new element at the beginning of the list, right before its current first element. The content of val is copied
-   ! (or moved) to the inserted element.
-   !
-   ! This effectively increases the container size by one.
-   !
    subroutine PushFront(self, val)
       class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(inout), target :: self
       FTL_TEMPLATE_TYPE_WRAP                    , intent(in)            :: val
@@ -505,10 +412,6 @@ contains
 
 
 
-   ! Removes the first element in the list container, effectively reducing its size by one.
-   !
-   ! This destroys the removed element.
-   !
    FTL_TEMPLATE_TYPE function PopFront(self)
       class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(inout), target :: self
 
@@ -525,11 +428,6 @@ contains
 
 
 
-   ! Adds a new element at the end of the list, after its current last element. The content of val is copied to
-   ! the new element.
-   !
-   ! This effectively increases the container size by one.
-   !
    subroutine PushBack(self, val)
       class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
       FTL_TEMPLATE_TYPE_WRAP                    , intent(in)    :: val
@@ -542,10 +440,6 @@ contains
 
 
 
-   ! Removes the last element in the list, effectively reducing the container size by one.
-   !
-   ! This destroys the removed element.
-   !
    FTL_TEMPLATE_TYPE function PopBack(self)
       class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(inout), target :: self
 
@@ -562,13 +456,6 @@ contains
 
 
 
-   ! Removes from the list container either a single element (position) or a range of elements ([first,last)).
-   !
-   ! This effectively reduces the container size by the number of elements removed, which are destroyed.
-   !
-   ! Unlike other standard sequence containers, list and forward_list objects are specifically designed to be efficient
-   ! inserting and removing elements in any position, even in the middle of the sequence.
-   !
    subroutine EraseSingle(self, position)
       class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME))         , intent(inout) :: self
       type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator))                :: position
@@ -599,15 +486,9 @@ contains
 
 
 
-   ! Exchanges the content of the container by the content of another list of the same type. Sizes may differ.
-   !
-   ! After the call to this member function, the elements in this container are those which were in x before the call, and
-   ! the elements of x are those which were in this. All iterators, references and pointers remain valid for the swapped
-   ! objects.
-   !
-   subroutine Swap(self, other)
-      class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(inout), target :: self
-      class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(inout), target :: other
+   subroutine SwapList(self, other)
+      type(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(inout), target :: self
+      type(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(inout), target :: other
 
       integer :: tmpSize
       type(ListNode) :: tmpNode
@@ -640,17 +521,6 @@ contains
 
 
 
-   ! Resizes the container so that it contains n elements.
-   !
-   ! If n is smaller than the current container size, the content is reduced to its first n elements, removing those beyond
-   ! (and destroying them).
-   !
-   ! If n is greater than the current container size, the content is expanded by inserting at the end as many elements as
-   ! needed to reach a size of n. If val is specified, the new elements are initialized as copies of val, otherwise, they are
-   ! value-initialized.
-   !
-   ! Notice that this function changes the actual content of the container by inserting or erasing elements from it.
-   !
    subroutine Resize(self, n, val)
       class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(inout)           :: self
       integer                                   , intent(in)              :: n
@@ -681,12 +551,9 @@ contains
 
 
 
-   ! Removes all elements from the list container (which are destroyed), and leaving the container with a size of 0.
-   !
    subroutine Clear(self)
       class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
 
-      call self%Delete()
       call self%New()
 
    end subroutine
