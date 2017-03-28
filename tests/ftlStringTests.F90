@@ -640,12 +640,12 @@ contains
 
       ! this is a workaround that does not leak ...
       allocate(prefixes(2))
-      prefixes(1) = ftlString('Test')
-      prefixes(2) = ftlString('anot')
+      prefixes(1) = 'Test'
+      prefixes(2) = 'anot'
       ASSERT(s%StartsWith(prefixes))
 
-      prefixes(1) = ftlString('Test')
-      prefixes(2) = ftlString('not there')
+      prefixes(1) = 'Test'
+      prefixes(2) = 'not there'
       ASSERT(.not.s%StartsWith(prefixes))
 
    end subroutine
