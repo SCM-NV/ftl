@@ -15,12 +15,6 @@
 ! You should have received a copy of the GNU Lesser General Public License along
 ! with the Fortran Template Library.  If not, see <http://www.gnu.org/licenses/>.
 
-
-!   ftlMemory
-!   =========
-!
-! This header defines general utilities to manage dynamic memory.
-
 #ifdef FTL_INSTANTIATE_TEMPLATE
 
 #if !defined(FTL_TEMPLATE_TYPE)
@@ -57,43 +51,29 @@ module CAT3(ftlMemory,FTL_TEMPLATE_TYPE_NAME,Module)
    contains
       private
 
-      procedure         :: NewDefault
-      procedure         :: NewFromRawPtr
-      procedure         :: NewFromOther
-      generic  , public :: New => NewDefault, NewFromRawPtr, NewFromOther
-
-      generic  , public :: assignment(=) => NewFromOther
-
-      procedure, public :: Delete
-      procedure, public :: Nullify => Delete
+      procedure, public :: Allocate
+      procedure, public :: AssumeOwnershipOf
+      procedure, public :: ShareOwnershipWith
+      generic  , public :: assignment(=) => ShareOwnershipWith
+      procedure, public :: Nullify
       final             :: Finalizer
 
-      procedure, public :: Swap
+      procedure         :: AssociatedDefault
+      procedure         :: AssociatedOther
+      procedure         :: AssociatedRaw
+      generic  , public :: Associated => AssociatedDefault, AssociatedOther, AssociatedRaw
+
       procedure, public :: UseCount
       procedure, public :: Unique
 
+      procedure, public :: Swap
+
    end type
-
-   public :: associated
-   interface associated
-      module procedure AssociatedDefault
-      module procedure AssociatedOther
-   end interface
-
-   public :: allocate
-   interface allocate
-      module procedure AllocatePrivate
-   end interface
-
-   public :: nullify
-   interface nullify
-      module procedure Delete
-   end interface
 
    public :: ftlSwap
    interface ftlSwap
        module procedure Swap
-    end interface
+   end interface
 
 contains
 
@@ -102,39 +82,32 @@ contains
 ! ====== Implementation of ftlSharedPtr methods ==================================================================================
 
 
-   ! Constructs a ftlSharedPtr object, depending on the signature used:
-   !
-   subroutine NewDefault(self)
-      class(CAT(ftlSharedPtr,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
+   subroutine Allocate(self)
+      class(CAT(ftlSharedPtr,FTL_TEMPLATE_TYPE_NAME)), intent(out) :: self
 
-      ! The object is empty (owns no pointer, use count of zero).
-
-      call self%Delete()
+      allocate(self%value)
+      allocate(self%refcount)
+      self%refcount = 1
 
    end subroutine
-   !
-   subroutine NewFromRawPtr(self, p)
-      class(CAT(ftlSharedPtr,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
-      FTL_TEMPLATE_TYPE_WRAP, pointer               , intent(in)    :: p
 
-      ! The object owns p, setting the use count to 1.
 
-      call self%Delete()
+
+   subroutine AssumeOwnershipOf(self, p)
+      class(CAT(ftlSharedPtr,FTL_TEMPLATE_TYPE_NAME)), intent(out) :: self
+      FTL_TEMPLATE_TYPE_WRAP, pointer                , intent(in)  :: p
 
       self%value => p
       allocate(self%refcount)
       self%refcount = 1
 
    end subroutine
-   !
-   subroutine NewFromOther(self, other)
-      class(CAT(ftlSharedPtr,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
-      class(CAT(ftlSharedPtr,FTL_TEMPLATE_TYPE_NAME)), intent(in)    :: other
 
-      ! If other is not empty, the object shares ownership of other's assets and increases the use count.
-      ! If other is empty, an empty object is constructed (as if default-constructed).
 
-      call self%Delete()
+
+   subroutine ShareOwnershipWith(self, other)
+      class(CAT(ftlSharedPtr,FTL_TEMPLATE_TYPE_NAME)), intent(out) :: self
+      class(CAT(ftlSharedPtr,FTL_TEMPLATE_TYPE_NAME)), intent(in)  :: other
 
       self%value => other%value
       self%refcount => other%refcount
@@ -144,57 +117,25 @@ contains
 
 
 
-   ! Destroys the ftlSharedPtr object. But, before, it may produce the following side effects depending on the value
-   ! of member refcount:
+   subroutine Nullify(self)
+      class(CAT(ftlSharedPtr,FTL_TEMPLATE_TYPE_NAME)), intent(out) :: self
+
+      ! Nothing to do here, intent(out) does the job.
+
+   end subroutine
    !
-   !  - If refcount is greater than 1 (i.e., the object is sharing ownership of its managed object with other ftlSharedPtr
-   !    objects): The use count of the other objects with which it shares ownership is decreased by 1.
-   !
-   !  - If refcount is 1 (i.e., the object is the unique owner of the managed pointer): the object pointed by its owned
-   !    pointer is deleted (if the ftlSharedPtr object was constructed with a specific deleter, this is called; Otherwise, the
-   !    function uses operator delete).
-   !
-   !  - If refcount is zero (i.e., the object is empty), this destructor has no side effects.
-   !
-   subroutine Delete(self)
-      class(CAT(ftlSharedPtr,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
+   subroutine Finalizer(self)
+      type(CAT(ftlSharedPtr,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
 
       if (.not. associated(self%refcount)) then
          return
       else if (self%refcount == 1) then
-         ! TODO: call self%value destructor
          deallocate(self%value)
          deallocate(self%refcount)
       else if (self%refcount > 1) then
          self%refcount = self%refcount - 1
          nullify(self%value, self%refcount)
       endif
-
-   end subroutine
-   !
-   subroutine Finalizer(self)
-      type(CAT(ftlSharedPtr,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
-      call self%Delete()
-   end subroutine
-
-
-
-   ! Exchanges the contents of the shared_ptr object with those of x, transferring ownership of any managed object
-   ! between them without destroying or altering the use count of either.
-   !
-   subroutine Swap(self, other)
-      class(CAT(ftlSharedPtr,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self, other
-
-      FTL_TEMPLATE_TYPE, pointer :: tmpValue
-      integer          , pointer :: tmpRefcount
-
-      tmpValue => self%value
-      self%value => other%value
-      other%value => tmpValue
-
-      tmpRefcount => self%refcount
-      self%refcount => other%refcount
-      other%refcount => tmpRefcount
 
    end subroutine
 
@@ -251,28 +192,39 @@ contains
    end function
    !
    pure logical function AssociatedOther(sp1, sp2) result(assoc)
-      class(CAT(ftlSharedPtr,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: sp1, sp2
+      class(CAT(ftlSharedPtr,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: sp1
+      type (CAT(ftlSharedPtr,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: sp2
 
       assoc = associated(sp1%value, sp2%value)
 
    end function
-
-
-   ! Define an allocate subroutine that allows binding a new object to a ftlSharedPtr right away, so without first making
-   ! a raw pointer and then calling the constructor.
    !
-   subroutine AllocatePrivate(self)
-      class(CAT(ftlSharedPtr,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
+   pure logical function AssociatedRaw(sp, p) result(assoc)
+      class(CAT(ftlSharedPtr,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: sp
+      FTL_TEMPLATE_TYPE_WRAP, pointer                , intent(in) :: p
 
-      if (associated(self%value)) then
-         ! Just bail out. A normal Fortran pointer would allow this double allocation and would just leak the first
-         ! allocation, but I don't see a good reason for replicating this behavior ...
-         stop "double allocation error with ftlSharedPtr"
-      else
-         allocate(self%value)
-         allocate(self%refcount)
-         self%refcount = 1
-      endif
+      assoc = associated(sp%value, p)
+
+   end function
+
+
+   ! Exchanges the contents of the shared_ptr object with those of x, transferring ownership of any managed object
+   ! between them without destroying or altering the use count of either.
+   !
+   subroutine Swap(self, other)
+      class(CAT(ftlSharedPtr,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
+      type (CAT(ftlSharedPtr,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: other
+
+      FTL_TEMPLATE_TYPE, pointer :: tmpValue
+      integer          , pointer :: tmpRefcount
+
+      tmpValue => self%value
+      self%value => other%value
+      other%value => tmpValue
+
+      tmpRefcount => self%refcount
+      self%refcount => other%refcount
+      other%refcount => tmpRefcount
 
    end subroutine
 
