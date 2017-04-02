@@ -69,6 +69,7 @@ contains
       call testClear
 
       call testSwap
+      call testMove
 
       ! Tests of its iterators:
 
@@ -505,6 +506,29 @@ contains
       ASSERT(size(uninit) == 4)
       ASSERT(uninit%front == 3)
       ASSERT(uninit%back == 2)
+
+   end subroutine
+
+
+   subroutine testMove
+      type(ftlDynArrayInt) :: v, u, uninit
+
+      v = [42,34,67,8,3,5]
+      u = [3,4,41,2]
+
+      call ftlMove(v, u)
+
+      ASSERT(size(v) == 0)
+      ASSERT(.not.associated(v%data))
+      ASSERT(all(u%data == [42,34,67,8,3,5]))
+      ASSERT(size(u) == 6)
+      ASSERT(u%front == 42)
+      ASSERT(u%back == 5)
+
+      call ftlMove(uninit, u)
+
+      ASSERT(size(u) == 0)
+      ASSERT(.not.associated(u%data))
 
    end subroutine
 
