@@ -26,7 +26,7 @@ program tests
    use ftlDynArrayTestsModule
    use ftlListTestsModule
    use ftlHashMapTestsModule
-   use ftlMemoryTestsModule
+   use ftlSharedPtrTestsModule
    use ftlAlgorithmsTestsModule
 
    ! dummy assertion to test that assertions themselves work ...
@@ -37,7 +37,7 @@ program tests
    call ftlDynArrayTests
    call ftlListTests
    call ftlHashMapTests
-   call ftlMemoryTests
+   call ftlSharedPtrTests
    call ftlAlgorithmsTests
 
    write (*,'(A,I0,A,I0)') 'Failed assertions: ',num_failed,'/',num_asserts

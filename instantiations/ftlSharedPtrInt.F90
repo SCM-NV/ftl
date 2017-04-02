@@ -19,4 +19,4 @@
 #define FTL_TEMPLATE_TYPE integer
 #define FTL_TEMPLATE_TYPE_NAME Int
 #define FTL_INSTANTIATE_TEMPLATE
-#include "ftlMemory.F90_template"
+#include "ftlSharedPtr.F90_template"

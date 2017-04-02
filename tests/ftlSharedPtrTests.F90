@@ -18,25 +18,25 @@
 
 #include "ftlTestTools.inc"
 
-module ftlMemoryTestsModule
+module ftlSharedPtrTestsModule
 
    use ftlTestToolsModule
-   use ftlMemoryIntModule
+   use ftlSharedPtrIntModule
 
    implicit none
    private
-   public :: ftlMemoryTests
+   public :: ftlSharedPtrTests
 
 contains
 
 
-   subroutine ftlMemoryTests
+   subroutine ftlSharedPtrTests
 
-      write (*,'(A)') 'Running ftlMemory tests ...'
+      write (*,'(A)') 'Running ftlSharedPtr tests ...'
 
       call testAllocate
       call testAssumeOwnershipOf
-      call testShareOwnershipWith
+      call testAssignment
       call testAssignOtherAndNullify
       call testSwap
 
@@ -76,7 +76,7 @@ contains
    end subroutine
 
 
-   subroutine testShareOwnershipWith
+   subroutine testAssignment
       type(ftlSharedPtrInt) :: sp1, sp2
       integer, pointer :: i
 
@@ -91,7 +91,7 @@ contains
       ASSERT(associated(sp1%value))
       ASSERT(sp1%value == 154)
 
-      call sp2%ShareOwnershipWith(sp1)
+      sp2 = sp1
 
       ASSERT(sp1%useCount() == 2)
       ASSERT(.not.sp1%Unique())

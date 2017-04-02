@@ -134,9 +134,8 @@ ftlAlgorithms
    A library of generic algorithms that work on all FTL containers. *Exactly* the
    same as C++'s std::algorithm header.
 
-ftlMemory
-   Provides general utilities to manage dynamic memory. At the moment only
-   contains a reference counted ftlSharedPtr in the spirit of C++'s
+ftlSharedPtr
+   Provides a reference counted ftlSharedPtr in the spirit of C++'s
    std::shared_ptr.
 
 
