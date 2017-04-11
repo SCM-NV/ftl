@@ -43,6 +43,8 @@ contains
       call testReplace
       call testReplaceGroupSub
 
+      call testArrayFinalization
+
    end subroutine
 
 
@@ -207,6 +209,26 @@ contains
       ASSERT(r%Replace(line, '\2', doGroupSub=.true.) == 'Element: 12 6 C Carbon')
       ASSERT(r%Replace(line, 'XXX', doGroupSub=.true.) == 'Element: XXX XXX XXX XXX')
       ASSERT(r%Replace(line, '\2->\1\1', doGroupSub=.true.) == 'Element: 12->massmass 6->ZZ C->symbolsymbol Carbon->namename')
+
+   end subroutine
+
+
+   subroutine testArrayFinalization
+      type(ftlRegex), allocatable :: r(:)
+
+      ! the following leaks 6 bytes per element with gfortran 7 developer version. bug or me not unterstanding the standard?
+      !r = [ ftlRegex('hello'), ftlRegex('world') ]
+
+      ! leak free workaround:
+      allocate(r(2))
+      call r(1)%New('hello')
+      call r(2)%New('world')
+
+      ASSERT('hello world' .matches. r(1))
+      ASSERT('hello world' .matches. r(2))
+
+      ! Here the rank-1 array finalizer should be called on r and both regexes should be cleaned up propery.
+      ! Check this this 'make memcheck' ...
 
    end subroutine
 
