@@ -39,6 +39,7 @@ contains
       call testAssignment
       call testAssignOtherAndNullify
       call testSwap
+      call testArrayFinalization
 
    end subroutine
 
@@ -192,6 +193,21 @@ contains
       ASSERT(sp2%Associated())
       ASSERT(associated(sp2%value))
       ASSERT(sp2%value == 42)
+
+   end subroutine
+
+
+   subroutine testArrayFinalization
+      type(ftlSharedPtrInt) :: sp(2)
+
+      call sp(1)%Allocate()
+      sp(1)%value = 42
+      sp(2) = sp(1)
+
+      ASSERT(sp(2)%Associated())
+      ASSERT(sp(2)%value == 42)
+      ASSERT(sp(1)%UseCount() == 2)
+      ASSERT(sp(2)%UseCount() == 2)
 
    end subroutine
 
