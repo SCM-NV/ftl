@@ -32,6 +32,11 @@ module LeakyModule
       generic   :: assignment(=) => AssignOther
    end type
 
+   !public :: ftlMove
+   !interface ftlMove
+   !   module procedure ftlMoveLeaky
+   !end interface
+
 contains
 
 
@@ -47,7 +52,7 @@ contains
    end subroutine
 
 
-   subroutine Delete(self)
+   elemental subroutine Delete(self)
       class(LeakyType), intent(inout) :: self
 
       if (allocated(self%name)) deallocate(self%name)
@@ -56,7 +61,7 @@ contains
    end subroutine
 
 
-   subroutine Finalizer(self)
+   elemental subroutine Finalizer(self)
       type(LeakyType), intent(inout) :: self
 
       call self%Delete()
@@ -75,6 +80,11 @@ contains
       endif
 
    end subroutine
+
+
+   !subroutine ftlMoveLeaky(src, tgt)
+
+   !end subroutine
 
 
 end module

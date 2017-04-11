@@ -22,6 +22,8 @@ module ftlDynArrayTestsModule
 
    use ftlTestToolsModule
    use ftlDynArrayIntModule
+   use ftlDynArrayLeakyModule
+   use LeakyModule
 
    implicit none
    private
@@ -81,6 +83,10 @@ contains
 
       call testAdvanceReverseDiff
       call testLogicalOperations
+
+      ! Tests with types that need to be cleaned up through a finalizer
+
+      call testLeakyEraseSingle
 
    end subroutine
 
@@ -673,6 +679,20 @@ contains
       call it2%Inc()
 
       ASSERT(it2 == v%End())
+
+   end subroutine
+
+
+   subroutine testLeakyEraseSingle
+      type(ftlDynArrayLeaky) :: v
+
+      call v%New(3)
+
+      call v%data(1)%New('first', 1000)
+      call v%data(2)%New('second', 2000)
+      call v%data(3)%New('third', 3000)
+
+      call v%Delete()
 
    end subroutine
 
