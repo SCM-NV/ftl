@@ -43,6 +43,7 @@ contains
       call testAssignments
 
       call testDelete
+      call testArrayFinalizer
 
       call testInsertSingle
       call testInsertFill
@@ -162,7 +163,9 @@ contains
 
 
    subroutine testDelete
-      type(ftlListInt) :: l
+      type(ftlListInt) :: l, uninit
+
+      call uninit%Delete() ! should not crash
 
       call l%New([5,13,41,97,17,10,88])
       call l%Delete()
@@ -171,6 +174,19 @@ contains
       ASSERT(l%Empty())
       ASSERT(.not.associated(l%front))
       ASSERT(.not.associated(l%back))
+
+   end subroutine
+
+
+   subroutine testArrayFinalizer
+      type(ftlListInt), allocatable :: l(:)
+
+      allocate(l(3))
+      l(1) = [1,2,3,4,5]
+      l(2) = [6,7,8,9]
+      l(3) = [10,42]
+
+      ! array finalizer should be called here. check that this doesn't leak with 'make memcheck'
 
    end subroutine
 
