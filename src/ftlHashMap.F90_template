@@ -213,16 +213,15 @@ contains
 
 
    subroutine NewDefault(self, n)
-      class(CAT3(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
-      integer                                                                 , intent(in)    :: n
+      class(CAT3(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME)), intent(out) :: self
+      integer                                                                 , intent(in)  :: n
 
-      call self%Delete()
       allocate(self%buckets(n))
 
    end subroutine
 
 
-   subroutine Delete(self)
+   elemental subroutine Delete(self)
       class(CAT3(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME)), intent(inout), target :: self
 
       call self%Clear()
@@ -232,7 +231,7 @@ contains
 
    end subroutine
    !
-   subroutine Finalizer(self)
+   elemental subroutine Finalizer(self)
       type(CAT3(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
       call self%Delete()
    end subroutine
@@ -493,7 +492,7 @@ contains
 
 
 
-   subroutine Clear(self)
+   elemental subroutine Clear(self)
       class(CAT3(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME)), intent(inout), target :: self
 
       integer :: b

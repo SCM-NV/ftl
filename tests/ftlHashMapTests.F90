@@ -48,6 +48,8 @@ contains
 
       call testStringSpecialization
 
+      call testArrayFinalization
+
    end subroutine
 
 
@@ -425,5 +427,26 @@ contains
 
    end subroutine
 
+
+   subroutine testArrayFinalization
+      type(ftlHashMapStringInt) :: um(2)
+
+      call um(1)%New(10)
+      call um(1)%Set('this', 1)
+      call um(1)%Set('is', 12)
+      call um(1)%Set('a', 21)
+      call um(1)%Set('test', 114)
+      ASSERT('this' .in. um(1))
+
+      call um(2)%New(10)
+      call um(2)%Set('bla blub', 1)
+      call um(2)%Set('here', 8)
+      call um(2)%Set('another', 26)
+      call um(2)%Set('test', 107)
+      ASSERT('here' .in. um(2))
+
+      ! This subroutine should not leak. Check with 'make memtest'
+
+   end subroutine
 
 end module
