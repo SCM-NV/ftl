@@ -54,7 +54,7 @@ else ifeq ($(PLATFORM)$(BUILD), inteldebug)
 else ifeq ($(PLATFORM)$(BUILD), gnurelease)
 	FLAGS += -O2 -march=native -flto
 else ifeq ($(PLATFORM)$(BUILD), intelrelease)
-	FLAGS += -fast -xHost
+	FLAGS += -O3 -ipo -xHost
 else
   $(error unrecognized BUILD)
 endif
