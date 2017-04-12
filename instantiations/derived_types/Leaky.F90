@@ -32,10 +32,10 @@ module LeakyModule
       generic   :: assignment(=) => AssignOther
    end type
 
-   !public :: ftlMove
-   !interface ftlMove
-   !   module procedure ftlMoveLeaky
-   !end interface
+   public :: ftlMove
+   interface ftlMove
+      module procedure ftlMoveLeaky
+   end interface
 
 contains
 
@@ -82,9 +82,20 @@ contains
    end subroutine
 
 
-   !subroutine ftlMoveLeaky(src, tgt)
+   subroutine ftlMoveLeaky(src, dest)
+      type(LeakyType), intent(inout) :: src
+      type(LeakyType), intent(out)   :: dest
 
-   !end subroutine
+      if (allocated(src%name)) then
+         dest%name = src%name
+      else
+         if (allocated(dest%name)) deallocate(dest%name)
+      endif
+
+      dest%dontLeakMe => src%dontLeakMe
+      nullify(src%dontLeakMe)
+
+   end subroutine
 
 
 end module
