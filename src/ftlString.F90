@@ -460,7 +460,7 @@ contains
 
       character(len=16) :: tmp
 
-      ! Constructs an ftlString from a complex
+      ! Constructs an ftlString from a logical
 
       if (present(format)) then
          write (tmp,format) l
@@ -1057,7 +1057,7 @@ contains
       call line%ReadLine(unit, ios)
       if (is_iostat_end(ios)) return
 
-      buffer = line%raw ! produces a bogus warning with gfortran, see: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=56670
+      buffer = line%raw
       nRead = len(line)
 
       do while (.true.)

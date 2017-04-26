@@ -340,7 +340,7 @@ contains
       s1 = 'this'
       s2 = 'is'
       s3 = 'testing'
-      c = 'some old value' ! produces a bogus warning with gfortran, see: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=56670
+      c = 'some old value'
 
       c = s1//' '//s2//' '//s3
       ASSERT(c == 'this is testing')

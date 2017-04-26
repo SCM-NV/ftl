@@ -69,9 +69,11 @@ contains
    end subroutine
 
 
-   subroutine AssignOther(self, other)
-      class(LeakyType), intent(out) :: self
-      type(LeakyType) , intent(in)  :: other
+   elemental subroutine AssignOther(self, other)
+      class(LeakyType), intent(inout) :: self
+      type(LeakyType) , intent(in)    :: other
+
+      call self%Delete()
 
       if (allocated(other%name)) self%name = other%name
       if (associated(other%dontLeakMe)) then
@@ -82,7 +84,7 @@ contains
    end subroutine
 
 
-   subroutine ftlMoveLeaky(src, dest)
+   elemental subroutine ftlMoveLeaky(src, dest)
       type(LeakyType), intent(inout) :: src
       type(LeakyType), intent(out)   :: dest
 

@@ -50,7 +50,7 @@ module ftlRegexModule
       procedure            :: PrintError
 
       procedure, public    :: Delete
-      final                :: Finalizer, FinalizerRank1, FinalizerRank2, FinalizerRank3
+      final                :: Finalizer, FinalizerRank1, FinalizerRank2, FinalizerRank3, FinalizerRank4
 
       procedure            :: NumMatchesRaw
       procedure            :: NumMatchesString
@@ -375,7 +375,7 @@ contains
 
       integer :: nGroups, iGroup
 
-      cstring = string // C_NULL_char ! produces a bogus warning with gfortran
+      cstring = string // C_NULL_char
       status = C_regexec(self%preg, cstring, nmatch, pmatch, 1_C_int)
       if (status /= 0 .and. status /= REG_NOMATCH) call self%PrintError(status)
       if (status == REG_NOMATCH) return

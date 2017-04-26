@@ -29,7 +29,7 @@ DEFINES =
 
 ifeq ($(PLATFORM), gnu)
 	COMPILER = gfortran
-	FLAGS = -std=f2003 -fall-intrinsics -ffree-line-length-none -Wall -Wextra -Wpedantic -Wno-target-lifetime -Wno-compare-reals -J$(BUILDDIR)
+	FLAGS = -std=f2008 -fall-intrinsics -ffree-line-length-none -Wall -Wextra -Wpedantic -Wno-target-lifetime -Wno-compare-reals -J$(BUILDDIR)
 	CXXCOMPILER = g++
 	CXXFLAGS = -std=c++11 -Ofast -march=native
 else ifeq ($(PLATFORM), intel)
@@ -48,7 +48,7 @@ ifeq ($(USE_PCRE), true)
 endif
 
 ifeq ($(PLATFORM)$(BUILD), gnudebug)
-	FLAGS += -g -O0 -fcheck=bounds,do,mem,pointer,recursion
+	FLAGS += -g -Og -fcheck=bounds,do,mem,pointer,recursion
 else ifeq ($(PLATFORM)$(BUILD), inteldebug)
 	FLAGS += -g -O0 -check all -debug all -traceback
 else ifeq ($(PLATFORM)$(BUILD), gnurelease)

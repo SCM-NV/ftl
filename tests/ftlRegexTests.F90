@@ -52,13 +52,16 @@ contains
       type(ftlRegex) :: r
       type(ftlRegexMatch) :: m
 
-      ! the temporary ftlRegexes in these expressions leak with gfortran 6.3.1:
+      ! The temporary ftlRegexes in these expressions leak with gfortran 6.3.1:
 
       !ASSERT(     ('blub atest' .matches. ftlRegex('a')))
       !ASSERT(.not.('blub atest' .matches. ftlRegex('A')))
       !ASSERT(     ('blub atest' .matches. ftlRegex('A', icase=.true.)))
 
-      ! I believe that's a compiler bug. here is a workaround, so that we don't have a leaking testsuite ...
+      ! Apparently they don't have finalization of temporaries implemented at the moment, see:
+      ! https://gcc.gnu.org/bugzilla/show_bug.cgi?id=37336#c27
+
+      ! Here is a workaround, so that we don't have a leaking testsuite ...
 
       call r%New('a')
       ASSERT('blub atest' .matches. r)

@@ -86,7 +86,14 @@ contains
 
       ! Tests with types that need to be cleaned up through a finalizer
 
+      call testLeakyResize
+      call testLeakyReserveAndShrinkToFit
+
+      call testLeakyPushBack
+      call testLeakyPopBack
+
       call testLeakyEraseSingle
+      call testLeakyEraseRange
 
    end subroutine
 
@@ -683,16 +690,147 @@ contains
    end subroutine
 
 
-   subroutine testLeakyEraseSingle
+   subroutine testLeakyResize
+      type(ftlDynArrayLeaky) :: v
+
+      call v%New(1)
+      call v%data(1)%New('first', 1000)
+      call v%Resize(2)
+
+      ASSERT(v%data(1)%name == 'first')
+      ASSERT(size(v%data(1)%dontLeakMe) == 1000)
+
+   end subroutine
+
+
+   subroutine testLeakyReserveAndShrinkToFit
       type(ftlDynArrayLeaky) :: v
 
       call v%New(3)
+      call v%data(1)%New('first', 1000)
+      call v%data(2)%New('second', 2000)
+      call v%Reserve(6)
+      call v%data(3)%New('third', 3000)
 
+      ASSERT(v%Capacity() == 6)
+
+      call v%ShrinkToFit()
+
+      ASSERT(v%Capacity() == 3)
+      ASSERT(v%front%name == 'first')
+      ASSERT(v%back%name  == 'third')
+      ASSERT(size(v) == 3)
+
+   end subroutine
+
+
+   subroutine testLeakyPushBack
+      type(ftlDynArrayLeaky) :: v
+      type(LeakyType) :: l
+      integer :: i
+
+      call v%New()
+      do i = 1, 32
+         call l%New('bla', i)
+         call v%PushBack(l)
+         ASSERT(size(v%back%dontLeakMe) == i)
+      enddo
+
+   end subroutine
+
+
+   subroutine testLeakyPopBack
+      type(ftlDynArrayLeaky) :: v
+      type(LeakyType) :: l
+
+      call v%New(3)
       call v%data(1)%New('first', 1000)
       call v%data(2)%New('second', 2000)
       call v%data(3)%New('third', 3000)
 
-      call v%Delete()
+      ASSERT(v%Size() == 3)
+      ASSERT(v%back%name == 'third')
+
+      l = v%PopBack()
+
+      ASSERT(l%name == 'third')
+      ASSERT(v%Size() == 2)
+      ASSERT(v%back%name == 'second')
+
+      l = v%PopBack()
+
+      ASSERT(l%name == 'second')
+      ASSERT(v%Size() == 1)
+      ASSERT(v%back%name == 'first')
+
+      l = v%PopBack()
+
+      ASSERT(l%name == 'first')
+      ASSERT(v%Size() == 0)
+
+      ! This subroutine leaks with gfortran in the moments. I think the reason is that gfortran does not yet implement
+      ! finalization of temporaries, see: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=37336#c27
+      ! TODO: Workaround?
+
+   end subroutine
+
+
+   subroutine testLeakyEraseSingle
+      type(ftlDynArrayLeaky) :: v
+
+      call v%New(3)
+      call v%data(1)%New('first', 1000)
+      call v%data(2)%New('second', 2000)
+      call v%data(3)%New('third', 3000)
+
+      ASSERT(v%Size() == 3)
+
+      call v%Erase(2)
+
+      ASSERT(v%Size() == 2)
+      ASSERT(v%back%name == 'third')
+
+   end subroutine
+
+
+   subroutine testLeakyEraseRange
+      type(ftlDynArrayLeaky) :: v
+
+      call v%New(10)
+      call v%data( 1)%New('first'  ,  1000)
+      call v%data( 2)%New('second' ,  2000)
+      call v%data( 3)%New('third'  ,  3000)
+      call v%data( 4)%New('fourth' ,  4000)
+      call v%data( 5)%New('fifth'  ,  5000)
+      call v%data( 6)%New('sixth'  ,  6000)
+      call v%data( 7)%New('seventh',  7000)
+      call v%data( 8)%New('eighth' ,  8000)
+      call v%data( 9)%New('nineth' ,  9000)
+      call v%data(10)%New('tenth'  , 10000)
+
+      call v%Erase(2,5)
+      ASSERT(v%Size() == 7)
+      ASSERT(v%data(1)%name == 'first')
+      ASSERT(size(v%data(1)%dontLeakMe) == 1000)
+      ASSERT(v%data(2)%name == 'fifth')
+      ASSERT(size(v%data(2)%dontLeakMe) == 5000)
+      ASSERT(v%back%name == 'tenth')
+      ASSERT(size(v%back%dontLeakMe) == 10000)
+
+      call v%Erase(1,3)
+      ASSERT(v%Size() == 5)
+      ASSERT(v%front%name == 'sixth')
+      ASSERT(size(v%front%dontLeakMe) == 6000)
+      ASSERT(v%data(2)%name == 'seventh')
+      ASSERT(size(v%data(2)%dontLeakMe) == 7000)
+      ASSERT(v%back%name == 'tenth')
+      ASSERT(size(v%back%dontLeakMe) == 10000)
+
+      call v%Erase(4,6)
+      ASSERT(v%Size() == 3)
+      ASSERT(v%data(1)%name == 'sixth')
+      ASSERT(v%data(2)%name == 'seventh')
+      ASSERT(v%data(3)%name == 'eighth')
 
    end subroutine
 
