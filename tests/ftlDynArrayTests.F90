@@ -313,9 +313,16 @@ contains
 
       call v%New([4,5,6,7])
       call v%Reserve(50)
+
       ASSERT(v%Capacity() >= 50)
+      ASSERT(v%front == 4)
+      ASSERT(v%back == 7)
+
       call v%Reserve(30)
+
       ASSERT(v%Capacity() >= 50)
+      ASSERT(v%front == 4)
+      ASSERT(v%back == 7)
 
    end subroutine
 
@@ -325,10 +332,17 @@ contains
 
       call v%New([4,5,6,7])
       call v%Reserve(50)
+
       ASSERT(v%Capacity() >= 50)
+      ASSERT(v%front == 4)
+      ASSERT(v%back == 7)
+
       call v%PushBack(9)
       call v%ShrinkToFit()
+
       ASSERT(v%Capacity() == 5)
+      ASSERT(v%front == 4)
+      ASSERT(v%back == 9)
 
    end subroutine
 
