@@ -590,6 +590,7 @@ contains
 
       if (allocated(self%storage)) then
          self%data => self%storage(1:self%psize)
+         call TriggerFinalizer(self%storage(self%psize+1:)) ! TODO: move this to where elements are actually removed
       else
          nullify(self%data)
       endif
@@ -633,6 +634,15 @@ contains
       class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
 
       call self%changeCapacity(max(2 * self%Capacity(), 1))
+
+   end subroutine
+
+
+
+   elemental subroutine TriggerFinalizer(instance)
+      FTL_TEMPLATE_TYPE_WRAP, intent(out) :: instance
+
+      ! Nothing to do here: intent(out) will finalize the instance and that's all we want
 
    end subroutine
 
