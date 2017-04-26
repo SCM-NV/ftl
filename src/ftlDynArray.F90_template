@@ -394,6 +394,7 @@ contains
       if (n == self%psize) return
 
       if (n > self%Capacity()) call self%ChangeCapacity(n)
+      if (n < self%psize) call TriggerFinalizer(self%storage(n+1:self%psize))
       if (present(val) .and. n > self%psize) self%storage(self%psize+1:n) = val
       self%psize = n
       call self%FixValuePtrs()
@@ -418,14 +419,20 @@ contains
    FTL_TEMPLATE_TYPE_WRAP function PopBack(self)
       class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
 
+#ifdef FTL_TEMPLATE_TYPE_PROVIDES_FTLMOVE
+      call ftlMove(self%storage(self%psize), PopBack)
+#else
       PopBack = self%storage(self%psize)
+      call TriggerFinalizer(self%storage(self%psize))
+#endif
       self%psize = self%psize - 1
       call self%FixValuePtrs()
 
    end function
 
 
-
+   ! TODO: more efficient insert implementation that don't make all of these temporary arrays ...
+   !
    subroutine InsertSingleAtIndex(self, position, val)
       class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
       integer                                       , intent(in)    :: position
@@ -484,7 +491,11 @@ contains
       endif
 
       do i = self%psize, position, -1
+#ifdef FTL_TEMPLATE_TYPE_PROVIDES_FTLMOVE
+         call ftlMove(self%storage(i), self%storage(i+size(array)))
+#else
          self%storage(i+size(array)) = self%storage(i)
+#endif
       enddo
 
       self%storage(position:position+size(array)-1) = array
@@ -553,7 +564,12 @@ contains
       numerased = last - first
 
       do i = first, self%psize - numerased
+#ifdef FTL_TEMPLATE_TYPE_PROVIDES_FTLMOVE
+         call ftlMove(self%storage(i+numerased), self%storage(i))
+#else
          self%storage(i) = self%storage(i+numerased)
+         call TriggerFinalizer(self%storage(i+numerased))
+#endif
       enddo
 
       self%psize = self%psize - numerased
@@ -590,7 +606,6 @@ contains
 
       if (allocated(self%storage)) then
          self%data => self%storage(1:self%psize)
-         call TriggerFinalizer(self%storage(self%psize+1:)) ! TODO: move this to where elements are actually removed
       else
          nullify(self%data)
       endif
@@ -620,7 +635,12 @@ contains
       if (allocated(self%storage)) then
          numretain = min(self%psize, n)
          do i = 1, numretain
+#ifdef FTL_TEMPLATE_TYPE_PROVIDES_FTLMOVE
+            call ftlMove(self%storage(i), newstorage(i))
+#else
             newstorage(i) = self%storage(i)
+            call TriggerFinalizer(self%storage(i))
+#endif
          enddo
       endif
 

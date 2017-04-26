@@ -39,9 +39,7 @@ contains
       call testAssignraw
       call testAssignOther
 
-#if !(defined(__GFORTRAN__) && __GNUC__ < 7)
       call testDerivedTypeIO
-#endif
 
       call testIteratorWriting
 
@@ -130,7 +128,6 @@ contains
    end subroutine
 
 
-#if !(defined(__GFORTRAN__) && __GNUC__ < 7)
    subroutine testDerivedTypeIO
       type(ftlString) :: s
 
@@ -147,7 +144,6 @@ contains
       write (*,'(DT)') s
 
    end subroutine
-#endif
 
 
    subroutine testIteratorWriting

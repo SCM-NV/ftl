@@ -178,7 +178,6 @@ module ftlStringModule
    end interface
 
 
-#if !(defined(__GFORTRAN__) && __GNUC__ < 7)
    ! Derived-type IO
 
    public :: write(formatted)
@@ -191,7 +190,6 @@ module ftlStringModule
       module procedure writeUnformatted
    end interface
 
-#endif
 
 
    ! Free versions of some type-bound procedures:
@@ -532,9 +530,8 @@ contains
 
 
 
-#if !(defined(__GFORTRAN__) && __GNUC__ < 7)
-
    ! =============> Derived-type IO:
+
 
 
    subroutine writeUnformatted(self, unit, iostat, iomsg)
@@ -567,7 +564,6 @@ contains
 
    end subroutine
 
-#endif
 
 
    ! =============> Character wise access:
