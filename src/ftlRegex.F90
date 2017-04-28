@@ -50,7 +50,7 @@ module ftlRegexModule
       procedure            :: PrintError
 
       procedure, public    :: Delete
-      final                :: Finalizer, FinalizerRank1, FinalizerRank2, FinalizerRank3, FinalizerRank4
+      final                :: Finalizer
 
       procedure            :: NumMatchesRaw
       procedure            :: NumMatchesString
@@ -154,9 +154,11 @@ contains
 
 
 
-   subroutine NewCopyOther(self, other)
-      class(ftlRegex), intent(out) :: self
+   impure elemental subroutine NewCopyOther(self, other)
+      class(ftlRegex), intent(inout) :: self
        type(ftlRegex), intent(in)  :: other
+
+      call self%Delete()
 
       if (.not.allocated(other%pattern)) return
 
@@ -254,7 +256,7 @@ contains
 
 
 
-   subroutine Delete(self)
+   impure elemental subroutine Delete(self)
       class(ftlRegex), intent(inout) :: self
 
       if (c_associated(self%preg)) then
@@ -266,73 +268,12 @@ contains
 
    end subroutine
    !
-   subroutine Finalizer(self)
+   impure elemental subroutine Finalizer(self)
       type(ftlRegex), intent(inout) :: self
 
       call self%Delete()
 
    end subroutine
-   !
-   ! Unfortunately we can't make the finalizer elemental, so we have to provide separate array finalizers for all ranks ...
-   ! (It can't be elemental/pure because the c_associated() intrinsic in Delete() is not pure in ifort for some reason.)
-   !
-   subroutine FinalizerRank1(self)
-      type(ftlRegex), intent(inout) :: self(:)
-
-      integer :: i
-
-      do i = 1, size(self)
-         call self(i)%Delete()
-      enddo
-
-   end subroutine
-   !
-   subroutine FinalizerRank2(self)
-      type(ftlRegex), intent(inout) :: self(:,:)
-
-      integer :: i, j
-
-      do j = 1, size(self, 2)
-         do i = 1, size(self, 1)
-            call self(i,j)%Delete()
-         enddo
-      enddo
-
-   end subroutine
-   !
-   subroutine FinalizerRank3(self)
-      type(ftlRegex), intent(inout) :: self(:,:,:)
-
-      integer :: i, j, k
-
-      do k = 1, size(self, 3)
-         do j = 1, size(self, 2)
-            do i = 1, size(self, 1)
-               call self(i,j,k)%Delete()
-            enddo
-         enddo
-      enddo
-
-   end subroutine
-   !
-   subroutine FinalizerRank4(self)
-      type(ftlRegex), intent(inout) :: self(:,:,:,:)
-
-      integer :: i, j, k, l
-
-      do l = 1, size(self, 4)
-         do k = 1, size(self, 3)
-            do j = 1, size(self, 2)
-               do i = 1, size(self, 1)
-                  call self(i,j,k,l)%Delete()
-               enddo
-            enddo
-         enddo
-      enddo
-
-   end subroutine
-   !
-   ! This should be enough. Hopefully nobody needs 5-dimensional arrays of regular expressions ...
 
 
 
