@@ -39,7 +39,9 @@ contains
       call testAssignment
       call testAssignOtherAndNullify
       call testSwap
+      call testMove
       call testArrayFinalization
+      call testArrayAssignment
 
    end subroutine
 
@@ -197,6 +199,41 @@ contains
    end subroutine
 
 
+   subroutine testMove
+      type(ftlSharedPtrInt) :: src, dest
+
+      call src%Allocate()
+      src%value = 42
+
+      ASSERT(src%useCount() == 1)
+      ASSERT(src%Unique())
+      ASSERT(src%Associated())
+      ASSERT(associated(src%value))
+      ASSERT(src%value == 42)
+
+      call dest%Allocate()
+      dest%value = 1750
+
+      ASSERT(dest%useCount() == 1)
+      ASSERT(dest%Unique())
+      ASSERT(dest%Associated())
+      ASSERT(associated(dest%value))
+      ASSERT(dest%value == 1750)
+
+      call ftlMove(src, dest)
+
+      ASSERT(.not.src%Associated())
+      ASSERT(.not.associated(src%value))
+
+      ASSERT(dest%useCount() == 1)
+      ASSERT(dest%Unique())
+      ASSERT(dest%Associated())
+      ASSERT(associated(dest%value))
+      ASSERT(dest%value == 42)
+
+   end subroutine
+
+
    subroutine testArrayFinalization
       type(ftlSharedPtrInt) :: sp(2)
 
@@ -208,6 +245,22 @@ contains
       ASSERT(sp(2)%value == 42)
       ASSERT(sp(1)%UseCount() == 2)
       ASSERT(sp(2)%UseCount() == 2)
+
+   end subroutine
+
+
+   subroutine testArrayAssignment
+      type(ftlSharedPtrInt) :: sp(2)
+      type(ftlSharedPtrInt) :: copy(2)
+
+      call sp(1)%Allocate()
+      sp(1)%value = 42
+      sp(2) = sp(1)
+      copy = sp
+
+      ASSERT(sp(1)%Associated())
+      ASSERT(sp(1)%value == 42)
+      ASSERT(sp(1)%UseCount() == 4)
 
    end subroutine
 
