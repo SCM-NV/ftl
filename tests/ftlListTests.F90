@@ -57,6 +57,7 @@ contains
       call testEraseIteratorPair
 
       call testSwap
+      call testMove
 
       call testResize
 
@@ -481,6 +482,40 @@ contains
       ASSERT(it%value == 5)
       call it%Inc()
       ASSERT(it == o%End())
+
+   end subroutine
+
+
+   subroutine testMove
+      type(ftlListInt) :: src, dest, uninit
+      type(ftlListIntIterator) :: it
+
+      src = [4,7,813,5]
+      dest = [5,9,6]
+
+      call ftlMove(src,dest)
+
+      ASSERT(dest%Size() == 4)
+      ASSERT(dest%front == 4)
+      ASSERT(dest%back == 5)
+
+      it = dest%Begin()
+      ASSERT(it%value == 4)
+      call it%Inc()
+      ASSERT(it%value == 7)
+      call it%Inc()
+      ASSERT(it%value == 813)
+      call it%Inc()
+      ASSERT(it%value == 5)
+      call it%Inc()
+      ASSERT(it == dest%End())
+
+      call ftlMove(uninit,dest)
+
+      ASSERT(dest%Size() == 0)
+      ASSERT(dest%Empty())
+      ASSERT(.not.associated(dest%front))
+      ASSERT(.not.associated(dest%back))
 
    end subroutine
 

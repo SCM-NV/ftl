@@ -137,6 +137,11 @@ module CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Module)
       module procedure SwapList
    end interface
 
+   public :: ftlMove
+   interface ftlMove
+      module procedure ftlMoveList
+   end interface
+
 
 ! ====== Type of an iterator over a ftlList container ============================================================================
 
@@ -553,6 +558,30 @@ contains
       class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
 
       call self%New()
+
+   end subroutine
+
+
+
+   ! =============> FTL methods:
+
+
+
+   subroutine ftlMoveList(src, dest)
+      type(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(inout)         :: src
+      type(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(out)  , target :: dest
+
+      dest%psize = src%psize
+      dest%sentinel = src%sentinel
+      if (associated(dest%sentinel%next)) dest%sentinel%next%prev => dest%sentinel
+      if (associated(dest%sentinel%prev)) dest%sentinel%prev%next => dest%sentinel
+      call dest%FixValuePtrs()
+
+      nullify(src%sentinel%prev)
+      nullify(src%sentinel%next)
+      nullify(src%front)
+      nullify(src%back)
+      src%psize = 0
 
    end subroutine
 
