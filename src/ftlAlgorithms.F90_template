@@ -165,6 +165,12 @@ module CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,AlgorithmsModule)
       module procedure ftlIterSwapPrivate
    end interface
 
+   public :: ftlCopy
+   interface ftlCopy
+      module procedure ftlCopyIterators
+      module procedure ftlCopyContainer
+   end interface
+
    public :: ftlGenerate
    interface ftlGenerate
       module procedure ftlGenerateIterators
@@ -799,16 +805,53 @@ contains
    subroutine ftlIterSwapPrivate(it1, it2)
       type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: it1, it2
 
-#ifdef FTL_TEMPLATE_TYPE_PROVIDES_FTLSWAP
-      call ftlSwap(it1%value, it2%value)
-#else
       FTL_TEMPLATE_TYPE_WRAP :: tmp
 
+#ifdef FTL_TEMPLATE_TYPE_PROVIDES_FTLMOVE
+      call ftlMove(it1%value, tmp)
+      call ftlMove(it2%value, it1%value)
+      call ftlMove(tmp,it2%value)
+#else
       tmp = it1%value
       it1%value = it2%value
       it2%value = tmp
 #endif
    end subroutine
+
+
+
+   ! Copies the elements in the range [first,last) into the range beginning at dest.
+   !
+   ! The function returns an iterator to the end of the destination range (which points to the element following the last
+   ! element copied).
+   !
+   ! The ranges shall not overlap in such a way that dest points to an element in the range [first,last). For such cases,
+   ! see ftlCopyBackward.
+   !
+   function ftlCopyIterators(first, last, dest) result(writer)
+      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last, dest
+      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator))             :: writer
+
+      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: reader
+
+      reader = first
+      writer = dest
+      do while (reader /= last)
+         writer%value = reader%value
+         call reader%Inc()
+         call writer%Inc()
+      enddo
+
+   end function
+   !
+   function ftlCopyContainer(container, dest) result(writer)
+      type(CAT(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME))          , intent(in) :: container
+      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: dest
+      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator))             :: writer
+
+      writer = ftlCopyIterators(container%Begin(), container%End(), dest)
+
+   end function
 
 
 

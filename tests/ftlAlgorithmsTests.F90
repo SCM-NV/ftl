@@ -72,6 +72,8 @@ contains
 
       call testIterSwap
 
+      call testCopy
+
       call testGenerate
 
       ! Partitions:
@@ -305,6 +307,20 @@ contains
 
       ASSERT(all(v%data == [1,2,3,4,5,6]))
       ASSERT(v%front == 1)
+
+   end subroutine
+
+
+   subroutine testCopy
+      type(ftlDynArrayInt) :: src, dest
+      type(ftlDynArrayIntIterator) :: it
+
+      src = [1,2,3,4,5,6]
+      dest = [9,8,7,6,5,4,3,2,1]
+      it = ftlCopy(src, Begin(dest))
+
+      ASSERT(all(dest%data == [1,2,3,4,5,6,3,2,1]))
+      ASSERT(it%value == 3)
 
    end subroutine
 

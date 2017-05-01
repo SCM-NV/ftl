@@ -108,10 +108,10 @@ module CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Module)
 
       procedure, public :: Clear
 
+      procedure         :: FixValuePtrs
+      procedure         :: ShiftByN
       procedure         :: ChangeCapacity
       procedure         :: IncreaseCapacity
-
-      procedure         :: FixValuePtrs
 
    end type
 
@@ -431,14 +431,16 @@ contains
    end function
 
 
-   ! TODO: more efficient insert implementation that don't make all of these temporary arrays ...
-   !
+
    subroutine InsertSingleAtIndex(self, position, val)
       class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
       integer                                       , intent(in)    :: position
       FTL_TEMPLATE_TYPE_WRAP                        , intent(in)    :: val
 
-      call self%InsertArrayAtIndex(position, [val])
+      call self%ShiftByN(position, 1)
+      self%storage(position) = val
+      self%psize = self%psize + 1
+      call self%FixValuePtrs()
 
    end subroutine
    !
@@ -447,7 +449,7 @@ contains
       type(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)    :: position
       FTL_TEMPLATE_TYPE_WRAP                                 , intent(in)    :: val
 
-      call self%InsertArrayAtIndex(position%index, [val])
+      call self%InsertSingleAtIndex(position%index, val)
 
    end subroutine
    !
@@ -457,9 +459,11 @@ contains
       integer                                       , intent(in)    :: n
       FTL_TEMPLATE_TYPE_WRAP                        , intent(in)    :: val
 
-      integer :: i
-
-      call self%InsertArrayAtIndex(position, [(val, i=1,n)])
+      if (n <= 0) return
+      call self%ShiftByN(position, n)
+      self%storage(position:position+n-1) = val
+      self%psize = self%psize + n
+      call self%FixValuePtrs()
 
    end subroutine
    !
@@ -469,9 +473,7 @@ contains
       integer                                                , intent(in)    :: n
       FTL_TEMPLATE_TYPE_WRAP                                 , intent(in)    :: val
 
-      integer :: i
-
-      call self%InsertArrayAtIndex(position%index, [(val, i=1,n)])
+      call self%InsertFillAtIndex(position%index, n, val)
 
    end subroutine
    !
@@ -480,26 +482,8 @@ contains
       integer                                       , intent(in)    :: position
       FTL_TEMPLATE_TYPE_WRAP                        , intent(in)    :: array(:)
 
-      integer :: i
-
-      if (size(array) == 0) return
-
-      if (self%psize + size(array) > 2 * self%Capacity()) then
-         call self%ChangeCapacity(self%psize + size(array))
-      elseif (self%psize + size(array) > self%Capacity()) then
-         call self%IncreaseCapacity()
-      endif
-
-      do i = self%psize, position, -1
-#ifdef FTL_TEMPLATE_TYPE_PROVIDES_FTLMOVE
-         call ftlMove(self%storage(i), self%storage(i+size(array)))
-#else
-         self%storage(i+size(array)) = self%storage(i)
-#endif
-      enddo
-
+      call self%ShiftByN(position, size(array))
       self%storage(position:position+size(array)-1) = array
-
       self%psize = self%psize + size(array)
       call self%FixValuePtrs()
 
@@ -616,6 +600,31 @@ contains
          self%front => self%storage(1)
          self%back => self%storage(self%psize)
       endif
+
+   end subroutine
+
+
+
+   subroutine ShiftByN(self, from, n)
+      class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
+      integer                                       , intent(in)    :: from
+      integer                                       , intent(in)    :: n
+
+      integer :: i
+
+      if (self%psize + n > 2 * self%Capacity()) then
+         call self%ChangeCapacity(self%psize + n)
+      elseif (self%psize + n > self%Capacity()) then
+         call self%IncreaseCapacity()
+      endif
+
+      do i = self%psize, from, -1
+#ifdef FTL_TEMPLATE_TYPE_PROVIDES_FTLMOVE
+         call ftlMove(self%storage(i), self%storage(i+n))
+#else
+         self%storage(i+n) = self%storage(i)
+#endif
+      enddo
 
    end subroutine
 
