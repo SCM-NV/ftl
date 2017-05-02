@@ -351,7 +351,7 @@ contains
       type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator))                :: position
       FTL_TEMPLATE_TYPE_WRAP                             , intent(in)    :: val
 
-      call self%InsertArray(position, [val])
+      call self%InsertFill(position, 1, val)
 
    end subroutine
    !
@@ -363,8 +363,11 @@ contains
 
       integer :: i
 
-      if (n == 0) return
-      call self%InsertArray(position, [(val, i=1,n)])
+      do i = 1, n
+         call InsertNodeBefore(position%node, val)
+      enddo
+      self%psize = self%psize + n
+      call self%FixValuePtrs()
 
    end subroutine
    !
@@ -415,13 +418,17 @@ contains
 
 
 
-   FTL_TEMPLATE_TYPE function PopFront(self)
+   FTL_TEMPLATE_TYPE_WRAP function PopFront(self)
       class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(inout), target :: self
 
       class(ListNode), pointer :: oldfirst
       oldfirst => self%sentinel%next
 
+#ifdef FTL_TEMPLATE_TYPE_PROVIDES_FTLMOVE
+      call ftlMove(self%front, PopFront)
+#else
       PopFront = self%front
+#endif
       self%psize = self%psize - 1
       call UnlinkNode(oldfirst)
       deallocate(oldfirst)
@@ -443,13 +450,17 @@ contains
 
 
 
-   FTL_TEMPLATE_TYPE function PopBack(self)
+   FTL_TEMPLATE_TYPE_WRAP function PopBack(self)
       class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(inout), target :: self
 
       class(ListNode), pointer :: oldlast
       oldlast => self%sentinel%prev
 
+#ifdef FTL_TEMPLATE_TYPE_PROVIDES_FTLMOVE
+      call ftlMove(self%back, PopBack)
+#else
       PopBack = self%back
+#endif
       self%psize = self%psize - 1
       call UnlinkNode(oldlast)
       deallocate(oldlast)
