@@ -39,6 +39,8 @@ contains
       ! Tests of the ftlHashMap container itself:
 
       call testNewDefault
+      call testNewCopyOther
+      call testAssignment
       call testSetAndGet
       call testRehash
       call testIterators
@@ -62,6 +64,100 @@ contains
       ASSERT(um%Size() == 0)
       ASSERT(size(um) == 0)
       ASSERT(um%BucketCount() == 100)
+
+   end subroutine
+
+
+   subroutine testNewCopyOther
+      type(ftlHashMapStrInt) :: um, copy
+
+      call um%New(10)
+      call um%Set('foo ', 42)
+      call um%Set('bar ',  1)
+      call um%Set('test',  2)
+      call um%Set('blub',  3)
+      call um%Set('jipi',  4)
+      call um%Set('fort',  5)
+      call um%Set('ran ',  6)
+      call um%Set('is m',  7)
+      call um%Set('y fa',  8)
+      call um%Set('vour',  9)
+      call um%Set('ite ', 10)
+      call um%Set('lang', 11)
+      call um%Set('not ', 12)
+      call um%Set('rly!', 13)
+
+      call copy%New(um)
+      call um%Delete()
+
+      ASSERT(copy%Size() == 14)
+      ASSERT(size(copy) == 14)
+      ASSERT(copy%Get('foo ') ==  42)
+      ASSERT(copy%Get('bar ') ==  1)
+      ASSERT(copy%Get('test') ==  2)
+      ASSERT(copy%Get('blub') ==  3)
+      ASSERT(copy%Get('jipi') ==  4)
+      ASSERT(copy%Get('fort') ==  5)
+      ASSERT(copy%Get('ran ') ==  6)
+      ASSERT(copy%Get('not ') == 12)
+      ASSERT(copy%Get('vour') ==  9)
+      ASSERT(copy%Get('is m') ==  7)
+      ASSERT(copy%Get('ite ') == 10)
+      ASSERT(copy%Get('y fa') ==  8)
+      ASSERT(copy%Get('lang') == 11)
+      ASSERT(copy%Get('rly!') == 13)
+
+      call copy%New(um)
+
+      ASSERT(copy%Size() == 0)
+      ASSERT(copy%Empty())
+
+   end subroutine
+
+
+   subroutine testAssignment
+      type(ftlHashMapStrInt) :: um, copy
+
+      call um%New(10)
+      call um%Set('foo ', 42)
+      call um%Set('bar ',  1)
+      call um%Set('test',  2)
+      call um%Set('blub',  3)
+      call um%Set('jipi',  4)
+      call um%Set('fort',  5)
+      call um%Set('ran ',  6)
+      call um%Set('is m',  7)
+      call um%Set('y fa',  8)
+      call um%Set('vour',  9)
+      call um%Set('ite ', 10)
+      call um%Set('lang', 11)
+      call um%Set('not ', 12)
+      call um%Set('rly!', 13)
+
+      copy = um
+      call um%Delete()
+
+      ASSERT(copy%Size() == 14)
+      ASSERT(size(copy) == 14)
+      ASSERT(copy%Get('foo ') ==  42)
+      ASSERT(copy%Get('bar ') ==  1)
+      ASSERT(copy%Get('test') ==  2)
+      ASSERT(copy%Get('blub') ==  3)
+      ASSERT(copy%Get('jipi') ==  4)
+      ASSERT(copy%Get('fort') ==  5)
+      ASSERT(copy%Get('ran ') ==  6)
+      ASSERT(copy%Get('not ') == 12)
+      ASSERT(copy%Get('vour') ==  9)
+      ASSERT(copy%Get('is m') ==  7)
+      ASSERT(copy%Get('ite ') == 10)
+      ASSERT(copy%Get('y fa') ==  8)
+      ASSERT(copy%Get('lang') == 11)
+      ASSERT(copy%Get('rly!') == 13)
+
+      copy = um
+
+      ASSERT(copy%Size() == 0)
+      ASSERT(copy%Empty())
 
    end subroutine
 

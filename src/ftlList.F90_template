@@ -328,6 +328,8 @@ contains
 
 
 
+   ! TODO: implement using existing list nodes instead of copy construction
+   !
    impure elemental subroutine AssignOther(self, other)
       class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
       class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(in)    :: other

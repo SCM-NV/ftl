@@ -16,11 +16,6 @@
 ! with the Fortran Template Library.  If not, see <http://www.gnu.org/licenses/>.
 
 
-!   ftlRegex
-!   ========
-!
-! TODO: description
-
 module ftlRegexModule
 
    use iso_c_binding
