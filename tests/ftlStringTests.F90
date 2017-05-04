@@ -45,6 +45,7 @@ contains
 
       call testHash
       call testSwap
+      call testMove
 
       call testStringFromNumeric
       call testStringToNumeric
@@ -199,6 +200,25 @@ contains
 
       ASSERT(s1 == '')
       ASSERT(uninit == 'other string')
+
+   end subroutine
+
+
+   subroutine testMove
+      type(ftlString) :: s1, s2, uninit
+
+      s1 = 'one string'
+      ASSERT(s2 == '')
+
+      call ftlMove(s1, s2)
+
+      ASSERT(s1 == '')
+      ASSERT(s2 == 'one string')
+
+      call ftlMove(uninit, s2)
+
+      ASSERT(s2 == '')
+      ASSERT(uninit == '')
 
    end subroutine
 

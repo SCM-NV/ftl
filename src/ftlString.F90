@@ -288,6 +288,11 @@ module ftlStringModule
       module procedure ftlSwapString
    end interface
 
+   public :: ftlMove
+   interface ftlMove
+      module procedure ftlMoveString
+   end interface
+
 
 ! ====== Type of an iterator over a ftlString container ==========================================================================
 
@@ -1530,6 +1535,20 @@ contains
       call move_alloc(str1%raw, tmp)
       call move_alloc(str2%raw, str1%raw)
       call move_alloc(tmp, str2%raw)
+
+   end subroutine
+
+
+
+   subroutine ftlMoveString(src, dest)
+      type(ftlString), intent(inout) :: src
+      type(ftlString), intent(out)   :: dest
+
+      if (allocated(src%raw)) then
+         call move_alloc(src%raw, dest%raw)
+      else
+         if (allocated(dest%raw)) deallocate(dest%raw)
+      endif
 
    end subroutine
 
