@@ -32,11 +32,13 @@ ifeq ($(PLATFORM), gnu)
 	FLAGS = -std=f2008 -fall-intrinsics -ffree-line-length-none -Wall -Wextra -Wpedantic -Wno-target-lifetime -Wno-compare-reals -J$(BUILDDIR)
 	CXXCOMPILER = g++
 	CXXFLAGS = -std=c++11 -Ofast -march=native
+	SUPPRESSIONS = --suppressions=gfortran.supp
 else ifeq ($(PLATFORM), intel)
 	COMPILER = ifort
 	FLAGS = -stand f03 -assume realloc_lhs -warn -diag-disable=5268 -module $(BUILDDIR)
 	CXXCOMPILER = g++
 	CXXFLAGS = -std=c++11 -fast -xHost
+	SUPPRESSIONS =
 else
   $(error unrecognized PLATFORM)
 endif
@@ -66,7 +68,7 @@ test: $(BUILDDIR)/tests
 	./$(BUILDDIR)/tests
 
 memcheck: $(BUILDDIR)/tests
-	valgrind --leak-check=yes ./$(BUILDDIR)/tests
+	valgrind --leak-check=yes $(SUPPRESSIONS) ./$(BUILDDIR)/tests
 
 perftest: $(BUILDDIR)/perftest_sortDynArrayInt $(BUILDDIR)/perftest_sortDynArrayInt_ref $(BUILDDIR)/perftest_countDistinctWords
 	./$(BUILDDIR)/perftest_countDistinctWords

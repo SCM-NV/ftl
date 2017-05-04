@@ -1,0 +1,94 @@
+{
+   <Finalization of function return values not implemented in gfortran 7>
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:malloc
+   fun:__leakymodule_MOD_assignother
+   fun:__ftllistleakymodule_MOD_popback
+   fun:__ftllisttestsmodule_MOD_testleakypushpopback
+   fun:__ftllisttestsmodule_MOD_ftllisttests
+   fun:MAIN__
+   fun:main
+}
+{
+   <Finalization of function return values not implemented in gfortran 7>
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:malloc
+   fun:__leakymodule_MOD_assignother
+   fun:__ftllistmovableleakymodule_MOD_insertnodeafter
+   fun:__ftllistmovableleakymodule_MOD_pushback
+   fun:__ftllisttestsmodule_MOD_testmovableleakypushpopback
+   fun:__ftllisttestsmodule_MOD_ftllisttests
+   fun:MAIN__
+   fun:main
+}
+{
+   <Finalization of function return values not implemented in gfortran 7>
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:malloc
+   fun:__leakymodule_MOD_assignother
+   fun:__ftldynarrayleakymodule_MOD_popback
+   fun:__ftldynarraytestsmodule_MOD_testleakypopback
+   fun:__ftldynarraytestsmodule_MOD_ftldynarraytests
+   fun:MAIN__
+   fun:main
+}
+{
+   <Finalization of function return values not implemented in gfortran 7>
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:malloc
+   fun:__leakymodule_MOD_new
+   fun:__ftldynarraytestsmodule_MOD_testmovableleakypopback
+   fun:__ftldynarraytestsmodule_MOD_ftldynarraytests
+   fun:MAIN__
+   fun:main
+}
+{
+   <Finalization of function return values not implemented in gfortran 7>
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:malloc
+   fun:__leakymodule_MOD_assignother
+   fun:__ftldynarrayleakymodule_MOD_popback
+   fun:__ftldynarraytestsmodule_MOD_testleakypopback
+   fun:__ftldynarraytestsmodule_MOD_ftldynarraytests
+   fun:MAIN__
+   fun:main
+}
+{
+   <Finalization of function return values not implemented in gfortran 7>
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:malloc
+   fun:__leakymodule_MOD_new
+   fun:__ftldynarraytestsmodule_MOD_testmovableleakypopback
+   fun:__ftldynarraytestsmodule_MOD_ftldynarraytests
+   fun:MAIN__
+   fun:main
+}
+{
+   <Finalization of function return values not implemented in gfortran 7>
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:malloc
+   fun:__leakymodule_MOD_assignother
+   fun:__ftldynarrayleakymodule_MOD_popback
+   fun:__ftldynarraytestsmodule_MOD_testleakypopback
+   fun:__ftldynarraytestsmodule_MOD_ftldynarraytests
+   fun:MAIN__
+   fun:main
+}
+{
+   <Finalization of function return values not implemented in gfortran 7>
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:malloc
+   fun:__leakymodule_MOD_new
+   fun:__ftldynarraytestsmodule_MOD_testmovableleakypopback
+   fun:__ftldynarraytestsmodule_MOD_ftldynarraytests
+   fun:MAIN__
+   fun:main
+}
