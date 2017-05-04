@@ -1544,11 +1544,7 @@ contains
       type(ftlString), intent(inout) :: src
       type(ftlString), intent(out)   :: dest
 
-      if (allocated(src%raw)) then
-         call move_alloc(src%raw, dest%raw)
-      else
-         if (allocated(dest%raw)) deallocate(dest%raw)
-      endif
+      call move_alloc(src%raw, dest%raw)
 
    end subroutine
 
