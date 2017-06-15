@@ -68,13 +68,13 @@ endif
 libftl: $(BUILDDIR)/libftl.so
 
 install: libftl
-	mkdir -p $(PREFIX)/lib/ftl/$(PLATFORM)
-	cp $(BUILDDIR)/libftl.so $(PREFIX)/lib/ftl/$(PLATFORM)/
-	cp $(BUILDDIR)/ftlhashmodule.mod $(PREFIX)/lib/ftl/$(PLATFORM)/
-	cp $(BUILDDIR)/ftlregexmodule.mod $(PREFIX)/lib/ftl/$(PLATFORM)/
-	cp $(BUILDDIR)/ftlstringmodule.mod $(PREFIX)/lib/ftl/$(PLATFORM)/
-	mkdir -p $(PREFIX)/include
-	cp src/*.F90_template $(PREFIX)/include
+	mkdir -p $(PREFIX)/lib
+	cp $(BUILDDIR)/libftl.so $(PREFIX)/lib/
+	mkdir -p $(PREFIX)/include/ftl
+	cp $(BUILDDIR)/ftlhashmodule.mod $(PREFIX)/include/ftl
+	cp $(BUILDDIR)/ftlregexmodule.mod $(PREFIX)/include/ftl
+	cp $(BUILDDIR)/ftlstringmodule.mod $(PREFIX)/include/ftl
+	cp src/*.F90_template $(PREFIX)/include/ftl
 
 test: $(BUILDDIR)/tests
 	./$(BUILDDIR)/tests
