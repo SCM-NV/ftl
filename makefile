@@ -23,6 +23,7 @@ MAKEFLAGS += --no-builtin-rules
 PLATFORM ?= gnu
 BUILD ?= debug
 BUILDDIR = build.$(PLATFORM).$(BUILD)
+PREFIX ?= /usr/local
 
 INCLUDES = -Isrc -Itests
 DEFINES =
@@ -64,6 +65,17 @@ endif
 
 # Make commands:
 
+libftl: $(BUILDDIR)/libftl.so
+
+install: libftl
+	mkdir -p $(PREFIX)/lib/ftl/$(PLATFORM)
+	cp $(BUILDDIR)/libftl.so $(PREFIX)/lib/ftl/$(PLATFORM)/
+	cp $(BUILDDIR)/ftlhashmodule.mod $(PREFIX)/lib/ftl/$(PLATFORM)/
+	cp $(BUILDDIR)/ftlregexmodule.mod $(PREFIX)/lib/ftl/$(PLATFORM)/
+	cp $(BUILDDIR)/ftlstringmodule.mod $(PREFIX)/lib/ftl/$(PLATFORM)/
+	mkdir -p $(PREFIX)/include
+	cp src/*.F90_template $(PREFIX)/include
+
 test: $(BUILDDIR)/tests
 	./$(BUILDDIR)/tests
 
@@ -84,6 +96,12 @@ clean:
 
 cleanall:
 	rm -rf build.* src/configure_ftlRegex.inc
+
+
+# Shared library of non-template components:
+
+$(BUILDDIR)/libftl.so: $(BUILDDIR)/ftlString.o $(BUILDDIR)/ftlHash.o $(BUILDDIR)/ftlRegex.o
+	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) $^ $(LDFLAGS) -shared -o $@
 
 
 # Unit tests:
@@ -185,13 +203,13 @@ $(BUILDDIR)/ftlSharedPtrInt.o: instantiations/ftlSharedPtrInt.F90 src/ftlSharedP
 # Non-template FTL modules:
 
 $(BUILDDIR)/ftlHash.o: src/ftlHash.F90 | $(BUILDDIR)
-	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
+	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -fPIC -c $< -o $@
 
 $(BUILDDIR)/ftlString.o: src/ftlString.F90 $(BUILDDIR)/ftlHash.o | $(BUILDDIR)
-	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
+	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -fPIC -c $< -o $@
 
 $(BUILDDIR)/ftlRegex.o: src/ftlRegex.F90 src/configure_ftlRegex.inc $(BUILDDIR)/ftlString.o | $(BUILDDIR)
-	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
+	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -fPIC -c $< -o $@
 
 src/configure_ftlRegex.inc: configure/configure_ftlRegex.c
 	$(CXXCOMPILER) $(DEFINES) configure/configure_ftlRegex.c -o configure/configure_ftlRegex
