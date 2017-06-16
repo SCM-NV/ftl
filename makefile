@@ -75,6 +75,7 @@ install: libftl
 	cp $(BUILDDIR)/ftlregexmodule.mod $(PREFIX)/include/ftl
 	cp $(BUILDDIR)/ftlstringmodule.mod $(PREFIX)/include/ftl
 	cp src/*.F90_template $(PREFIX)/include/ftl
+	cp src/ftlMacros.inc $(PREFIX)/include/ftl
 
 test: $(BUILDDIR)/tests
 	./$(BUILDDIR)/tests
