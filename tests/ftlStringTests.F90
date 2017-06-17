@@ -346,6 +346,18 @@ contains
       ASSERT(s1 /= s2)
       ASSERT('bar' /= s1)
 
+      ! cases with trailing spaces:
+
+      s1 = 'test '
+      s2 = 'test  '
+
+      ASSERT(.not.(s1 == 'test'))
+      ASSERT(s1 /= 'test')
+      ASSERT(.not.('test' == s1))
+      ASSERT('test' /= s1)
+      ASSERT(s1 /= s2)
+      ASSERT(.not.(s1 == s2))
+
    end subroutine
 
 

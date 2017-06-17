@@ -128,6 +128,16 @@ module ftlStringModule
       ! Other string methods:
       procedure, public :: CountWords
 
+      ! Derived-type IO
+      procedure         :: writeUnformatted
+      generic  , public :: write(unformatted) => writeUnformatted
+      procedure         :: writeFormatted
+      generic  , public :: write(formatted) => writeFormatted
+      procedure         :: readUnformatted
+      generic  , public :: read(unformatted) => readUnformatted
+      procedure         :: readFormatted
+      generic  , public :: read(formatted) => readFormatted
+
       ! Overloaded operators:
 
       generic  , public :: assignment(=) => NewCopyOther, NewFromRaw
@@ -176,20 +186,6 @@ module ftlStringModule
       module procedure NewFromComplexConstr
       module procedure NewFromLogicalConstr
    end interface
-
-
-   ! Derived-type IO
-
-   public :: write(formatted)
-   interface write(formatted)
-      module procedure writeFormatted
-   end interface
-
-   public :: write(unformatted)
-   interface write(unformatted)
-      module procedure writeUnformatted
-   end interface
-
 
 
    ! Free versions of some type-bound procedures:
@@ -292,6 +288,7 @@ module ftlStringModule
    interface ftlMove
       module procedure ftlMoveString
    end interface
+
 
 
 ! ====== Type of an iterator over a ftlString container ==========================================================================
@@ -571,6 +568,29 @@ contains
 
 
 
+   subroutine readUnformatted(self, unit, iostat, iomsg)
+      class(ftlString), intent(inout) :: self
+      integer         , intent(in)    :: unit
+      integer         , intent(out)   :: iostat
+      character(len=*), intent(inout) :: iomsg
+
+      call self%ReadLine(unit, iostat)
+
+   end
+   !
+   subroutine readFormatted(self, unit, iotype, vlist, iostat, iomsg)
+      class(ftlString), intent(inout) :: self
+      integer         , intent(in)    :: unit
+      character(len=*), intent(in)    :: iotype
+      integer         , intent(in)    :: vlist(:)
+      integer         , intent(out)   :: iostat
+      character(len=*), intent(inout) :: iomsg
+
+      call self%ReadLine(unit, iostat)
+
+   end
+
+
    ! =============> Character wise access:
 
 
@@ -596,7 +616,9 @@ contains
       class(ftlString), intent(in) :: lhs
        type(ftlString), intent(in) :: rhs
 
-      if (allocated(lhs%raw) .and. allocated(rhs%raw)) then
+      if (len(lhs) /= len(rhs)) then
+         equal = .false.
+      else if (allocated(lhs%raw) .and. allocated(rhs%raw)) then
          equal = (lhs%raw == rhs%raw)
       else if (allocated(lhs%raw)) then
          equal = (lhs%raw == '')
@@ -612,7 +634,9 @@ contains
       class(ftlString), intent(in) :: lhs
       character(len=*), intent(in) :: rhs
 
-      if (allocated(lhs%raw)) then
+      if (len(lhs) /= len(rhs)) then
+         equal = .false.
+      else if (allocated(lhs%raw)) then
          equal = (lhs%raw == rhs)
       else
          equal = (rhs == '')
@@ -624,7 +648,9 @@ contains
       character(len=*), intent(in) :: lhs
       class(ftlString), intent(in) :: rhs
 
-      if (allocated(rhs%raw)) then
+      if (len(lhs) /= len(rhs)) then
+         equal = .false.
+      else if (allocated(rhs%raw)) then
          equal = (lhs == rhs%raw)
       else
          equal = (lhs == '')
