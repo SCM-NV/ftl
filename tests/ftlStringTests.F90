@@ -66,6 +66,7 @@ contains
       call testCount
       call testPartition
       call testSplit
+      call testJoin
       call testStartsWith
       call testUpperLower
       call testReplace
@@ -642,6 +643,40 @@ contains
       ASSERT(words(7) == 'weird')
       ASSERT(words(8) == 'whitespacing')
       ASSERT(words(9) == 'issues.')
+
+   end subroutine
+
+
+   subroutine testJoin
+      type(ftlString) :: sep, emptysep
+      type(ftlString), allocatable :: words(:)
+
+      allocate(words(4))
+      words(1) = 'test'
+      words(2) = 'this'
+      words(3) = 'stuff'
+      ! words(4) intentionally uninitialized
+
+      sep = ':'
+
+      ASSERT(sep%Join(words(1:1)) == 'test')
+      ASSERT(sep%Join(words(1:2)) == 'test:this')
+      ASSERT(sep%Join(words(1:3)) == 'test:this:stuff')
+      ASSERT(sep%Join(words(1:4)) == 'test:this:stuff:')
+
+      sep = ''
+
+      ASSERT(sep%Join(words(1:1)) == 'test')
+      ASSERT(sep%Join(words(1:2)) == 'testthis')
+      ASSERT(sep%Join(words(1:3)) == 'testthisstuff')
+      ASSERT(sep%Join(words(1:4)) == 'testthisstuff')
+
+      ! test with uninitialized separator
+
+      ASSERT(emptysep%Join(words(1:1)) == 'test')
+      ASSERT(emptysep%Join(words(1:2)) == 'testthis')
+      ASSERT(emptysep%Join(words(1:3)) == 'testthisstuff')
+      ASSERT(emptysep%Join(words(1:4)) == 'testthisstuff')
 
    end subroutine
 

@@ -107,6 +107,7 @@ module ftlStringModule
       procedure         :: PartitionOther
       generic  , public :: Partition => PartitionRaw, PartitionOther
       procedure, public :: Split
+      procedure, public :: Join
       procedure         :: StartsWithRaw
       procedure         :: StartsWithOther
       procedure         :: StartsWithArray
@@ -1212,6 +1213,47 @@ contains
        type(ftlString)             :: partition(3)
 
       partition = self%PartitionRaw(sep%raw)
+
+   end function
+
+
+
+   ! Return a string which is the concatenation of the strings in array. The separator between elements is the string
+   ! providing this method.
+   !
+   function Join(self, words) result(joined)
+      class(ftlString), intent(in)  :: self
+       type(ftlString), intent(in)  :: words(:)
+       type(ftlString)              :: joined
+
+      integer :: joinedLen, wordIdx, writer
+
+      if (size(words) == 0) then
+         joined = ''
+      else if (size(words) == 1) then
+         joined = words(1)
+      else
+
+         ! calculate the length of the resulting string
+         joinedLen = (size(words) - 1) * len(self)
+         do wordIdx = 1, size(words)
+            joinedLen = joinedLen + len(words(wordIdx))
+         enddo
+
+         ! allocate output string with the correct length
+         joined = repeat('_', joinedLen)
+
+         ! write word by word
+         joined%raw(1:len(words(1))) = words(1)%raw
+         writer = len(words(1)) + 1
+         do wordIdx = 2, size(words)
+            joined%raw(writer:writer+len(self)-1) = self%raw
+            writer = writer + len(self)
+            joined%raw(writer:writer+len(words(wordIdx))-1) = words(wordIdx)%raw
+            writer = writer + len(words(wordIdx))
+         enddo
+
+      endif
 
    end function
 
