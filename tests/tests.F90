@@ -43,7 +43,7 @@ program tests
    write (*,'(A,I0,A,I0)') 'Failed assertions: ',num_failed,'/',num_asserts
    if (num_failed > 0) then
       write (*,'(A)') 'TEST FAILED'
-      stop num_failed
+      error stop
    else
       write (*,'(A)') 'TEST PASSED'
    endif

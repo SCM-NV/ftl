@@ -129,16 +129,6 @@ module ftlStringModule
       ! Other string methods:
       procedure, public :: CountWords
 
-      ! Derived-type IO
-      procedure         :: writeUnformatted
-      generic  , public :: write(unformatted) => writeUnformatted
-      procedure         :: writeFormatted
-      generic  , public :: write(formatted) => writeFormatted
-      procedure         :: readUnformatted
-      generic  , public :: read(unformatted) => readUnformatted
-      procedure         :: readFormatted
-      generic  , public :: read(formatted) => readFormatted
-
       ! Overloaded operators:
 
       generic  , public :: assignment(=) => NewCopyOther, NewFromRaw
@@ -186,6 +176,29 @@ module ftlStringModule
       module procedure NewFromRealConstr
       module procedure NewFromComplexConstr
       module procedure NewFromLogicalConstr
+   end interface
+
+
+   ! Derived-type IO
+
+   public :: write(formatted)
+   interface write(formatted)
+      module procedure writeFormatted
+   end interface
+
+   public :: write(unformatted)
+   interface write(unformatted)
+      module procedure writeUnformatted
+   end interface
+
+   public :: read(formatted)
+   interface read(formatted)
+      module procedure readFormatted
+   end interface
+
+   public :: read(unformatted)
+   interface read(unformatted)
+      module procedure readUnformatted
    end interface
 
 
@@ -577,7 +590,7 @@ contains
 
       call self%ReadLine(unit, iostat)
 
-   end
+   end subroutine
    !
    subroutine readFormatted(self, unit, iotype, vlist, iostat, iomsg)
       class(ftlString), intent(inout) :: self
@@ -589,7 +602,7 @@ contains
 
       call self%ReadLine(unit, iostat)
 
-   end
+   end subroutine
 
 
    ! =============> Character wise access:
@@ -823,7 +836,11 @@ contains
    pure integer function ftlLen(self)
       class(ftlString), intent(in) :: self
 
-      ftlLen = len(self%raw)
+      if (allocated(self%raw)) then
+         ftlLen = len(self%raw)
+      else
+         ftlLen = 0
+      endif
 
    end function
 
@@ -832,7 +849,11 @@ contains
    pure integer function ftlLenTrim(self)
       class(ftlString), intent(in) :: self
 
-      ftlLenTrim = len_trim(self%raw)
+      if (allocated(self%raw)) then
+         ftlLenTrim = len_trim(self%raw)
+      else
+         ftlLenTrim = 0
+      endif
 
    end function
 
@@ -841,7 +862,7 @@ contains
    pure type(ftlString) function ftlTrim(str)
       class(ftlString), intent(in) :: str
 
-      ftlTrim%raw = trim(str%raw)
+      if (allocated(str%raw)) ftlTrim%raw = trim(str%raw)
 
    end function
 
@@ -850,7 +871,7 @@ contains
    pure type(ftlString) function ftlAdjustl(str)
       class(ftlString), intent(in) :: str
 
-      ftlAdjustl%raw = adjustl(str%raw)
+      if (allocated(str%raw)) ftlAdjustl%raw = adjustl(str%raw)
 
    end function
 
@@ -859,7 +880,7 @@ contains
    pure type(ftlString) function ftlAdjustr(str)
       class(ftlString), intent(in) :: str
 
-      ftlAdjustr%raw = adjustr(str%raw)
+         if (allocated(str%raw)) ftlAdjustr%raw = adjustr(str%raw)
 
    end function
 
@@ -869,7 +890,7 @@ contains
       class(ftlString), intent(in) :: str
       integer         , intent(in) :: i
 
-      ftlRepeat%raw = repeat(str%raw,i)
+      if (allocated(str%raw)) ftlRepeat%raw = repeat(str%raw,i)
 
    end function
 
@@ -1226,7 +1247,15 @@ contains
        type(ftlString), intent(in)  :: words(:)
        type(ftlString)              :: joined
 
+      character(len=:), allocatable :: sep
       integer :: joinedLen, wordIdx, writer
+
+      ! only for making this work with uninitialized selfs ...
+      if (allocated(self%raw)) then
+         sep = self%raw
+      else
+         sep = ''
+      endif
 
       if (size(words) == 0) then
          joined = ''
@@ -1235,7 +1264,7 @@ contains
       else
 
          ! calculate the length of the resulting string
-         joinedLen = (size(words) - 1) * len(self)
+         joinedLen = (size(words) - 1) * len(sep)
          do wordIdx = 1, size(words)
             joinedLen = joinedLen + len(words(wordIdx))
          enddo
@@ -1247,10 +1276,12 @@ contains
          joined%raw(1:len(words(1))) = words(1)%raw
          writer = len(words(1)) + 1
          do wordIdx = 2, size(words)
-            joined%raw(writer:writer+len(self)-1) = self%raw
-            writer = writer + len(self)
-            joined%raw(writer:writer+len(words(wordIdx))-1) = words(wordIdx)%raw
-            writer = writer + len(words(wordIdx))
+            joined%raw(writer:writer+len(sep)-1) = sep
+            writer = writer + len(sep)
+            if (allocated(words(wordIdx)%raw)) then
+               joined%raw(writer:writer+len(words(wordIdx))-1) = words(wordIdx)%raw
+               writer = writer + len(words(wordIdx))
+            endif
          enddo
 
       endif
