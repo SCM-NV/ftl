@@ -28,6 +28,7 @@ program tests
    use ftlHashMapTestsModule
    use ftlSharedPtrTestsModule
    use ftlAlgorithmsTestsModule
+   use integrationTestsModule
 
    ! dummy assertion to test that assertions themselves work ...
    ASSERT(.false.)
@@ -39,6 +40,7 @@ program tests
    call ftlHashMapTests
    call ftlSharedPtrTests
    call ftlAlgorithmsTests
+   call integrationTests
 
    write (*,'(A,I0,A,I0)') 'Failed assertions: ',num_failed,'/',num_asserts
    if (num_failed > 0) then

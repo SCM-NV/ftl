@@ -107,6 +107,7 @@ module ftlStringModule
       procedure         :: PartitionOther
       generic  , public :: Partition => PartitionRaw, PartitionOther
       procedure, public :: Split
+      procedure, public :: SplitLines
       procedure, public :: Join
       procedure         :: StartsWithRaw
       procedure         :: StartsWithOther
@@ -1294,6 +1295,8 @@ contains
    ! maxsplit splits are done (thus, the list will have at most maxsplit+1 elements). If maxsplit is not specified or
    ! -1, then there is no limit on the number of splits (all possible splits are made).
    !
+   ! TODO: version taking ftlString sep
+   !
    function Split(self, sep, maxsplit) result(words)
       class(ftlString), intent(in)           :: self
       character(len=*), intent(in), optional :: sep
@@ -1310,6 +1313,8 @@ contains
          ! (for example, '1,,2'%split(',') returns ['1', '', '2']). The sep argument may consist of multiple characters
          ! (for example, '1<>2<>3'%split('<>') returns ['1', '2', '3']). Splitting an empty string with a specified
          ! separator returns [''].
+
+         allocate(words(self%Count(sep)))
 
          stop 'TODO'
 
@@ -1336,6 +1341,20 @@ contains
          enddo
 
       endif
+
+   end function
+
+
+
+   ! TODO: docstring
+   !
+   function SplitLines(self) result(words)
+      class(ftlString), intent(in)  :: self
+      type(ftlString) , allocatable :: words(:)
+
+      ! TODO: handle different styles of new line characters (windows, etc.)
+
+      words = self%Split(FTL_STRING_NEWLINE)
 
    end function
 

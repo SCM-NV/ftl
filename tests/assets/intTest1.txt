@@ -1,0 +1,14 @@
+This is a text file with a couple of different lines.
+Some of these lines need to be removed.
+And in some of the lines we need to change a few numbers.
+### REMOVE this line and add 1 to the first number in the next line!
+text 4
+Just some random filler text.
+### REMOVE this line and add 1 to the first number in the next line!
+Another line in which we want to replace 3 with 4.
+Random filler. Random filler.
+rANDOM FILLER. rANDOM FILLER.
+### REMOVE this line and add 1 to the first number in the next line!
+text 6 (<-- replace this with 7)
+Random filler. Random filler.
+RANDOM FILLER. RANDOM FILLER.
