@@ -39,6 +39,8 @@ contains
       call testAssignraw
       call testAssignOther
 
+      call testAllocated
+
       call testDerivedTypeIO
 
       call testIteratorWriting
@@ -130,6 +132,26 @@ contains
    end subroutine
 
 
+   subroutine testAllocated
+      type(ftlString) :: s1
+      type(ftlString), allocatable :: s2
+
+      ASSERT(.not.s1%Allocated())
+      s1 = 'test'
+      ASSERT(s1%Allocated())
+
+      ASSERT(.not.allocated(s2))
+      allocate(s2)
+      ASSERT(allocated(s2))
+      ASSERT(.not.s2%Allocated())
+      s2 = 'test2'
+      ASSERT(allocated(s2))
+      ASSERT(s2%Allocated())
+
+   end subroutine
+
+
+
    subroutine testDerivedTypeIO
       type(ftlString) :: s
 
@@ -199,7 +221,7 @@ contains
 
       call ftlSwap(s1, uninit)
 
-      ASSERT(s1 == '')
+      ASSERT(.not.s1%Allocated())
       ASSERT(uninit == 'other string')
 
    end subroutine
@@ -209,17 +231,17 @@ contains
       type(ftlString) :: s1, s2, uninit
 
       s1 = 'one string'
-      ASSERT(s2 == '')
+      ASSERT(.not.s2%Allocated())
 
       call ftlMove(s1, s2)
 
-      ASSERT(s1 == '')
+      ASSERT(.not.s1%Allocated())
       ASSERT(s2 == 'one string')
 
       call ftlMove(uninit, s2)
 
-      ASSERT(s2 == '')
-      ASSERT(uninit == '')
+      ASSERT(.not.s2%Allocated())
+      ASSERT(.not.uninit%Allocated())
 
    end subroutine
 
@@ -648,14 +670,14 @@ contains
 
 
    subroutine testJoin
-      type(ftlString) :: sep, emptysep
+      type(ftlString) :: sep
       type(ftlString), allocatable :: words(:)
 
       allocate(words(5))
       words(1) = 'test'
       words(2) = 'this'
       words(3) = 'stuff'
-      ! words(4) intentionally uninitialized
+      words(4) = ''
       words(5) = 'thoroughly'
 
       sep = ':'
@@ -666,6 +688,14 @@ contains
       ASSERT(sep%Join(words(1:4)) == 'test:this:stuff:')
       ASSERT(sep%Join(words(1:5)) == 'test:this:stuff::thoroughly')
 
+      sep = '=='
+
+      ASSERT(sep%Join(words(1:1)) == 'test')
+      ASSERT(sep%Join(words(1:2)) == 'test==this')
+      ASSERT(sep%Join(words(1:3)) == 'test==this==stuff')
+      ASSERT(sep%Join(words(1:4)) == 'test==this==stuff==')
+      ASSERT(sep%Join(words(1:5)) == 'test==this==stuff====thoroughly')
+
       sep = ''
 
       ASSERT(sep%Join(words(1:1)) == 'test')
@@ -673,14 +703,6 @@ contains
       ASSERT(sep%Join(words(1:3)) == 'testthisstuff')
       ASSERT(sep%Join(words(1:4)) == 'testthisstuff')
       ASSERT(sep%Join(words(1:5)) == 'testthisstuffthoroughly')
-
-      ! test with uninitialized separator
-
-      ASSERT(emptysep%Join(words(1:1)) == 'test')
-      ASSERT(emptysep%Join(words(1:2)) == 'testthis')
-      ASSERT(emptysep%Join(words(1:3)) == 'testthisstuff')
-      ASSERT(emptysep%Join(words(1:4)) == 'testthisstuff')
-      ASSERT(emptysep%Join(words(1:5)) == 'testthisstuffthoroughly')
 
    end subroutine
 

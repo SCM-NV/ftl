@@ -25,8 +25,6 @@
 ! that operate on strings. These are mostly taken from the Python string, which provides a more convenient interface than
 ! C++'s std::string.
 
-! TODO: consistent behaviour for uninitialized ftlStrings (should behave like '')
-
 #define FTL_CONTAINER ftlString
 #define FTL_CONTAINER_PROVIDES_RANDOM_ACCESS_ITERATOR
 
@@ -71,6 +69,8 @@ module ftlStringModule
       procedure         :: NewFromLogical
       generic  , public :: New => NewDefault, NewCopyOther, NewFromRaw, NewFromInt, NewFromReal, NewFromComplex, NewFromLogical
 
+      procedure         :: AllocatedString
+      generic  , public :: Allocated => AllocatedString
       procedure, public :: Delete
 
       procedure, public :: Size => ftlLen
@@ -534,6 +534,16 @@ contains
 
 
 
+   ! Checks whether an ftlString is initialized (that is the raw string is allocated)
+   !
+   pure logical function AllocatedString(self)
+      class(ftlString), intent(in) :: self
+
+      AllocatedString = allocated(self%raw)
+
+   end function
+
+
 
    ! Destroys the ftlString object. This deallocates all the storage capacity allocated by the ftlString.
    !
@@ -556,11 +566,7 @@ contains
       integer         , intent(out)   :: iostat
       character(len=*), intent(inout) :: iomsg
 
-      if (allocated(self%raw)) then
-         write (unit, iostat=iostat, iomsg=iomsg) self%raw
-      else
-         write (unit, iostat=iostat, iomsg=iomsg) ''
-      endif
+      write (unit, iostat=iostat, iomsg=iomsg) self%raw
 
    end subroutine
    !
@@ -572,11 +578,7 @@ contains
       integer         , intent(out)   :: iostat
       character(len=*), intent(inout) :: iomsg
 
-      if (allocated(self%raw)) then
-         write (unit, '(A)', iostat=iostat, iomsg=iomsg) self%raw
-      else
-         write (unit, '(A)', iostat=iostat, iomsg=iomsg) ''
-      endif
+      write (unit, '(A)', iostat=iostat, iomsg=iomsg) self%raw
 
    end subroutine
 
@@ -630,16 +632,10 @@ contains
       class(ftlString), intent(in) :: lhs
        type(ftlString), intent(in) :: rhs
 
-      if (len(lhs) /= len(rhs)) then
+      if (len(lhs) /= len(rhs)) then ! because raw Fortran strings of unequal length can compare equal
          equal = .false.
-      else if (allocated(lhs%raw) .and. allocated(rhs%raw)) then
-         equal = (lhs%raw == rhs%raw)
-      else if (allocated(lhs%raw)) then
-         equal = (lhs%raw == '')
-      else if (allocated(rhs%raw)) then
-         equal = (rhs%raw == '')
       else
-         equal = .true.
+         equal = (lhs%raw == rhs%raw)
       endif
 
    end function
@@ -648,12 +644,10 @@ contains
       class(ftlString), intent(in) :: lhs
       character(len=*), intent(in) :: rhs
 
-      if (len(lhs) /= len(rhs)) then
+      if (len(lhs) /= len(rhs)) then ! because raw Fortran strings of unequal length can compare equal
          equal = .false.
-      else if (allocated(lhs%raw)) then
-         equal = (lhs%raw == rhs)
       else
-         equal = (rhs == '')
+         equal = (lhs%raw == rhs)
       endif
 
    end function
@@ -662,12 +656,10 @@ contains
       character(len=*), intent(in) :: lhs
       class(ftlString), intent(in) :: rhs
 
-      if (len(lhs) /= len(rhs)) then
+      if (len(lhs) /= len(rhs)) then ! because raw Fortran strings of unequal length can compare equal
          equal = .false.
-      else if (allocated(rhs%raw)) then
-         equal = (lhs == rhs%raw)
       else
-         equal = (lhs == '')
+         equal = (lhs == rhs%raw)
       endif
 
    end function
@@ -836,11 +828,7 @@ contains
    pure integer function ftlLen(self)
       class(ftlString), intent(in) :: self
 
-      if (allocated(self%raw)) then
-         ftlLen = len(self%raw)
-      else
-         ftlLen = 0
-      endif
+      ftlLen = len(self%raw)
 
    end function
 
@@ -849,11 +837,7 @@ contains
    pure integer function ftlLenTrim(self)
       class(ftlString), intent(in) :: self
 
-      if (allocated(self%raw)) then
-         ftlLenTrim = len_trim(self%raw)
-      else
-         ftlLenTrim = 0
-      endif
+      ftlLenTrim = len_trim(self%raw)
 
    end function
 
@@ -862,7 +846,7 @@ contains
    pure type(ftlString) function ftlTrim(str)
       class(ftlString), intent(in) :: str
 
-      if (allocated(str%raw)) ftlTrim%raw = trim(str%raw)
+      ftlTrim%raw = trim(str%raw)
 
    end function
 
@@ -871,7 +855,7 @@ contains
    pure type(ftlString) function ftlAdjustl(str)
       class(ftlString), intent(in) :: str
 
-      if (allocated(str%raw)) ftlAdjustl%raw = adjustl(str%raw)
+      ftlAdjustl%raw = adjustl(str%raw)
 
    end function
 
@@ -880,7 +864,7 @@ contains
    pure type(ftlString) function ftlAdjustr(str)
       class(ftlString), intent(in) :: str
 
-         if (allocated(str%raw)) ftlAdjustr%raw = adjustr(str%raw)
+      ftlAdjustr%raw = adjustr(str%raw)
 
    end function
 
@@ -890,7 +874,7 @@ contains
       class(ftlString), intent(in) :: str
       integer         , intent(in) :: i
 
-      if (allocated(str%raw)) ftlRepeat%raw = repeat(str%raw,i)
+      ftlRepeat%raw = repeat(str%raw,i)
 
    end function
 
@@ -1247,15 +1231,7 @@ contains
        type(ftlString), intent(in)  :: words(:)
        type(ftlString)              :: joined
 
-      character(len=:), allocatable :: sep
       integer :: joinedLen, wordIdx, writer
-
-      ! only for making this work with uninitialized selfs ...
-      if (allocated(self%raw)) then
-         sep = self%raw
-      else
-         sep = ''
-      endif
 
       if (size(words) == 0) then
          joined = ''
@@ -1264,7 +1240,7 @@ contains
       else
 
          ! calculate the length of the resulting string
-         joinedLen = (size(words) - 1) * len(sep)
+         joinedLen = (size(words) - 1) * len(self%raw)
          do wordIdx = 1, size(words)
             joinedLen = joinedLen + len(words(wordIdx))
          enddo
@@ -1276,12 +1252,10 @@ contains
          joined%raw(1:len(words(1))) = words(1)%raw
          writer = len(words(1)) + 1
          do wordIdx = 2, size(words)
-            joined%raw(writer:writer+len(sep)-1) = sep
-            writer = writer + len(sep)
-            if (allocated(words(wordIdx)%raw)) then
-               joined%raw(writer:writer+len(words(wordIdx))-1) = words(wordIdx)%raw
-               writer = writer + len(words(wordIdx))
-            endif
+            joined%raw(writer:writer+len(self%raw)-1) = self%raw
+            writer = writer + len(self%raw)
+            joined%raw(writer:writer+len(words(wordIdx))-1) = words(wordIdx)%raw
+            writer = writer + len(words(wordIdx))
          enddo
 
       endif
@@ -1589,7 +1563,7 @@ contains
 
 
 
-   ! Count the number of words separater by whitespace (spaces or tabs). Ignores leading and trailing whitespace.
+   ! Count the number of words separated by whitespace (spaces or tabs). Ignores leading and trailing whitespace.
    !
    integer function CountWords(self)
       class(ftlString), intent(in) :: self
