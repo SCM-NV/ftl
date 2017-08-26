@@ -179,6 +179,14 @@ module ftlStringModule
    end interface
 
 
+   ! Assignment of ftlString to raw Fortran strings
+
+   public :: assignment(=)
+   interface assignment(=)
+      module procedure AssignToAllocatableRaw
+   end interface
+
+
    ! Derived-type IO
 
    public :: write(formatted)
@@ -551,6 +559,24 @@ contains
       class(ftlString), intent(out) :: self
 
       ! Nothing to do here: intent(out) will deallocate self%raw
+
+   end subroutine
+
+
+
+   ! =============>  Assignment of ftlString to raw Fortran strings:
+
+
+
+   subroutine AssignToAllocatableRaw(lhs, rhs)
+      character(len=:), allocatable, intent(inout) :: lhs
+      type(ftlString)              , intent(in)    :: rhs
+
+      if (allocated(rhs%raw)) then
+         lhs = rhs%raw
+      else
+         if (allocated(lhs)) deallocate(lhs)
+      endif
 
    end subroutine
 

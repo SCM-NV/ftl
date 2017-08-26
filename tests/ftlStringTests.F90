@@ -36,7 +36,7 @@ contains
       write (*,'(A)') 'Running ftlString tests ...'
 
       call testNewDefault
-      call testAssignraw
+      call testAssignRaw
       call testAssignOther
 
       call testAllocated
@@ -101,12 +101,28 @@ contains
    end subroutine
 
 
-   subroutine testAssignraw
+   subroutine testAssignRaw
       type(ftlString) :: s
+      character(len=:), allocatable :: c
+      character(len=2) :: flc
+      character(len=10) :: lflc
 
       s = 'test'
 
       ASSERT(s%raw == 'test')
+
+      c = s
+
+      ASSERT(c == 'test')
+
+      flc = s%raw
+
+      ASSERT(flc == 'te')
+
+      lflc = 'blabla'
+      s = lflc
+
+      ASSERT(s == 'blabla    ')
 
    end subroutine
 
@@ -115,6 +131,9 @@ contains
       type(ftlString) :: s1, s2
 
       s1 = s2 ! assignment of uninitialized strings (should not cause a debug build to freak out)
+
+      ASSERT(.not.s1%Allocated())
+      ASSERT(.not.s2%Allocated())
 
       s1 = 'testme'
       s2 = s1
