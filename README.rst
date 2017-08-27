@@ -149,10 +149,9 @@ C++'s std::algorithm header to be implemented, but so far I only did maybe 30%
 of them. It's quite a lot of work as there are many algorithms to implement. I
 would absolutely appreciate some help here.
 
-ftlString is incomplete. I would like to have all Python string manipulation
-methods, but only a handful are implemented at the moment. Help is much
-appreciated. Fortran 2003 derived-type I/O would be nice, though this is not
-yet supported in gfortran at the moment.
+ftlString is incomplete. The basics are there, but I would like to have all
+Python string manipulation methods. Only a handful are implemented at the
+moment. Again, there are just many of them. Help is much appreciated.
 
 Definitely on the TODO list are:
 
@@ -170,6 +169,10 @@ Definitely on the TODO list are:
 These things might be nice:
 
 + Random number generators and distributions like in std::random.
+
++ File system access like std::filesystem.
+
++ Parsing and evaluating equations from strings.
 
 
 License
