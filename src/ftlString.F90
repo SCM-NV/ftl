@@ -151,11 +151,11 @@ module ftlStringModule
       procedure, pass(rhs) :: CharCatString
       generic  , public    :: operator(//) => StringCatString, StringCatChar, CharCatString
 
-      ! .cat. operator with ftlString output
+      ! + operator with ftlString output
       procedure, pass(lhs) :: StringCatOpString
       procedure, pass(lhs) :: StringCatOpChar
       procedure, pass(rhs) :: CharCatOpString
-      generic  , public    :: operator(.cat.) => StringCatOpString, StringCatOpChar, CharCatOpString
+      generic  , public    :: operator(+) => StringCatOpString, StringCatOpChar, CharCatOpString
 
       ! Python style .in. operator
       procedure, pass(lhs) :: StringInString

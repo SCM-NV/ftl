@@ -421,10 +421,10 @@ contains
       s4 = 'woho '//s1//' '//s2//' '//s3
       ASSERT(s4 == 'woho this is testing')
 
-      s4 = s1.cat.' '.cat.s2.cat.' '.cat.s3
+      s4 = s1+' '+s2+' '+s3
       ASSERT(s4 == 'this is testing')
 
-      s4 = 'woho '.cat.s1.cat.' '.cat.s2.cat.' '.cat.s3
+      s4 = 'woho '+s1+' '+s2+' '+s3
       ASSERT(s4 == 'woho this is testing')
 
    end subroutine
