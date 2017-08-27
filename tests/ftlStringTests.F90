@@ -427,6 +427,10 @@ contains
       s4 = 'woho '+s1+' '+s2+' '+s3
       ASSERT(s4 == 'woho this is testing')
 
+      c = ' bla'
+      s4 = 'test' + c
+      ASSERT(s4 == 'test bla')
+
    end subroutine
 
 

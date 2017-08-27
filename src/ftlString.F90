@@ -186,6 +186,10 @@ module ftlStringModule
       module procedure AssignToAllocatableRaw
    end interface
 
+   interface operator(+)
+      module procedure CharCatOpChar
+   end interface
+
 
    ! Derived-type IO
 
@@ -777,6 +781,14 @@ contains
        type(ftlString)              :: concat
 
       concat%raw = lhs//rhs%raw
+
+   endfunction
+   !
+   elemental function CharCatOpChar(lhs, rhs) result(concat)
+      character(len=*), intent(in)  :: lhs, rhs
+       type(ftlString)              :: concat
+
+      concat%raw = lhs//rhs
 
    endfunction
 
