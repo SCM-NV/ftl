@@ -136,8 +136,8 @@ ftlAlgorithms
 
 ftlArray
    A little module that provides the FTL style container iterators for plain
-   one-dimensional Fortran arrays. This allows the ftlAlgorithms (see below) to
-   work on normal Fortran arrays.
+   one-dimensional Fortran arrays. This allows the ftlAlgorithms to work on
+   normal Fortran arrays.
 
 ftlSharedPtr
    Provides a reference counted ftlSharedPtr in the spirit of C++'s

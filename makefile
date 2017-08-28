@@ -113,7 +113,7 @@ $(BUILDDIR)/tests: tests/tests.F90 $(BUILDDIR)/ftlTestTools.o $(BUILDDIR)/ftlArr
 $(BUILDDIR)/ftlTestTools.o: tests/ftlTestTools.F90 tests/ftlTestTools.inc | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
-$(BUILDDIR)/ftlArrayTests.o: tests/ftlArrayTests.F90 $(BUILDDIR)/ftlArrayInt.o | $(BUILDDIR)
+$(BUILDDIR)/ftlArrayTests.o: tests/ftlArrayTests.F90 $(BUILDDIR)/ftlArrayIntAlgorithms.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
 $(BUILDDIR)/ftlDynArrayTests.o: tests/ftlDynArrayTests.F90 $(BUILDDIR)/ftlDynArrayInt.o $(BUILDDIR)/ftlDynArrayPoint2D.o $(BUILDDIR)/ftlDynArrayLeaky.o $(BUILDDIR)/ftlDynArrayMovableLeaky.o | $(BUILDDIR)
@@ -152,9 +152,6 @@ $(BUILDDIR)/perftest_countDistinctWords: perftests/countDistinctWords.F90 $(BUIL
 
 # Container instantiations:
 
-$(BUILDDIR)/ftlArrayInt.o: instantiations/ftlArrayInt.F90 src/ftlArray.F90_template | $(BUILDDIR)
-	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
-
 $(BUILDDIR)/ftlDynArrayInt.o: instantiations/ftlDynArrayInt.F90 src/ftlDynArray.F90_template | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
@@ -188,7 +185,7 @@ $(BUILDDIR)/ftlHashMapStringInt.o: instantiations/ftlHashMapStringInt.F90 src/ft
 
 # ftlAlgorithms instantiations:
 
-$(BUILDDIR)/ftlArrayIntAlgorithms.o: instantiations/ftlArrayIntAlgorithms.F90 src/ftlAlgorithms.F90_template $(BUILDDIR)/ftlArrayInt.o | $(BUILDDIR)
+$(BUILDDIR)/ftlArrayIntAlgorithms.o: instantiations/ftlArrayIntAlgorithms.F90 src/ftlArray.F90_template src/ftlAlgorithms.F90_template | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
 $(BUILDDIR)/ftlDynArrayIntAlgorithms.o: instantiations/ftlDynArrayIntAlgorithms.F90 src/ftlAlgorithms.F90_template $(BUILDDIR)/ftlDynArrayInt.o | $(BUILDDIR)
