@@ -16,6 +16,7 @@
 ! with the Fortran Template Library.  If not, see <http://www.gnu.org/licenses/>.
 
 #define FTL_CONTAINER ftlArray
+#define FTL_CONTAINER_IS_PLAIN_ARRAY
 #define FTL_CONTAINER_PROVIDES_RANDOM_ACCESS_ITERATOR
 
 #ifdef FTL_INSTANTIATE_TEMPLATE

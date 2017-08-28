@@ -53,6 +53,14 @@
 #define FTL_TEMPLATE_TYPE_WRAP FTL_TEMPLATE_TYPE
 #endif
 
+#ifdef FTL_CONTAINER_IS_PLAIN_ARRAY
+#define FTL_CONTAINER_TYPE FTL_TEMPLATE_TYPE_WRAP, dimension(:)
+#else
+#define FTL_CONTAINER_TYPE type(CAT(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME))
+#endif
+
+#define FTL_CONTAINER_ITERATOR_TYPE type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator))
+
 
 module CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,AlgorithmsModule)
 
@@ -319,10 +327,10 @@ contains
    ! and false otherwise.
    !
    logical function ftlAllOfIteratorPair(first, last, pred) result(alltrue)
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
-      procedure(UnaryPredicate)                                             :: pred
+      FTL_CONTAINER_ITERATOR_TYPE, intent(in) :: first, last
+      procedure(UnaryPredicate)               :: pred
 
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: it
+      FTL_CONTAINER_ITERATOR_TYPE :: it
 
       alltrue = .true.
       it = first
@@ -337,8 +345,8 @@ contains
    end function
    !
    logical function ftlAllOfContainer(container, pred) result(alltrue)
-      type(CAT(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: container
-      procedure(UnaryPredicate)                                   :: pred
+      FTL_CONTAINER_TYPE       , intent(in) :: container
+      procedure(UnaryPredicate)             :: pred
 
       alltrue = ftlAllOfIteratorPair(Begin(container), End(container), pred)
 
@@ -351,10 +359,10 @@ contains
    ! If [first,last) is an empty range, the function returns false.
    !
    logical function ftlAnyOfIteratorPair(first, last, pred) result(anytrue)
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
-      procedure(UnaryPredicate)                                             :: pred
+      FTL_CONTAINER_ITERATOR_TYPE, intent(in) :: first, last
+      procedure(UnaryPredicate)               :: pred
 
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: it
+      FTL_CONTAINER_ITERATOR_TYPE :: it
 
       anytrue = .false.
       it = first
@@ -369,8 +377,8 @@ contains
    end function
    !
    logical function ftlAnyOfContainer(container, pred) result(anytrue)
-      type(CAT(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: container
-      procedure(UnaryPredicate)                                   :: pred
+      FTL_CONTAINER_TYPE       , intent(in) :: container
+      procedure(UnaryPredicate)             :: pred
 
       anytrue = ftlAnyOfIteratorPair(Begin(container), End(container), pred)
 
@@ -382,16 +390,16 @@ contains
    ! and false otherwise.
    !
    logical function ftlNoneOfIteratorPair(first, last, pred) result(nonetrue)
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
-      procedure(UnaryPredicate)                                             :: pred
+      FTL_CONTAINER_ITERATOR_TYPE, intent(in) :: first, last
+      procedure(UnaryPredicate)               :: pred
 
       nonetrue = .not.ftlAnyOfIteratorPair(first, last, pred)
 
    end function
    !
    logical function ftlNoneOfContainer(container, pred) result(nonetrue)
-      type(CAT(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: container
-      procedure(UnaryPredicate)                                 :: pred
+      FTL_CONTAINER_TYPE       , intent(in) :: container
+      procedure(UnaryPredicate)             :: pred
 
       nonetrue = .not.ftlAnyOfIteratorPair(Begin(container), End(container), pred)
 
@@ -402,10 +410,10 @@ contains
    ! Calls subroutine subr on each of the elements in the range [first,last).
    !
    subroutine ftlForEachIteratorPair(first, last, subr)
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
-      procedure(UnarySubroutine)                                            :: subr
+      FTL_CONTAINER_ITERATOR_TYPE, intent(in) :: first, last
+      procedure(UnarySubroutine)              :: subr
 
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: it
+      FTL_CONTAINER_ITERATOR_TYPE :: it
 
       it = first
       do while (it /= last)
@@ -416,8 +424,8 @@ contains
    end subroutine
    !
    subroutine ftlForEachContainer(container, subr)
-      type(CAT(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: container
-      procedure(UnarySubroutine)                                  :: subr
+      FTL_CONTAINER_TYPE        , intent(in) :: container
+      procedure(UnarySubroutine)             :: subr
 
       call ftlForEachIteratorPair(Begin(container), End(container), subr)
 
@@ -431,9 +439,9 @@ contains
    ! The function uses operator== to compare the individual elements to val.
    !
    function ftlFindIteratorPair(first, last, val) result(it)
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
-      FTL_TEMPLATE_TYPE_WRAP                                   , intent(in) :: val
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator))             :: it
+      FTL_CONTAINER_ITERATOR_TYPE, intent(in) :: first, last
+      FTL_TEMPLATE_TYPE_WRAP     , intent(in) :: val
+      FTL_CONTAINER_ITERATOR_TYPE             :: it
 
       it = first
       do while (it /= last)
@@ -444,9 +452,9 @@ contains
    end function
    !
    function ftlFindContainer(container, val) result(it)
-      type(CAT(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME))          , intent(in) :: container
-      FTL_TEMPLATE_TYPE_WRAP                                   , intent(in) :: val
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator))             :: it
+      FTL_CONTAINER_TYPE         , intent(in) :: container
+      FTL_TEMPLATE_TYPE_WRAP     , intent(in) :: val
+      FTL_CONTAINER_ITERATOR_TYPE             :: it
 
       it = ftlFindIteratorPair(Begin(container), End(container), val)
 
@@ -458,9 +466,9 @@ contains
    ! found, the function returns last.
    !
    function ftlFindIfIteratorPair(first, last, pred) result(it)
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
-      procedure(UnaryPredicate)                                             :: pred
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator))             :: it
+      FTL_CONTAINER_ITERATOR_TYPE, intent(in) :: first, last
+      procedure(UnaryPredicate)               :: pred
+      FTL_CONTAINER_ITERATOR_TYPE             :: it
 
       it = first
       do while (it /= last)
@@ -471,9 +479,9 @@ contains
    end function
    !
    function ftlFindIfContainer(container, pred) result(it)
-      type(CAT(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME))          , intent(in) :: container
-      procedure(UnaryPredicate)                                             :: pred
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator))             :: it
+      FTL_CONTAINER_TYPE         , intent(in) :: container
+      procedure(UnaryPredicate)               :: pred
+      FTL_CONTAINER_ITERATOR_TYPE             :: it
 
       it = ftlFindIfIteratorPair(Begin(container), End(container), pred)
 
@@ -485,9 +493,9 @@ contains
    ! is found, the function returns last.
    !
    function ftlFindIfNotIteratorPair(first, last, pred) result(it)
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
-      procedure(UnaryPredicate)                                             :: pred
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator))             :: it
+      FTL_CONTAINER_ITERATOR_TYPE, intent(in) :: first, last
+      procedure(UnaryPredicate)               :: pred
+      FTL_CONTAINER_ITERATOR_TYPE             :: it
 
       it = first
       do while (it /= last)
@@ -498,9 +506,9 @@ contains
    end function
    !
    function ftlFindIfNotContainer(container, pred) result(it)
-      type(CAT(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME))          , intent(in) :: container
-      procedure(UnaryPredicate)                                             :: pred
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator))             :: it
+      FTL_CONTAINER_TYPE         , intent(in) :: container
+      procedure(UnaryPredicate)               :: pred
+      FTL_CONTAINER_ITERATOR_TYPE             :: it
 
       it = ftlFindIfNotIteratorPair(Begin(container), End(container), pred)
 
@@ -515,11 +523,11 @@ contains
    ! comp, if present), until a pair matches.
    !
    function ftlFirstOfIteratorPair(first1, last1, first2, last2, comp) result(firstOf)
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first1, last1, first2, last2
-      procedure(Comparator)                                    , optional   :: comp
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator))             :: firstOf
+      FTL_CONTAINER_ITERATOR_TYPE, intent(in) :: first1, last1, first2, last2
+      procedure(Comparator)      , optional   :: comp
+      FTL_CONTAINER_ITERATOR_TYPE             :: firstOf
 
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: it
+      FTL_CONTAINER_ITERATOR_TYPE :: it
 
       if (first2 == last2) then
          firstOf = last1
@@ -543,9 +551,9 @@ contains
    end function
    !
    function ftlFirstOfContainer(container1, container2, comp) result(firstOf)
-      type(CAT(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME))          , intent(in) :: container1, container2
-      procedure(Comparator)                                    , optional   :: comp
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator))             :: firstOf
+      FTL_CONTAINER_TYPE         , intent(in) :: container1, container2
+      procedure(Comparator)      , optional   :: comp
+      FTL_CONTAINER_ITERATOR_TYPE             :: firstOf
 
       firstOf = ftlFirstOfIteratorPair(Begin(container1), End(container1), Begin(container2), End(container2), comp)
 
@@ -557,10 +565,10 @@ contains
    ! The function uses the == operator to compare the individual elements to val.
    !
    integer function ftlCountIteratorPair(first, last, val) result(num)
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
-      FTL_TEMPLATE_TYPE_WRAP                                   , intent(in) :: val
+      FTL_CONTAINER_ITERATOR_TYPE, intent(in) :: first, last
+      FTL_TEMPLATE_TYPE_WRAP     , intent(in) :: val
 
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: it
+      FTL_CONTAINER_ITERATOR_TYPE :: it
 
       num = 0
       it = first
@@ -572,8 +580,8 @@ contains
    end function
    !
    integer function ftlCountContainer(container, val) result(num)
-      type(CAT(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: container
-      FTL_TEMPLATE_TYPE_WRAP                         , intent(in) :: val
+      FTL_CONTAINER_TYPE    , intent(in) :: container
+      FTL_TEMPLATE_TYPE_WRAP, intent(in) :: val
 
       num = ftlCountIteratorPair(Begin(container), End(container), val)
 
@@ -584,10 +592,10 @@ contains
    ! Returns the number of elements in the range [first,last) for which pred is true.
    !
    integer function ftlCountIfIteratorPair(first, last, pred) result(num)
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
-      procedure(UnaryPredicate)                                             :: pred
+      FTL_CONTAINER_ITERATOR_TYPE, intent(in) :: first, last
+      procedure(UnaryPredicate)               :: pred
 
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: it
+      FTL_CONTAINER_ITERATOR_TYPE :: it
 
       num = 0
       it = first
@@ -599,8 +607,8 @@ contains
    end function
    !
    integer function ftlCountIfContainer(container, pred) result(num)
-      type(CAT(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: container
-      procedure(UnaryPredicate)                                   :: pred
+      FTL_CONTAINER_TYPE       , intent(in) :: container
+      procedure(UnaryPredicate)             :: pred
 
       num = ftlCountIfIteratorPair(Begin(container), End(container), pred)
 
@@ -616,9 +624,9 @@ contains
    ! The function returns a pair of iterators to the first element in each range that does not match.
    !
    function ftlMismatchIterators(first1, last1, first2, comp) result(it)
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first1, last1, first2
-      procedure(Comparator)                                    , optional   :: comp
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator))             :: it(2)
+      FTL_CONTAINER_ITERATOR_TYPE, intent(in) :: first1, last1, first2
+      procedure(Comparator)      , optional   :: comp
+      FTL_CONTAINER_ITERATOR_TYPE             :: it(2)
 
       it(1) = first1
       it(2) = first2
@@ -635,9 +643,9 @@ contains
    end function
    !
    function ftlMismatchContainers(container1, container2, comp) result(it)
-      type(CAT(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME))          , intent(in) :: container1, container2
-      procedure(Comparator)                                    , optional   :: comp
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator))             :: it(2)
+      FTL_CONTAINER_TYPE         , intent(in) :: container1, container2
+      procedure(Comparator)      , optional   :: comp
+      FTL_CONTAINER_ITERATOR_TYPE             :: it(2)
 
       it = ftlMismatchIterators(Begin(container1), End(container1), Begin(container2), comp)
 
@@ -651,10 +659,10 @@ contains
    ! The elements are compared using operator== (or comp, if present).
    !
    logical function ftlEqualIterators(first1, last1, first2, comp) result(equal)
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first1, last1, first2
-      procedure(Comparator)                                    , optional   :: comp
+      FTL_CONTAINER_ITERATOR_TYPE, intent(in) :: first1, last1, first2
+      procedure(Comparator)      , optional   :: comp
 
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: it1, it2
+      FTL_CONTAINER_ITERATOR_TYPE :: it1, it2
 
       equal = .true.
       it1 = first1
@@ -674,8 +682,8 @@ contains
    end function
    !
    logical function ftlEqualContainers(container1, container2, comp) result(equal)
-      type(CAT(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: container1, container2
-      procedure(Comparator)                          , optional   :: comp
+      FTL_CONTAINER_TYPE   , intent(in) :: container1, container2
+      procedure(Comparator), optional   :: comp
 
       if (Size(container1) /= Size(container2)) then
          equal = .false.
@@ -693,9 +701,9 @@ contains
    ! The elements are compared using operator==.
    !
    logical function ftlIsPermutationIterators(first1, last1, first2) result(isPermutation)
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first1, last1, first2
+      FTL_CONTAINER_ITERATOR_TYPE, intent(in) :: first1, last1, first2
 
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: firstdiff(2), last2, it1
+      FTL_CONTAINER_ITERATOR_TYPE :: firstdiff(2), last2, it1
       integer :: n
 
       isPermutation = .true.
@@ -729,7 +737,7 @@ contains
    end function
    !
    logical function ftlIsPermutationContainers(container1, container2) result(isPermutation)
-      type(CAT(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: container1, container2
+      FTL_CONTAINER_TYPE, intent(in) :: container1, container2
 
       if (Size(container1) /= Size(container2)) then
          isPermutation = .false.
@@ -750,11 +758,11 @@ contains
    ! This function returns the first of such occurrences. For an algorithm that returns the last instead, see ftlFindEnd.
    !
    function ftlSearchIterators(first1, last1, first2, last2, comp) result(itFirst)
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first1, last1, first2, last2
-      procedure(Comparator)                                    , optional   :: comp
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator))             :: itFirst
+      FTL_CONTAINER_ITERATOR_TYPE, intent(in) :: first1, last1, first2, last2
+      procedure(Comparator)      , optional   :: comp
+      FTL_CONTAINER_ITERATOR_TYPE             :: itFirst
 
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: it1, it2
+      FTL_CONTAINER_ITERATOR_TYPE :: it1, it2
 
       itFirst = first1
       if (first2 == last2) return ! specified by C++11
@@ -782,9 +790,9 @@ contains
    end function
    !
    function ftlSearchContainers(container1, container2, comp) result(itFirst)
-      type(CAT(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME))          , intent(in) :: container1, container2
-      procedure(Comparator)                                    , optional   :: comp
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator))             :: itFirst
+      FTL_CONTAINER_TYPE         , intent(in) :: container1, container2
+      procedure(Comparator)      , optional   :: comp
+      FTL_CONTAINER_ITERATOR_TYPE             :: itFirst
 
       if (Size(container1) < Size(container2)) then
          itFirst = End(container1)
@@ -803,7 +811,7 @@ contains
    ! Swaps the elements pointed to by a and b.
    !
    subroutine ftlIterSwapPrivate(it1, it2)
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: it1, it2
+      FTL_CONTAINER_ITERATOR_TYPE :: it1, it2
 
       FTL_TEMPLATE_TYPE_WRAP :: tmp
 
@@ -829,10 +837,10 @@ contains
    ! see ftlCopyBackward.
    !
    function ftlCopyIterators(first, last, dest) result(writer)
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last, dest
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator))             :: writer
+      FTL_CONTAINER_ITERATOR_TYPE, intent(in) :: first, last, dest
+      FTL_CONTAINER_ITERATOR_TYPE             :: writer
 
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: reader
+      FTL_CONTAINER_ITERATOR_TYPE :: reader
 
       reader = first
       writer = dest
@@ -845,9 +853,9 @@ contains
    end function
    !
    function ftlCopyContainer(container, dest) result(writer)
-      type(CAT(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME))          , intent(in) :: container
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: dest
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator))             :: writer
+      FTL_CONTAINER_TYPE         , intent(in) :: container
+      FTL_CONTAINER_ITERATOR_TYPE, intent(in) :: dest
+      FTL_CONTAINER_ITERATOR_TYPE             :: writer
 
       writer = ftlCopyIterators(Begin(container), End(container), dest)
 
@@ -858,10 +866,10 @@ contains
    ! Assigns the value returned by successive calls to gen to the elements in the range [first,last).
    !
    subroutine ftlGenerateIterators(first, last, gen)
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
-      procedure(Generator)                                                  :: gen
+      FTL_CONTAINER_ITERATOR_TYPE, intent(in) :: first, last
+      procedure(Generator)                    :: gen
 
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: it
+      FTL_CONTAINER_ITERATOR_TYPE :: it
 
       it = first
       do while (it /= last)
@@ -872,8 +880,8 @@ contains
    end subroutine
    !
    subroutine ftlGenerateContainer(container, gen)
-      type(CAT(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: container
-      procedure(Generator)                                        :: gen
+      FTL_CONTAINER_TYPE  , intent(in) :: container
+      procedure(Generator)             :: gen
 
       call ftlGenerateIterators(Begin(container), End(container), gen)
 
@@ -892,11 +900,11 @@ contains
    ! function with a similar behavior but with stable ordering within each group.
    !
    function ftlPartitionIterators(first, last, pred) result(pivot)
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
-      procedure(UnaryPredicate)                                             :: pred
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator))             :: pivot
+      FTL_CONTAINER_ITERATOR_TYPE, intent(in) :: first, last
+      procedure(UnaryPredicate)               :: pred
+      FTL_CONTAINER_ITERATOR_TYPE             :: pivot
 
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: itRev
+      FTL_CONTAINER_ITERATOR_TYPE :: itRev
 
       ! TODO: implementation for forward iterators
 
@@ -919,9 +927,9 @@ contains
    end function
    !
    function ftlPartitionContainer(container, pred) result(pivot)
-      type(CAT(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME))          , intent(in) :: container
-      procedure(UnaryPredicate)                                             :: pred
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator))             :: pivot
+      FTL_CONTAINER_TYPE         , intent(in) :: container
+      procedure(UnaryPredicate)               :: pred
+      FTL_CONTAINER_ITERATOR_TYPE             :: pivot
 
       pivot = ftlPartitionIterators(Begin(container), End(container), pred)
 
@@ -935,10 +943,10 @@ contains
    ! If the range is empty, the function returns true.
    !
    logical function ftlIsPartitionedIterators(first, last, pred) result(isPartitioned)
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
-      procedure(UnaryPredicate)                                             :: pred
+      FTL_CONTAINER_ITERATOR_TYPE, intent(in) :: first, last
+      procedure(UnaryPredicate)               :: pred
 
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: it
+      FTL_CONTAINER_ITERATOR_TYPE :: it
 
       isPartitioned = .true.
       it = first
@@ -960,8 +968,8 @@ contains
    end function
    !
    logical function ftlIsPartitionedContainer(container, pred) result(isPartitioned)
-      type(CAT(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: container
-      procedure(UnaryPredicate)                                   :: pred
+      FTL_CONTAINER_TYPE       , intent(in) :: container
+      procedure(UnaryPredicate)             :: pred
 
       isPartitioned = ftlIsPartitionedIterators(Begin(container), End(container), pred)
 
@@ -980,11 +988,11 @@ contains
    ! Equivalent elements are not guaranteed to keep their original relative order (see stable_sort).
    !
    subroutine ftlSortIterators(first, last, comp)
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
+      FTL_CONTAINER_ITERATOR_TYPE, intent(in) :: first, last
 #ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
-      procedure(Comparator)                                    , optional   :: comp
+      procedure(Comparator)      , optional   :: comp
 #else
-      procedure(Comparator)                                                 :: comp
+      procedure(Comparator)                   :: comp
 #endif
 
       if (first == last) return
@@ -1002,11 +1010,11 @@ contains
    end subroutine
    !
    subroutine ftlSortContainer(container, comp)
-      type(CAT(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: container
+      FTL_CONTAINER_TYPE   , intent(inout) :: container
 #ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
-      procedure(Comparator)                          , optional      :: comp
+      procedure(Comparator), optional      :: comp
 #else
-      procedure(Comparator)                                          :: comp
+      procedure(Comparator)                :: comp
 #endif
 
       call ftlSortIterators(Begin(container), End(container), comp)
@@ -1019,14 +1027,14 @@ contains
    !
    !
    subroutine InsertionSort(first, last, comp)
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
+      FTL_CONTAINER_ITERATOR_TYPE, intent(in) :: first, last
 #ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
-      procedure(Comparator)                                    , optional   :: comp
+      procedure(Comparator)      , optional   :: comp
 #else
-      procedure(Comparator)                                                 :: comp
+      procedure(Comparator)                   :: comp
 #endif
 
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: sortedUntil, insertAt, insertAtMinus1
+      FTL_CONTAINER_ITERATOR_TYPE :: sortedUntil, insertAt, insertAtMinus1
       FTL_TEMPLATE_TYPE_WRAP :: value
       logical :: shift
 
@@ -1065,14 +1073,14 @@ contains
    !
 #ifdef FTL_CONTAINER_PROVIDES_RANDOM_ACCESS_ITERATOR
    subroutine HeapSort(first, last, comp)
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
+      FTL_CONTAINER_ITERATOR_TYPE, intent(in) :: first, last
 #ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
-      procedure(Comparator)                                    , optional   :: comp
+      procedure(Comparator)      , optional   :: comp
 #else
-      procedure(Comparator)                                                 :: comp
+      procedure(Comparator)                   :: comp
 #endif
 
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: endOfHeap
+      FTL_CONTAINER_ITERATOR_TYPE :: endOfHeap
 
       if (first == last) return
 
@@ -1087,15 +1095,15 @@ contains
    end subroutine
    !
    recursive subroutine IntroSort(first, last, comp, depthLimit)
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
+      FTL_CONTAINER_ITERATOR_TYPE, intent(in) :: first, last
 #ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
-      procedure(Comparator)                                    , optional   :: comp
+      procedure(Comparator)      , optional   :: comp
 #else
-      procedure(Comparator)                                                 :: comp
+      procedure(Comparator)                   :: comp
 #endif
-      integer                                                  , intent(in) :: depthLimit
+      integer                    , intent(in) :: depthLimit
 
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: pivot, it1, it2
+      FTL_CONTAINER_ITERATOR_TYPE :: pivot, it1, it2
 
       if (first == last) then
          return
@@ -1159,11 +1167,11 @@ contains
    ! The elements are compared using operator< (if available), or comp (if present).
    !
    logical function ftlIsSortedIterators(first, last, comp) result(isSorted)
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
+      FTL_CONTAINER_ITERATOR_TYPE, intent(in) :: first, last
 #ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
-      procedure(Comparator)                                    , optional   :: comp
+      procedure(Comparator)      , optional   :: comp
 #else
-      procedure(Comparator)                                                 :: comp
+      procedure(Comparator)                   :: comp
 #endif
 
       isSorted = (ftlIsSortedUntilIterators(first, last, comp) == last)
@@ -1171,11 +1179,11 @@ contains
    end function
    !
    logical function ftlIsSortedContainer(container, comp) result(isSorted)
-      type(CAT(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: container
+      FTL_CONTAINER_TYPE   , intent(in) :: container
 #ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
-      procedure(Comparator)                          , optional   :: comp
+      procedure(Comparator), optional   :: comp
 #else
-      procedure(Comparator)                                       :: comp
+      procedure(Comparator)             :: comp
 #endif
 
       isSorted = ftlIsSortedIterators(Begin(container), End(container), comp)
@@ -1193,15 +1201,15 @@ contains
    ! The elements are compared using operator< (if available), or comp (if present).
    !
    function ftlIsSortedUntilIterators(first, last, comp) result(firstUnsorted)
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
+      FTL_CONTAINER_ITERATOR_TYPE, intent(in) :: first, last
 #ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
-      procedure(Comparator)                                    , optional   :: comp
+      procedure(Comparator)      , optional   :: comp
 #else
-      procedure(Comparator)                                                 :: comp
+      procedure(Comparator)                   :: comp
 #endif
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator))             :: firstUnsorted
+      FTL_CONTAINER_ITERATOR_TYPE             :: firstUnsorted
 
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: lastSorted
+      FTL_CONTAINER_ITERATOR_TYPE :: lastSorted
 
       firstUnsorted = first
       if (first == last) return
@@ -1217,13 +1225,13 @@ contains
    end function
    !
    function ftlIsSortedUntilContainer(container, comp) result(firstUnsorted)
-      type(CAT(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: container
+      FTL_CONTAINER_TYPE   , intent(in) :: container
 #ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
-      procedure(Comparator)                          , optional   :: comp
+      procedure(Comparator), optional   :: comp
 #else
-      procedure(Comparator)                                       :: comp
+      procedure(Comparator)             :: comp
 #endif
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator))   :: firstUnsorted
+      FTL_CONTAINER_ITERATOR_TYPE   :: firstUnsorted
 
       firstUnsorted = ftlIsSortedUntilIterators(Begin(container), End(container), comp)
 
@@ -1236,9 +1244,9 @@ contains
 
 
    logical function ftlIterComparePrivate(it1, it2, comp) result(iterCompare)
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: it1, it2
+      FTL_CONTAINER_ITERATOR_TYPE, intent(in) :: it1, it2
 #ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
-      procedure(Comparator)                                    , optional   :: comp
+      procedure(Comparator)      , optional   :: comp
 
       if (present(comp)) then
          iterCompare = comp(it1%value, it2%value)
@@ -1255,9 +1263,9 @@ contains
 
 
    function ftlAdvancePrivate(itin, n) result(itout)
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: itin
-      integer                                                  , intent(in) :: n
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator))             :: itout
+      FTL_CONTAINER_ITERATOR_TYPE, intent(in) :: itin
+      integer                    , intent(in) :: n
+      FTL_CONTAINER_ITERATOR_TYPE             :: itout
 
 #ifdef FTL_CONTAINER_PROVIDES_RANDOM_ACCESS_ITERATOR
       itout = itin + n
@@ -1275,12 +1283,12 @@ contains
 
 
    integer function ftlDistancePrivate(it1, it2) result(dist)
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: it1, it2
+      FTL_CONTAINER_ITERATOR_TYPE, intent(in) :: it1, it2
 
 #ifdef FTL_CONTAINER_PROVIDES_RANDOM_ACCESS_ITERATOR
       dist = it2 - it1
 #else
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: it
+      FTL_CONTAINER_ITERATOR_TYPE :: it
 
       dist = 0
       it = it1
@@ -1317,14 +1325,14 @@ contains
    ! The elements are compared using operator< (if available, this would produce a max-heap), or comp (if present).
    !
    subroutine ftlMakeHeapIterators(first, last, comp)
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
+      FTL_CONTAINER_ITERATOR_TYPE, intent(in) :: first, last
 #ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
-      procedure(Comparator)                                    , optional   :: comp
+      procedure(Comparator)      , optional   :: comp
 #else
-      procedure(Comparator)                                                 :: comp
+      procedure(Comparator)                   :: comp
 #endif
 
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: it
+      FTL_CONTAINER_ITERATOR_TYPE :: it
 
       it = first + (last-first) / 2
       do while (.true.)
@@ -1336,11 +1344,11 @@ contains
    end subroutine
    !
    subroutine ftlMakeHeapContainer(container, comp)
-      type(CAT(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: container
+      FTL_CONTAINER_TYPE   , intent(in) :: container
 #ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
-      procedure(Comparator)                          , optional   :: comp
+      procedure(Comparator), optional   :: comp
 #else
-      procedure(Comparator)                                       :: comp
+      procedure(Comparator)             :: comp
 #endif
 
       call ftlMakeHeapIterators(Begin(container), End(container), comp)
@@ -1358,11 +1366,11 @@ contains
    ! The elements are compared using operator< (if available), or comp (if present).
    !
    subroutine ftlPushHeapIterators(first, last, comp)
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
+      FTL_CONTAINER_ITERATOR_TYPE, intent(in) :: first, last
 #ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
-      procedure(Comparator)                                    , optional   :: comp
+      procedure(Comparator)      , optional   :: comp
 #else
-      procedure(Comparator)                                                 :: comp
+      procedure(Comparator)                   :: comp
 #endif
 
       call HeapUpDown(first, last, last-1, comp)
@@ -1370,11 +1378,11 @@ contains
    end subroutine
    !
    subroutine ftlPushHeapContainer(container, comp)
-      type(CAT(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: container
+      FTL_CONTAINER_TYPE   , intent(in) :: container
 #ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
-      procedure(Comparator)                          , optional   :: comp
+      procedure(Comparator), optional   :: comp
 #else
-      procedure(Comparator)                                       :: comp
+      procedure(Comparator)             :: comp
 #endif
 
       call ftlPushHeapIterators(Begin(container), End(container), comp)
@@ -1395,11 +1403,11 @@ contains
    ! The elements are compared using operator< (if available), or comp (if present).
    !
    subroutine ftlPopHeapIterators(first, last, comp)
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
+      FTL_CONTAINER_ITERATOR_TYPE, intent(in) :: first, last
 #ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
-      procedure(Comparator)                                    , optional   :: comp
+      procedure(Comparator)      , optional   :: comp
 #else
-      procedure(Comparator)                                                 :: comp
+      procedure(Comparator)                   :: comp
 #endif
 
       call ftlIterSwap(first, last-1)
@@ -1408,11 +1416,11 @@ contains
    end subroutine
    !
    subroutine ftlPopHeapContainer(container, comp)
-      type(CAT(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: container
+      FTL_CONTAINER_TYPE   , intent(in) :: container
 #ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
-      procedure(Comparator)                          , optional   :: comp
+      procedure(Comparator), optional   :: comp
 #else
-      procedure(Comparator)                                       :: comp
+      procedure(Comparator)             :: comp
 #endif
 
       call ftlPopHeapIterators(Begin(container), End(container), comp)
@@ -1424,14 +1432,14 @@ contains
    ! Internal heap helper methods
    !
    subroutine HeapDown(first, last, downIn, comp)
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last, downIn
+      FTL_CONTAINER_ITERATOR_TYPE, intent(in) :: first, last, downIn
 #ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
-      procedure(Comparator)                                    , optional   :: comp
+      procedure(Comparator)      , optional   :: comp
 #else
-      procedure(Comparator)                                                 :: comp
+      procedure(Comparator)                   :: comp
 #endif
 
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: down, leftChild, rightChild, largerChild
+      FTL_CONTAINER_ITERATOR_TYPE :: down, leftChild, rightChild, largerChild
 
       down = downIn
       do while (.true.)
@@ -1457,14 +1465,14 @@ contains
    end subroutine
    !
    subroutine HeapUpDown(first, last, upIn, comp)
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last, upIn
+      FTL_CONTAINER_ITERATOR_TYPE, intent(in) :: first, last, upIn
 #ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
-      procedure(Comparator)                                    , optional   :: comp
+      procedure(Comparator)      , optional   :: comp
 #else
-      procedure(Comparator)                                                 :: comp
+      procedure(Comparator)                   :: comp
 #endif
 
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: up, parent
+      FTL_CONTAINER_ITERATOR_TYPE :: up, parent
 
       up = UpIn
       do while (up /= first)
@@ -1484,11 +1492,11 @@ contains
    ! The elements are compared using operator< (if available), or comp (if present).
    !
    logical function ftlIsHeapIterators(first, last, comp) result(isHeap)
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
+      FTL_CONTAINER_ITERATOR_TYPE, intent(in) :: first, last
 #ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
-      procedure(Comparator)                                    , optional   :: comp
+      procedure(Comparator)      , optional   :: comp
 #else
-      procedure(Comparator)                                                 :: comp
+      procedure(Comparator)                   :: comp
 #endif
 
       isHeap = (ftlIsHeapUntilIterators(first, last, comp) == last)
@@ -1496,11 +1504,11 @@ contains
    end function
    !
    logical function ftlIsHeapContainer(container, comp) result(isHeap)
-      type(CAT(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: container
+      FTL_CONTAINER_TYPE   , intent(in) :: container
 #ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
-      procedure(Comparator)                          , optional   :: comp
+      procedure(Comparator), optional   :: comp
 #else
-      procedure(Comparator)                                       :: comp
+      procedure(Comparator)             :: comp
 #endif
 
       isHeap = ftlIsHeapIterators(Begin(container), End(container), comp)
@@ -1519,15 +1527,15 @@ contains
    ! The elements are compared using operator< (if available), or comp (if present).
    !
    function ftlIsHeapUntilIterators(first, last, comp) result(heapUntil)
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: first, last
+      FTL_CONTAINER_ITERATOR_TYPE, intent(in) :: first, last
 #ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
-      procedure(Comparator)                                    , optional   :: comp
+      procedure(Comparator)      , optional   :: comp
 #else
-      procedure(Comparator)                                                 :: comp
+      procedure(Comparator)                   :: comp
 #endif
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator))             :: heapUntil
+      FTL_CONTAINER_ITERATOR_TYPE :: heapUntil
 
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: parent
+      FTL_CONTAINER_ITERATOR_TYPE :: parent
 
       heapUntil = first
       do while (heapUntil /= last)
@@ -1539,13 +1547,13 @@ contains
    end function
    !
    function ftlIsHeapUntilContainer(container, comp) result(heapUntil)
-      type(CAT(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: container
+      FTL_CONTAINER_TYPE   , intent(in) :: container
 #ifdef FTL_TEMPLATE_TYPE_PROVIDES_COMPARATOR_SMALLER
-      procedure(Comparator)                          , optional   :: comp
+      procedure(Comparator), optional   :: comp
 #else
-      procedure(Comparator)                                       :: comp
+      procedure(Comparator)             :: comp
 #endif
-      type(CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,Iterator))   :: heapUntil
+      FTL_CONTAINER_ITERATOR_TYPE :: heapUntil
 
       heapUntil = ftlIsHeapUntilIterators(Begin(container), End(container), comp)
 

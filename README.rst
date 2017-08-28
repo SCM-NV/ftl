@@ -134,6 +134,11 @@ ftlAlgorithms
    A library of generic algorithms that work on all FTL containers. *Exactly* the
    same as C++'s std::algorithm header.
 
+ftlArray
+   A little module that provides the FTL style container iterators for plain
+   one-dimensional Fortran arrays. This allows the ftlAlgorithms (see below) to
+   work on normal Fortran arrays.
+
 ftlSharedPtr
    Provides a reference counted ftlSharedPtr in the spirit of C++'s
    std::shared_ptr.
@@ -142,7 +147,8 @@ ftlSharedPtr
 Implementation progress
 #######################
 
-ftlDynArray, ftlList and ftlHashMap are pretty much finished.
+ftlDynArray, ftlList, ftlHashMap and the plain Fortran array wrapper ftlArray
+are pretty much finished.
 
 ftlAlgorithms is incomplete. Ultimately I would like all of the algorithms in
 C++'s std::algorithm header to be implemented, but so far I only did maybe 30%
@@ -154,10 +160,6 @@ Python string manipulation methods. Only a handful are implemented at the
 moment. Again, there are just many of them. Help is much appreciated.
 
 Definitely on the TODO list are:
-
-+ A wrapper container for an existing plain Fortran array. It should provide a
-  random access iterator so that the ftlAlgorithms can work on plain Fortran
-  arrays.
 
 + An equivalent of std::deque, a double-ended queue. A container with random
   access iterators but constant time insertion at both ends. It should be

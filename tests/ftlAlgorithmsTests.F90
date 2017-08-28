@@ -21,6 +21,8 @@
 module ftlAlgorithmsTestsModule
 
    use ftlTestToolsModule
+   use ftlArrayIntModule
+   use ftlArrayIntAlgorithmsModule
    use ftlDynArrayIntModule
    use ftlDynArrayIntAlgorithmsModule
    use Point2DModule
@@ -83,6 +85,7 @@ contains
 
       ! Sorting operations:
 
+      call testSortArray
       call testSortDynArray
       call testSortList
       call testSortString
@@ -498,6 +501,24 @@ contains
             ASSERT(IsEven(it%value))
          endif
       end do
+
+   end subroutine
+
+
+   subroutine testSortArray
+      integer, allocatable :: v(:)
+
+      v = [9,6,3,4,7]
+
+      call ftlSort(v)
+
+      ASSERT(all(v == [3,4,6,7,9]))
+      ASSERT(ftlIsSorted(v))
+
+      call ftlSort(v, Greater)
+
+      ASSERT(all(v == [9,7,6,4,3]))
+      ASSERT(ftlIsSorted(v, Greater))
 
    end subroutine
 

@@ -125,7 +125,7 @@ $(BUILDDIR)/ftlListTests.o: tests/ftlListTests.F90 $(BUILDDIR)/ftlListInt.o $(BU
 $(BUILDDIR)/ftlHashMapTests.o: tests/ftlHashMapTests.F90 $(BUILDDIR)/ftlHashMapStrInt.o $(BUILDDIR)/ftlHashMapStringInt.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
-$(BUILDDIR)/ftlAlgorithmsTests.o: tests/ftlAlgorithmsTests.F90 $(BUILDDIR)/ftlDynArrayIntAlgorithms.o $(BUILDDIR)/ftlDynArrayPoint2DAlgorithms.o $(BUILDDIR)/ftlListIntAlgorithms.o $(BUILDDIR)/ftlStringAlgorithms.o | $(BUILDDIR)
+$(BUILDDIR)/ftlAlgorithmsTests.o: tests/ftlAlgorithmsTests.F90 $(BUILDDIR)/ftlArrayIntAlgorithms.o $(BUILDDIR)/ftlDynArrayIntAlgorithms.o $(BUILDDIR)/ftlDynArrayPoint2DAlgorithms.o $(BUILDDIR)/ftlListIntAlgorithms.o $(BUILDDIR)/ftlStringAlgorithms.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
 $(BUILDDIR)/ftlSharedPtrTests.o: tests/ftlSharedPtrTests.F90 $(BUILDDIR)/ftlSharedPtrInt.o | $(BUILDDIR)
@@ -187,6 +187,9 @@ $(BUILDDIR)/ftlHashMapStringInt.o: instantiations/ftlHashMapStringInt.F90 src/ft
 
 
 # ftlAlgorithms instantiations:
+
+$(BUILDDIR)/ftlArrayIntAlgorithms.o: instantiations/ftlArrayIntAlgorithms.F90 src/ftlAlgorithms.F90_template $(BUILDDIR)/ftlArrayInt.o | $(BUILDDIR)
+	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
 $(BUILDDIR)/ftlDynArrayIntAlgorithms.o: instantiations/ftlDynArrayIntAlgorithms.F90 src/ftlAlgorithms.F90_template $(BUILDDIR)/ftlDynArrayInt.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
