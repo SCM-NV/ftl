@@ -23,6 +23,7 @@ program tests
    use ftlTestToolsModule
    use ftlStringTestsModule
    use ftlRegexTestsModule
+   use ftlArrayTestsModule
    use ftlDynArrayTestsModule
    use ftlListTestsModule
    use ftlHashMapTestsModule
@@ -34,6 +35,7 @@ program tests
 
    call ftlRegexTests
    call ftlStringTests
+   call ftlArrayTests
    call ftlDynArrayTests
    call ftlListTests
    call ftlHashMapTests
