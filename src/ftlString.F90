@@ -106,7 +106,10 @@ module ftlStringModule
       procedure         :: PartitionRaw
       procedure         :: PartitionOther
       generic  , public :: Partition => PartitionRaw, PartitionOther
-      procedure, public :: Split
+      procedure         :: SplitWords
+      procedure         :: SplitSepRaw
+      procedure         :: SplitSepOther
+      generic  , public :: Split => SplitWords, SplitSepRaw, SplitSepOther
       procedure, public :: Join
       procedure         :: StartsWithRaw
       procedure         :: StartsWithOther
@@ -1319,56 +1322,71 @@ contains
    ! maxsplit splits are done (thus, the list will have at most maxsplit+1 elements). If maxsplit is not specified or
    ! -1, then there is no limit on the number of splits (all possible splits are made).
    !
-   function Split(self, sep, maxsplit) result(words)
+   ! If sep is not present, a different splitting algorithm is applied: runs of consecutive whitespace are
+   ! regarded as a single separator, and the result will contain no empty strings at the start or end if the
+   ! string has leading or trailing whitespace.  Consequently, splitting an empty string or a string consisting of
+   ! just whitespace without a separator returns [].
+   !
+   function SplitWords(self, maxsplit) result(words)
       class(ftlString), intent(in)           :: self
-      character(len=*), intent(in), optional :: sep
       integer         , intent(in), optional :: maxsplit
       type(ftlString) , allocatable          :: words(:)
 
-      integer :: idx, wordbegin, wordidx, nextsepidx
+      integer :: idx, wordbegin, wordidx
 
       if (present(maxsplit)) stop 'TODO'
 
-      if (present(sep)) then
+      allocate(words(self%CountWords()))
 
-         ! If sep is present, consecutive delimiters are not grouped together and are deemed to delimit empty strings
-         ! (for example, '1,,2'%split(',') returns ['1', '', '2']). The sep argument may consist of multiple characters
-         ! (for example, '1<>2<>3'%split('<>') returns ['1', '2', '3']). Splitting an empty string with a specified
-         ! separator returns [''].
-
-         allocate(words(self%Count(sep)+1))
-
-         wordbegin = 1
-         do wordidx = 1, size(words)
-            nextsepidx = self%Find(sep,begin=wordbegin)
-            if (nextsepidx < wordbegin) nextsepidx = len(self%raw) + 1
-            words(wordidx) = self%raw(wordbegin:nextsepidx-1)
-            wordbegin = nextsepidx + len(sep)
+      idx = 1
+      do wordidx = 1, size(words)
+         do while (CharIsWhitespace(self%At(idx)))
+            idx = idx + 1
          enddo
-
-      else
-
-         ! If sep is not present, a different splitting algorithm is applied: runs of consecutive whitespace are
-         ! regarded as a single separator, and the result will contain no empty strings at the start or end if the
-         ! string has leading or trailing whitespace.  Consequently, splitting an empty string or a string consisting of
-         ! just whitespace without a separator returns [].
-
-         allocate(words(self%CountWords()))
-
-         idx = 1
-         do wordidx = 1, size(words)
-            do while (CharIsWhitespace(self%At(idx)))
-               idx = idx + 1
-            enddo
-            wordbegin = idx
-            do while (idx <= len(self))
-               if (CharIsWhitespace(self%At(idx))) exit
-               idx = idx + 1
-            enddo
-            words(wordidx) = self%raw(wordbegin:idx-1)
+         wordbegin = idx
+         do while (idx <= len(self))
+            if (CharIsWhitespace(self%At(idx))) exit
+            idx = idx + 1
          enddo
+         words(wordidx) = self%raw(wordbegin:idx-1)
+      enddo
 
-      endif
+   end function
+   !
+   ! If sep is present, consecutive delimiters are not grouped together and are deemed to delimit empty strings
+   ! (for example, '1,,2'%split(',') returns ['1', '', '2']). The sep argument may consist of multiple characters
+   ! (for example, '1<>2<>3'%split('<>') returns ['1', '2', '3']). Splitting an empty string with a specified
+   ! separator returns [''].
+   !
+   function SplitSepRaw(self, sep, maxsplit) result(words)
+      class(ftlString), intent(in)           :: self
+      character(len=*), intent(in)           :: sep
+      integer         , intent(in), optional :: maxsplit
+      type(ftlString) , allocatable          :: words(:)
+
+      integer :: wordbegin, wordidx, nextsepidx
+
+      if (present(maxsplit)) stop 'TODO'
+
+      allocate(words(self%Count(sep)+1))
+
+      wordbegin = 1
+      do wordidx = 1, size(words)
+         nextsepidx = self%Find(sep,begin=wordbegin)
+         if (nextsepidx < wordbegin) nextsepidx = len(self%raw) + 1
+         words(wordidx) = self%raw(wordbegin:nextsepidx-1)
+         wordbegin = nextsepidx + len(sep)
+      enddo
+
+   end function
+   !
+   function SplitSepOther(self, sep, maxsplit) result(words)
+      class(ftlString), intent(in)           :: self
+      type(ftlString) , intent(in)           :: sep
+      integer         , intent(in), optional :: maxsplit
+      type(ftlString) , allocatable          :: words(:)
+
+      words = SplitSepRaw(self, sep%raw, maxsplit)
 
    end function
 
