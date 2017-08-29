@@ -618,6 +618,14 @@ contains
       s = 'test'
       ASSERT(s%Count('') == 5) ! replicating a Python behavior
 
+      ! tests with slicing
+      s = 'testtesttest'
+      ASSERT(s%Count('test',start=2,end=13) == 2)
+      ASSERT(s%Count('test',start=2) == 2)
+      ASSERT(s%Count('test',end=10) == 2)
+      ASSERT(s%Count('test',start=5,end=9) == 1)
+      ASSERT(s%Count('test',start=6,end=5) == 0)
+
    end subroutine
 
 

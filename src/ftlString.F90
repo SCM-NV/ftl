@@ -1191,27 +1191,15 @@ contains
       character(len=*), intent(in)           :: sub
       integer         , intent(in), optional :: start, end
 
-      integer doneEnd, next
-
-      if (present(start) .or. present(end)) stop 'TODO'
-
-      if (len(sub) == 0) then
-         ! replicate Python string behavior
-         count = len(self%raw) + 1
-         return
+      if (present(start) .and. present(end)) then
+         count = CountImplementation(self%raw(start:end-1), sub)
+      elseif (present(start)) then
+         count = CountImplementation(self%raw(start:), sub)
+      elseif (present(end)) then
+         count = CountImplementation(self%raw(:end-1), sub)
+      else
+         count = CountImplementation(self%raw, sub)
       endif
-
-      count = 0
-      doneEnd = 1
-      do while (.true.)
-         next = self%Find(sub, begin=doneEnd)
-         if (next >= doneEnd) then ! found one more
-            count = count + 1
-            doneEnd = next + len(sub)
-         else
-            exit
-         endif
-      enddo
 
    end function
    !
@@ -1221,6 +1209,31 @@ contains
       integer         , intent(in), optional :: start, end
 
       count = CountRaw(self, sub%raw, start, end)
+
+   end function
+   !
+   integer function CountImplementation(raw, sub) result(count)
+      character(len=*), intent(in) :: raw, sub
+
+      integer doneEnd, next
+
+      if (len(sub) == 0) then
+         ! replicate Python string behavior
+         count = len(raw) + 1
+         return
+      endif
+
+      count = 0
+      doneEnd = 1
+      do while (.true.)
+         next = index(raw(doneEnd:), sub) + doneEnd - 1
+         if (next >= doneEnd) then ! found one more
+            count = count + 1
+            doneEnd = next + len(sub)
+         else
+            exit
+         endif
+      enddo
 
    end function
 
