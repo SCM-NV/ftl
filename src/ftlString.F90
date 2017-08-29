@@ -1325,7 +1325,7 @@ contains
       integer         , intent(in), optional :: maxsplit
       type(ftlString) , allocatable          :: words(:)
 
-      integer :: idx, wordbegin, wordidx
+      integer :: idx, wordbegin, wordidx, nextsepidx
 
       if (present(maxsplit)) stop 'TODO'
 
@@ -1336,7 +1336,15 @@ contains
          ! (for example, '1<>2<>3'%split('<>') returns ['1', '2', '3']). Splitting an empty string with a specified
          ! separator returns [''].
 
-         stop 'TODO'
+         allocate(words(self%Count(sep)+1))
+
+         wordbegin = 1
+         do wordidx = 1, size(words)
+            nextsepidx = self%Find(sep,begin=wordbegin)
+            if (nextsepidx < wordbegin) nextsepidx = len(self%raw) + 1
+            words(wordidx) = self%raw(wordbegin:nextsepidx-1)
+            wordbegin = nextsepidx + len(sep)
+         enddo
 
       else
 
@@ -1620,6 +1628,11 @@ contains
       class(ftlString), intent(in) :: self
 
       integer :: idx
+
+      if (len(self%raw) == 0) then
+         CountWords = 0
+         return
+      endif
 
       if (CharIsWhitespace(self%raw(1:1))) then
          CountWords = 0

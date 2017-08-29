@@ -697,6 +697,81 @@ contains
       ASSERT(words(8) == 'whitespacing')
       ASSERT(words(9) == 'issues.')
 
+      s = 'bla,blub,test'
+      words = s%Split(',')
+
+      ASSERT(size(words) == 3)
+      ASSERT(words(1) == 'bla')
+      ASSERT(words(2) == 'blub')
+      ASSERT(words(3) == 'test')
+
+      s = ',bla,,blub,test,'
+      words = s%Split(',')
+
+      ASSERT(size(words) == 6)
+      ASSERT(words(1) == '')
+      ASSERT(words(2) == 'bla')
+      ASSERT(words(3) == '')
+      ASSERT(words(4) == 'blub')
+      ASSERT(words(5) == 'test')
+      ASSERT(words(6) == '')
+
+      s = ',,,,,'
+      words = s%Split(',')
+
+      ASSERT(size(words) == 6)
+      ASSERT(words(1) == '')
+      ASSERT(words(2) == '')
+      ASSERT(words(3) == '')
+      ASSERT(words(4) == '')
+      ASSERT(words(5) == '')
+      ASSERT(words(6) == '')
+
+      s = 'bla<>blub<>test'
+      words = s%Split('<>')
+
+      ASSERT(size(words) == 3)
+      ASSERT(words(1) == 'bla')
+      ASSERT(words(2) == 'blub')
+      ASSERT(words(3) == 'test')
+
+      s = '<>bla<><>blub<>test<>'
+      words = s%Split('<>')
+
+      ASSERT(size(words) == 6)
+      ASSERT(words(1) == '')
+      ASSERT(words(2) == 'bla')
+      ASSERT(words(3) == '')
+      ASSERT(words(4) == 'blub')
+      ASSERT(words(5) == 'test')
+      ASSERT(words(6) == '')
+
+      s = '<><><><><>'
+      words = s%Split('<>')
+
+      ASSERT(size(words) == 6)
+      ASSERT(words(1) == '')
+      ASSERT(words(2) == '')
+      ASSERT(words(3) == '')
+      ASSERT(words(4) == '')
+      ASSERT(words(5) == '')
+      ASSERT(words(6) == '')
+
+      ! Test that splitting empty strings behaves like in Python:
+
+      s = ''
+      words = s%Split(',')
+      ASSERT(size(words) == 1)
+      ASSERT(words(1) == '')
+
+      s = ''
+      words = s%Split()
+      ASSERT(size(words) == 0)
+
+      s = FTL_STRING_WHITESPACE
+      words = s%Split()
+      ASSERT(size(words) == 0)
+
    end subroutine
 
 
@@ -813,6 +888,12 @@ contains
    subroutine testCountWords
       type(ftlString) :: s
 
+      s = ''
+      ASSERT(s%CountWords() == 0)
+
+      s = FTL_STRING_WHITESPACE
+      ASSERT(s%CountWords() == 0)
+
       s = 'this is a test'
       ASSERT(s%CountWords() == 4)
 
@@ -861,12 +942,12 @@ contains
       call s%New('still testing')
       it = s%Begin()
 
-      !ASSERT(associated(it%value,s%At(1)))
+      ASSERT(associated(it%value,s%At(1)))
       ASSERT(it%value == 's')
 
       call it%Inc()
 
-      !ASSERT(associated(it%value,s%At(2)))
+      ASSERT(associated(it%value,s%At(2)))
       ASSERT(it%value == 't')
 
    end subroutine
