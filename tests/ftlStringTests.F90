@@ -863,6 +863,7 @@ contains
 
       sep = ':'
 
+      ASSERT(sep%Join(words(1:0)) == '')
       ASSERT(sep%Join(words(1:1)) == 'test')
       ASSERT(sep%Join(words(1:2)) == 'test:this')
       ASSERT(sep%Join(words(1:3)) == 'test:this:stuff')
@@ -871,6 +872,7 @@ contains
 
       sep = '=='
 
+      ASSERT(sep%Join(words(1:0)) == '')
       ASSERT(sep%Join(words(1:1)) == 'test')
       ASSERT(sep%Join(words(1:2)) == 'test==this')
       ASSERT(sep%Join(words(1:3)) == 'test==this==stuff')
@@ -879,11 +881,21 @@ contains
 
       sep = ''
 
+      ASSERT(sep%Join(words(1:0)) == '')
       ASSERT(sep%Join(words(1:1)) == 'test')
       ASSERT(sep%Join(words(1:2)) == 'testthis')
       ASSERT(sep%Join(words(1:3)) == 'testthisstuff')
       ASSERT(sep%Join(words(1:4)) == 'testthisstuff')
       ASSERT(sep%Join(words(1:5)) == 'testthisstuffthoroughly')
+
+      ! test free Join() method
+
+      ASSERT(Join(':',words(1:0)) == '')
+      ASSERT(Join(':',words(1:1)) == 'test')
+      ASSERT(Join(':',words(1:2)) == 'test:this')
+      ASSERT(Join(':',words(1:3)) == 'test:this:stuff')
+      ASSERT(Join(':',words(1:4)) == 'test:this:stuff:')
+      ASSERT(Join(':',words(1:5)) == 'test:this:stuff::thoroughly')
 
    end subroutine
 

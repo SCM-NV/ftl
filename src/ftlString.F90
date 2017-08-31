@@ -110,7 +110,8 @@ module ftlStringModule
       procedure         :: SplitSepRaw
       procedure         :: SplitSepOther
       generic  , public :: Split => SplitWords, SplitSepRaw, SplitSepOther
-      procedure, public :: Join
+      procedure         :: JoinBound
+      generic  , public :: Join => JoinBound
       procedure         :: StartsWithRaw
       procedure         :: StartsWithOther
       procedure         :: StartsWithArray
@@ -191,6 +192,11 @@ module ftlStringModule
 
    interface operator(+)
       module procedure CharCatOpChar
+   end interface
+
+   public :: Join
+   interface Join
+      module procedure JoinFree
    end interface
 
 
@@ -1280,8 +1286,17 @@ contains
    ! Return a string which is the concatenation of the strings in array. The separator between elements is the string
    ! providing this method.
    !
-   function Join(self, words) result(joined)
+   function JoinBound(self, words) result(joined)
       class(ftlString), intent(in)  :: self
+       type(ftlString), intent(in)  :: words(:)
+       type(ftlString)              :: joined
+
+       joined = JoinFree(self%raw, words)
+
+   end function
+   !
+   function JoinFree(sep, words) result(joined)
+      character(len=*), intent(in)  :: sep
        type(ftlString), intent(in)  :: words(:)
        type(ftlString)              :: joined
 
@@ -1294,7 +1309,7 @@ contains
       else
 
          ! calculate the length of the resulting string
-         joinedLen = (size(words) - 1) * len(self%raw)
+         joinedLen = (size(words) - 1) * len(sep)
          do wordIdx = 1, size(words)
             joinedLen = joinedLen + len(words(wordIdx))
          enddo
@@ -1306,8 +1321,8 @@ contains
          joined%raw(1:len(words(1))) = words(1)%raw
          writer = len(words(1)) + 1
          do wordIdx = 2, size(words)
-            joined%raw(writer:writer+len(self%raw)-1) = self%raw
-            writer = writer + len(self%raw)
+            joined%raw(writer:writer+len(sep)-1) = sep
+            writer = writer + len(sep)
             joined%raw(writer:writer+len(words(wordIdx))-1) = words(wordIdx)%raw
             writer = writer + len(words(wordIdx))
          enddo
