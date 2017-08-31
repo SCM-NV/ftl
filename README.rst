@@ -36,11 +36,11 @@ function.
 .. code:: c++
 
     bigger_integer = max(1,6)
-    bigger_float   = max(1.2,6.4)
+    bigger_double   = max(1.2,6.4)
 
 The compiler will determine that the type ``T`` is ``int``  for the first call
-and ``float`` for the second and will generate two versions of the max function
-template: One for ``int`` and ``float``. This is called template instantiation.
+and ``double`` for the second and will generate two versions of the max function
+template: One for ``int`` and ``double``. This is called template instantiation.
 This does not only work for the plain old types like numbers, but for *any*
 type, provided that it overloads the ``<`` operator. If it doesn't, the compiler
 can not instantiate the the template and will produce an error.
