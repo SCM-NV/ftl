@@ -757,6 +757,68 @@ contains
       ASSERT(words(5) == '')
       ASSERT(words(6) == '')
 
+      ! Tests with maxsplit:
+
+      s = 'This is a test.'
+      words = s%Split(maxsplit=2)
+
+      ASSERT(size(words) == 3)
+      ASSERT(words(1) == 'This')
+      ASSERT(words(2) == 'is')
+      ASSERT(words(3) == 'a test.')
+
+      s = 'This is a test.   '
+      words = s%Split(maxsplit=2)
+
+      ASSERT(size(words) == 3)
+      ASSERT(words(1) == 'This')
+      ASSERT(words(2) == 'is')
+      ASSERT(words(3) == 'a test.   ')
+
+      s = 'This is a test.   '
+      words = s%Split(maxsplit=20)
+
+      ASSERT(size(words) == 4)
+      ASSERT(words(1) == 'This')
+      ASSERT(words(2) == 'is')
+      ASSERT(words(3) == 'a')
+      ASSERT(words(4) == 'test.')
+
+      s = '   This is a test.   '
+      words = s%Split(maxsplit=2)
+
+      ASSERT(size(words) == 3)
+      ASSERT(words(1) == 'This')
+      ASSERT(words(2) == 'is')
+      ASSERT(words(3) == 'a test.   ')
+
+      s = 'bla,blub,test'
+      words = s%Split(',', maxsplit=1)
+
+      ASSERT(size(words) == 2)
+      ASSERT(words(1) == 'bla')
+      ASSERT(words(2) == 'blub,test')
+
+      s = ',bla,,blub,test,'
+      words = s%Split(',',maxsplit=3)
+
+      ASSERT(size(words) == 4)
+      ASSERT(words(1) == '')
+      ASSERT(words(2) == 'bla')
+      ASSERT(words(3) == '')
+      ASSERT(words(4) == 'blub,test,')
+
+      s = ',,,,,'
+      words = s%Split(',',maxsplit=20)
+
+      ASSERT(size(words) == 6)
+      ASSERT(words(1) == '')
+      ASSERT(words(2) == '')
+      ASSERT(words(3) == '')
+      ASSERT(words(4) == '')
+      ASSERT(words(5) == '')
+      ASSERT(words(6) == '')
+
       ! Test that splitting empty strings behaves like in Python:
 
       s = ''
@@ -770,6 +832,19 @@ contains
 
       s = FTL_STRING_WHITESPACE
       words = s%Split()
+      ASSERT(size(words) == 0)
+
+      s = ''
+      words = s%Split(',',maxsplit=20)
+      ASSERT(size(words) == 1)
+      ASSERT(words(1) == '')
+
+      s = ''
+      words = s%Split(maxsplit=20)
+      ASSERT(size(words) == 0)
+
+      s = FTL_STRING_WHITESPACE
+      words = s%Split(maxsplit=20)
       ASSERT(size(words) == 0)
 
    end subroutine

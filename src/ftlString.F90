@@ -1334,9 +1334,11 @@ contains
 
       integer :: idx, wordbegin, wordidx
 
-      if (present(maxsplit)) stop 'TODO'
-
-      allocate(words(self%CountWords()))
+      if (present(maxsplit)) then
+         allocate(words( min(self%CountWords(), maxsplit+1) ))
+      else
+         allocate(words(self%CountWords()))
+      endif
 
       idx = 1
       do wordidx = 1, size(words)
@@ -1344,11 +1346,16 @@ contains
             idx = idx + 1
          enddo
          wordbegin = idx
-         do while (idx <= len(self))
-            if (CharIsWhitespace(self%At(idx))) exit
-            idx = idx + 1
-         enddo
-         words(wordidx) = self%raw(wordbegin:idx-1)
+         if (present(maxsplit) .and. wordidx == size(words)) then
+            words(wordidx) = self%raw(wordbegin:)
+            if (wordidx /= maxsplit+1) words(wordidx)%raw = trim(words(wordidx)%raw) ! TODO: remove this ugly fix
+         else
+            do while (idx <= len(self))
+               if (CharIsWhitespace(self%At(idx))) exit
+               idx = idx + 1
+            enddo
+            words(wordidx) = self%raw(wordbegin:idx-1)
+         endif
       enddo
 
    end function
@@ -1366,16 +1373,23 @@ contains
 
       integer :: wordbegin, wordidx, nextsepidx
 
-      if (present(maxsplit)) stop 'TODO'
 
-      allocate(words(self%Count(sep)+1))
+      if (present(maxsplit)) then
+         allocate(words( min(self%Count(sep)+1, maxsplit+1) ))
+      else
+         allocate(words(self%Count(sep)+1))
+      endif
 
       wordbegin = 1
       do wordidx = 1, size(words)
-         nextsepidx = self%Find(sep,begin=wordbegin)
-         if (nextsepidx < wordbegin) nextsepidx = len(self%raw) + 1
-         words(wordidx) = self%raw(wordbegin:nextsepidx-1)
-         wordbegin = nextsepidx + len(sep)
+         if (present(maxsplit) .and. wordidx == size(words)) then
+            words(wordidx) = self%raw(wordbegin:)
+         else
+            nextsepidx = self%Find(sep,begin=wordbegin)
+            if (nextsepidx < wordbegin) nextsepidx = len(self%raw) + 1
+            words(wordidx) = self%raw(wordbegin:nextsepidx-1)
+            wordbegin = nextsepidx + len(sep)
+         endif
       enddo
 
    end function
