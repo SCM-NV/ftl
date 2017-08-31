@@ -71,6 +71,7 @@ contains
       call testSplitLines
       call testJoin
       call testStartsWith
+      call testStrip
       call testUpperLower
       call testReplace
 
@@ -983,6 +984,29 @@ contains
       prefixes(1) = 'Test'
       prefixes(2) = 'not there'
       ASSERT(.not.s%StartsWith(prefixes))
+
+   end subroutine
+
+
+   subroutine testStrip
+      type(ftlString) :: s, stripme
+
+      s = '   hohoho   '
+      ASSERT(s%Strip(' ') == 'hohoho')
+
+      s = '   '
+      ASSERT(s%Strip(' ') == '')
+
+      s = 'helloworld'
+      ASSERT(s%Strip(' ') == 'helloworld')
+
+      s = ''
+      ASSERT(s%Strip(' ') == '')
+
+      s = './!@#$%^&*()-_ hello world  _)(*&^%$#@!'
+      stripme = './!@#$%^&*()-_ '
+      ASSERT(s%Strip('./!@#$%^&*()-_ ') == 'hello world')
+      ASSERT(s%Strip(stripme) == 'hello world')
 
    end subroutine
 

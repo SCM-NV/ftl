@@ -117,6 +117,10 @@ module ftlStringModule
       procedure         :: StartsWithOther
       procedure         :: StartsWithArray
       generic  , public :: StartsWith => StartsWithRaw, StartsWithOther, StartsWithArray
+      procedure         :: StripWhitespace
+      procedure         :: StripRaw
+      procedure         :: StripString
+      generic  , public :: Strip => StripWhitespace, StripRaw, StripString
       procedure         :: FindRaw
       procedure         :: FindOther
       generic  , public :: Find => FindRaw, FindOther
@@ -1430,7 +1434,7 @@ contains
 
       type(ftlString) :: tmp
 
-      ! TODO: more efficient implemetation that doesn't make a copy
+      ! TODO: more efficient implementation that doesn't make a copy
 
       ! special case: empty string
       if (len(self) == 0) then
@@ -1489,6 +1493,52 @@ contains
             return
          endif
       enddo
+
+   end function
+
+
+   ! Return a copy of the string with the leading and trailing characters removed. The chars argument is a string
+   ! specifying the set of characters to be removed. If omitted or None, the chars argument defaults to removing
+   ! whitespace. The chars argument is not a prefix or suffix; rather, all combinations of its values are stripped.
+   !
+   type(ftlString) function StripWhitespace(self) result(stripped)
+      class(ftlString), intent(in) :: self
+
+      integer :: first, last
+
+      first = verify(self%raw, FTL_STRING_WHITESPACE)
+      last = verify(self%raw, FTL_STRING_WHITESPACE, .true.)
+
+      if (first == 0) then
+         stripped%raw = ''
+      else
+         stripped%raw = self%raw(first:last)
+      endif
+
+   end function
+   !
+   type(ftlString) function StripRaw(self, chars) result(stripped)
+      class(ftlString), intent(in) :: self
+      character(len=*), intent(in) :: chars
+
+      integer :: first, last
+
+      first = verify(self%raw, chars)
+      last = verify(self%raw, chars, .true.)
+
+      if (first == 0) then
+         stripped%raw = ''
+      else
+         stripped%raw = self%raw(first:last)
+      endif
+
+   end function
+   !
+   type(ftlString) function StripString(self, chars) result(stripped)
+      class(ftlString), intent(in) :: self
+       type(ftlString), intent(in) :: chars
+
+      stripped = self%StripRaw(chars%raw)
 
    end function
 
