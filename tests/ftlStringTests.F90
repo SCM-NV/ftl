@@ -68,6 +68,7 @@ contains
       call testCount
       call testPartition
       call testSplit
+      call testSplitLines
       call testJoin
       call testStartsWith
       call testUpperLower
@@ -846,6 +847,59 @@ contains
       s = FTL_STRING_WHITESPACE
       words = s%Split(maxsplit=20)
       ASSERT(size(words) == 0)
+
+   end subroutine
+
+
+   subroutine testSplitLines
+      type(ftlString) :: s
+      type(ftlString), allocatable :: lines(:)
+
+      s = 'bla'//achar(10)//'blub blub'//achar(13)//achar(10)//'test'
+      lines = s%SplitLines()
+
+      ASSERT(size(lines) == 3)
+      ASSERT(lines(1) == 'bla')
+      ASSERT(lines(2) == 'blub blub')
+      ASSERT(lines(3) == 'test')
+
+      s = 'bla'//achar(10)//'blub blub'//achar(13)//achar(10)//'test'//achar(10)
+      lines = s%SplitLines()
+
+      ASSERT(size(lines) == 3)
+      ASSERT(lines(1) == 'bla')
+      ASSERT(lines(2) == 'blub blub')
+      ASSERT(lines(3) == 'test')
+
+      s = 'bla'//achar(10)//'blub blub'//achar(13)//achar(10)//'test'//achar(10)//achar(10)
+      lines = s%SplitLines()
+
+      ASSERT(size(lines) == 4)
+      ASSERT(lines(1) == 'bla')
+      ASSERT(lines(2) == 'blub blub')
+      ASSERT(lines(3) == 'test')
+      ASSERT(lines(4) == '')
+
+      s = achar(13)//'bla'//achar(10)//'blub'//achar(13)//'blub'//achar(13)//achar(10)//'test'//achar(10)//achar(10)
+      lines = s%SplitLines()
+
+      ASSERT(size(lines) == 6)
+      ASSERT(lines(1) == '')
+      ASSERT(lines(2) == 'bla')
+      ASSERT(lines(3) == 'blub')
+      ASSERT(lines(4) == 'blub')
+      ASSERT(lines(5) == 'test')
+      ASSERT(lines(6) == '')
+
+      s = 'just one line'
+      lines = s%SplitLines()
+
+      ASSERT(size(lines) == 1)
+      ASSERT(lines(1) == 'just one line')
+
+      s = ''
+      lines = s%SplitLines()
+      ASSERT(size(lines) == 0)
 
    end subroutine
 

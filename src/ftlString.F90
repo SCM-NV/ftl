@@ -110,6 +110,7 @@ module ftlStringModule
       procedure         :: SplitSepRaw
       procedure         :: SplitSepOther
       generic  , public :: Split => SplitWords, SplitSepRaw, SplitSepOther
+      procedure, public :: SplitLines
       procedure         :: JoinBound
       generic  , public :: Join => JoinBound
       procedure         :: StartsWithRaw
@@ -1416,6 +1417,40 @@ contains
       type(ftlString) , allocatable          :: words(:)
 
       words = SplitSepRaw(self, sep%raw, maxsplit)
+
+   end function
+
+
+
+   ! Return a list of the lines in the string, breaking at line boundaries. Line breaks are not included in the resulting list.
+   !
+   function SplitLines(self) result(lines)
+      class(ftlString), intent(in)  :: self
+      type(ftlString) , allocatable :: lines(:)
+
+      type(ftlString) :: tmp
+
+      ! TODO: more efficient implemetation that doesn't make a copy
+
+      ! special case: empty string
+      if (len(self) == 0) then
+         allocate(lines(0))
+         return
+      endif
+
+      ! convert DOS to UNIX line endings
+      tmp = self%Replace(achar(13)//achar(10), achar(10))
+
+      ! convert old Mac to UNIX endings
+      if (achar(13) .in. tmp) tmp = tmp%Replace(achar(13), achar(10))
+
+      ! remove potential linebreak at the end of the string
+      if (tmp%raw(len(tmp%raw):len(tmp%raw)) == achar(10)) then
+         tmp%raw = tmp%raw(:len(tmp%raw)-1)
+      endif
+
+      ! use normal split method to do the actual work
+      lines = tmp%Split(achar(10))
 
    end function
 
