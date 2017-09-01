@@ -43,10 +43,10 @@ and ``double`` for the second and will generate two versions of the max function
 template: One for ``int`` and ``double``. This is called template instantiation.
 This does not only work for the plain old types like numbers, but for *any*
 type, provided that it overloads the ``<`` operator. If it doesn't, the compiler
-can not instantiate the the template and will produce an error.
+can not instantiate the template and will produce an error.
 
 In Python we can do pretty much the same thing, only that we would get a
-run-time error in the ``max()`` function if it is called with type for which the
+run-time error in the ``max()`` function if it is called with a type for which the
 ``<`` operator is not overloaded.
 
 Now Fortran obviously does not have something like C++'s templates or Python's
