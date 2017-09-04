@@ -36,7 +36,7 @@ function.
 .. code:: c++
 
     bigger_integer = max(1,6)
-    bigger_double   = max(1.2,6.4)
+    bigger_double  = max(1.2,6.4)
 
 The compiler will determine that the type ``T`` is ``int``  for the first call
 and ``double`` for the second and will generate two versions of the max function
