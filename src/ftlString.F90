@@ -1124,9 +1124,9 @@ contains
       nRead = 0
       do
          read (unit, '(A)', advance='no', err=10, end=10, eor=10, size=nRead, iostat=ios) buff
-         self%raw = self%raw//buff(:nRead)
+         self%raw = self%raw//buff(1:nRead)
       enddo
-   10 self%raw = self%raw//buff(:nRead)
+   10 self%raw = self%raw//buff(1:nRead)
       if (present(iostat)) iostat = ios
 
    end subroutine
@@ -1163,7 +1163,7 @@ contains
          nRead = nRead + len(line%raw)
       enddo
 
-      self = buffer(:nRead)
+      self = buffer(1:nRead)
 
    end subroutine
 
@@ -1212,9 +1212,9 @@ contains
       if (present(start) .and. present(end)) then
          count = CountImplementation(self%raw(start:end-1), sub)
       elseif (present(start)) then
-         count = CountImplementation(self%raw(start:), sub)
+         count = CountImplementation(self%raw(start:len(self%raw)), sub)
       elseif (present(end)) then
-         count = CountImplementation(self%raw(:end-1), sub)
+         count = CountImplementation(self%raw(1:end-1), sub)
       else
          count = CountImplementation(self%raw, sub)
       endif
@@ -1244,7 +1244,7 @@ contains
       count = 0
       doneEnd = 1
       do while (.true.)
-         next = index(raw(doneEnd:), sub) + doneEnd - 1
+         next = index(raw(doneEnd:len(raw)), sub) + doneEnd - 1
          if (next >= doneEnd) then ! found one more
             count = count + 1
             doneEnd = next + len(sub)
@@ -1276,7 +1276,7 @@ contains
       else
          partition(1) = self%raw(1:idx-1)
          partition(2) = self%raw(idx:idx+len(sep)-1)
-         partition(3) = self%raw(idx+len(sep):)
+         partition(3) = self%raw(idx+len(sep):len(self%raw))
       endif
 
    end function
@@ -1371,7 +1371,7 @@ contains
          enddo
          wordbegin = idx
          if (present(maxsplit) .and. wordidx == size(words)) then
-            words(wordidx) = self%raw(wordbegin:)
+            words(wordidx) = self%raw(wordbegin:len(self%raw))
             if (wordidx /= maxsplit+1) words(wordidx)%raw = trim(words(wordidx)%raw) ! TODO: remove this ugly fix
          else
             do while (idx <= len(self))
@@ -1407,7 +1407,7 @@ contains
       wordbegin = 1
       do wordidx = 1, size(words)
          if (present(maxsplit) .and. wordidx == size(words)) then
-            words(wordidx) = self%raw(wordbegin:)
+            words(wordidx) = self%raw(wordbegin:len(self%raw))
          else
             nextsepidx = self%Find(sep,begin=wordbegin)
             if (nextsepidx < wordbegin) nextsepidx = len(self%raw) + 1
@@ -1454,7 +1454,7 @@ contains
 
       ! remove potential linebreak at the end of the string
       if (tmp%raw(len(tmp%raw):len(tmp%raw)) == achar(10)) then
-         tmp%raw = tmp%raw(:len(tmp%raw)-1)
+         tmp%raw = tmp%raw(1:len(tmp%raw)-1)
       endif
 
       ! use normal split method to do the actual work
@@ -1786,7 +1786,7 @@ contains
       enddo
 
       ! all replacements done, copy the rest of the string
-      str%raw(writeEnd:) = self%raw(readEnd:)
+      str%raw(writeEnd:len(str%raw)) = self%raw(readEnd:len(self%raw))
 
    end function
 
