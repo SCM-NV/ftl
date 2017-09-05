@@ -25,6 +25,7 @@ program tests
    use ftlRegexTestsModule
    use ftlArrayTestsModule
    use ftlDynArrayTestsModule
+   use ftlDequeTestsModule
    use ftlListTestsModule
    use ftlHashMapTestsModule
    use ftlSharedPtrTestsModule
@@ -37,6 +38,7 @@ program tests
    call ftlStringTests
    call ftlArrayTests
    call ftlDynArrayTests
+   call ftlDequeTests
    call ftlListTests
    call ftlHashMapTests
    call ftlSharedPtrTests

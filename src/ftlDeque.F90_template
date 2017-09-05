@@ -1,0 +1,150 @@
+! Copyright (c) 2017  Robert Rüger
+!
+! This file is part of of the Fortran Template Library.
+!
+! The Fortran Template Library is free software: you can redistribute it and/or
+! modify it under the terms of the GNU Lesser General Public License as
+! published by the Free Software Foundation, either version 3 of the License, or
+! (at your option) any later version.
+!
+! The Fortran Template Library is distributed in the hope that it will be
+! useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
+! General Public License for more details.
+!
+! You should have received a copy of the GNU Lesser General Public License along
+! with the Fortran Template Library.  If not, see <http://www.gnu.org/licenses/>.
+
+#define FTL_CONTAINER ftlDeque
+#define FTL_CONTAINER_PROVIDES_RANDOM_ACCESS_ITERATOR
+
+#ifdef FTL_INSTANTIATE_TEMPLATE
+
+#ifndef FTL_DEQUE_PAGESIZE
+#define FTL_DEQUE_PAGESIZE 512
+#endif
+
+#if !defined(FTL_TEMPLATE_TYPE)
+#error FTL_TEMPLATE_TYPE must be defined when instantiating ftlDeque
+#endif
+#if !defined(FTL_TEMPLATE_TYPE_NAME)
+#error FTL_TEMPLATE_TYPE_NAME must be defined when instantiating ftlDeque
+#endif
+
+#include "ftlMacros.inc"
+
+#ifdef FTL_TEMPLATE_TYPE_IS_DERIVED
+#define FTL_TEMPLATE_TYPE_WRAP type(FTL_TEMPLATE_TYPE)
+#else
+#define FTL_TEMPLATE_TYPE_WRAP FTL_TEMPLATE_TYPE
+#endif
+
+
+module CAT3(ftlDeque,FTL_TEMPLATE_TYPE_NAME,Module)
+
+#ifdef FTL_TEMPLATE_TYPE_MODULE
+   use FTL_TEMPLATE_TYPE_MODULE
+#endif
+
+   implicit none
+   private
+
+! ====== Type of the ftlDeque container itself ===================================================================================
+
+   type :: Page
+      FTL_TEMPLATE_TYPE_WRAP, allocatable :: storage(:)
+   end type
+
+   type, public :: CAT(ftlDeque,FTL_TEMPLATE_TYPE_NAME)
+      private
+
+      integer                                     :: psize = 0
+      integer                                     :: pageOffset = 0 ! offset for iterator access to pages
+      integer                                     :: frontIdx = 1 ! index of front within first page
+      integer                                     :: backIdx  = 0 ! index of back  within last  page
+      type(Page)            , allocatable         :: page(:)
+      FTL_TEMPLATE_TYPE_WRAP, pointer    , public :: front => null()
+      FTL_TEMPLATE_TYPE_WRAP, pointer    , public :: back => null()
+
+   contains
+      private
+
+      procedure         :: NewDefault
+      procedure         :: NewCopyOther
+      generic  , public :: New => NewDefault, NewCopyOther
+
+      procedure, public :: Delete
+      final             :: Finalizer
+
+      procedure         :: FixValuePtrs
+
+   end type
+
+
+contains
+
+
+
+! ====== Implementation of ftlDeque methods ======================================================================================
+
+
+   subroutine NewDefault(self)
+      class(CAT(ftlDeque,FTL_TEMPLATE_TYPE_NAME)), intent(out) :: self
+
+      allocate(self%page(1))
+      allocate(self%page(1)%storage(FTL_DEQUE_PAGESIZE))
+
+   end subroutine
+   !
+   subroutine NewCopyOther(self, other)
+      class(CAT(ftlDeque,FTL_TEMPLATE_TYPE_NAME)), intent(out) :: self
+       type(CAT(ftlDeque,FTL_TEMPLATE_TYPE_NAME)), intent(in)  :: other
+
+      self%psize = other%psize
+      self%page = other%page
+      call self%FixValuePtrs()
+
+   end subroutine
+
+
+
+   elemental subroutine Delete(self)
+      class(CAT(ftlDeque,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
+
+      self%psize = 0
+      self%pageOffset = 0
+      if (allocated(self%page)) deallocate(self%page)
+      nullify(self%front)
+      nullify(self%back)
+
+   end subroutine
+   !
+   elemental subroutine Finalizer(self)
+      type(CAT(ftlDeque,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
+
+      call self%Delete()
+
+   end subroutine
+
+
+
+   ! =============> Internal methods:
+
+
+
+   subroutine FixValuePtrs(self)
+      class(CAT(ftlDeque,FTL_TEMPLATE_TYPE_NAME)), intent(inout), target :: self
+
+      if (self%psize == 0) then
+         ! not strictly necessary, because it will always crash if someone accesses front/back on an empty dynArray ...
+         nullify(self%front, self%back)
+      else
+         self%front => self%page(1)%storage(self%frontIdx)
+         self%back  => self%page(size(self%page))%storage(self%backIdx)
+      endif
+
+   end subroutine
+
+
+end module
+#endif
