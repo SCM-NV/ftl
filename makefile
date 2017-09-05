@@ -30,7 +30,7 @@ DEFINES =
 
 ifeq ($(PLATFORM), gnu)
 	COMPILER = gfortran
-	FLAGS = -std=f2008 -fall-intrinsics -ffree-line-length-none -Wall -Wextra -Wpedantic -Wno-target-lifetime -Wno-compare-reals -J$(BUILDDIR)
+	FLAGS = -std=f2008 -fall-intrinsics -ffree-line-length-none -Wall -Wextra -Wpedantic -Wno-target-lifetime -Wno-compare-reals -Wno-surprising -J$(BUILDDIR)
 	CXXCOMPILER = g++
 	CXXFLAGS = -std=c++11 -Ofast -march=native
 	SUPPRESSIONS = --suppressions=gfortran.supp
@@ -116,10 +116,10 @@ $(BUILDDIR)/ftlTestTools.o: tests/ftlTestTools.F90 tests/ftlTestTools.inc | $(BU
 $(BUILDDIR)/ftlArrayTests.o: tests/ftlArrayTests.F90 $(BUILDDIR)/ftlArrayIntAlgorithms.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
-$(BUILDDIR)/ftlDynArrayTests.o: tests/ftlDynArrayTests.F90 $(BUILDDIR)/ftlDynArrayInt.o $(BUILDDIR)/ftlDynArrayPoint2D.o $(BUILDDIR)/ftlDynArrayLeaky.o $(BUILDDIR)/ftlDynArrayMovableLeaky.o | $(BUILDDIR)
+$(BUILDDIR)/ftlDynArrayTests.o: tests/ftlDynArrayTests.F90 $(BUILDDIR)/ftlDynArrayInt.o $(BUILDDIR)/ftlDynArrayPoint2D.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
-$(BUILDDIR)/ftlListTests.o: tests/ftlListTests.F90 $(BUILDDIR)/ftlListInt.o $(BUILDDIR)/ftlListLeaky.o $(BUILDDIR)/ftlListMovableLeaky.o | $(BUILDDIR)
+$(BUILDDIR)/ftlListTests.o: tests/ftlListTests.F90 $(BUILDDIR)/ftlListInt.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
 $(BUILDDIR)/ftlHashMapTests.o: tests/ftlHashMapTests.F90 $(BUILDDIR)/ftlHashMapStrInt.o $(BUILDDIR)/ftlHashMapStringInt.o | $(BUILDDIR)
@@ -158,22 +158,10 @@ $(BUILDDIR)/ftlDynArrayInt.o: instantiations/ftlDynArrayInt.F90 src/ftlDynArray.
 $(BUILDDIR)/ftlDynArrayPoint2D.o: instantiations/ftlDynArrayPoint2D.F90 src/ftlDynArray.F90_template $(BUILDDIR)/Point2D.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
-$(BUILDDIR)/ftlDynArrayLeaky.o: instantiations/ftlDynArrayLeaky.F90 src/ftlDynArray.F90_template $(BUILDDIR)/Leaky.o | $(BUILDDIR)
-	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
-
-$(BUILDDIR)/ftlDynArrayMovableLeaky.o: instantiations/ftlDynArrayMovableLeaky.F90 src/ftlDynArray.F90_template $(BUILDDIR)/Leaky.o | $(BUILDDIR)
-	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
-
 $(BUILDDIR)/ftlDynArrayString.o: src/instantiations/ftlDynArrayString.F90 src/ftlDynArray.F90_template $(BUILDDIR)/ftlString.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
 $(BUILDDIR)/ftlListInt.o: instantiations/ftlListInt.F90 src/ftlList.F90_template | $(BUILDDIR)
-	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
-
-$(BUILDDIR)/ftlListLeaky.o: instantiations/ftlListLeaky.F90 src/ftlList.F90_template $(BUILDDIR)/Leaky.o | $(BUILDDIR)
-	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
-
-$(BUILDDIR)/ftlListMovableLeaky.o: instantiations/ftlListMovableLeaky.F90 src/ftlList.F90_template $(BUILDDIR)/Leaky.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
 $(BUILDDIR)/ftlHashMapStrInt.o: instantiations/ftlHashMapStrInt.F90 src/ftlHashMap.F90_template $(BUILDDIR)/ftlHash.o | $(BUILDDIR)
@@ -227,7 +215,4 @@ src/configure_ftlRegex.inc: configure/configure_ftlRegex.c
 # Example derived types:
 
 $(BUILDDIR)/Point2D.o: instantiations/derived_types/Point2D.F90 | $(BUILDDIR)
-	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
-
-$(BUILDDIR)/Leaky.o: instantiations/derived_types/Leaky.F90 | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@

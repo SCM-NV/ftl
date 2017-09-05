@@ -22,9 +22,6 @@ module ftlListTestsModule
 
    use ftlTestToolsModule
    use ftlListIntModule
-   use LeakyModule
-   use ftlListMovableLeakyModule
-   use ftlListLeakyModule
 
    implicit none
    private
@@ -65,12 +62,6 @@ contains
       call testResize
 
       call testClear
-
-      ! Tests with a type that needs to be cleaned up through a finalizer
-      call testLeakyPushPopBack
-
-      ! Tests with a movable type that needs to be cleaned up through a finalizer
-      call testMovableLeakyPushPopBack
 
    end subroutine
 
@@ -563,88 +554,6 @@ contains
       ASSERT(l%Empty())
       ASSERT(l%Size() == 0)
       ASSERT(l%Begin() == l%End())
-
-   end subroutine
-
-
-   subroutine testLeakyPushPopBack
-      type(ftlListLeaky) :: l
-      type(LeakyType) :: leaky
-
-      call leaky%New('test', 100)
-      call l%New(2, leaky)
-
-      ASSERT(leaky%name == 'test')
-      ASSERT(associated(leaky%dontLeakMe))
-      ASSERT(l%Size() == 2)
-      ASSERT(l%front%name == 'test')
-      ASSERT(l%back%name  == 'test')
-      ASSERT(.not.associated(l%front%dontLeakMe, l%back%dontLeakMe))
-
-      call leaky%New('bla', 200)
-      call l%PushBack(leaky)
-
-      ASSERT(leaky%name == 'bla')
-      ASSERT(associated(leaky%dontLeakMe))
-      ASSERT(l%Size() == 3)
-      ASSERT(l%front%name == 'test')
-      ASSERT(l%back%name  == 'bla')
-      ASSERT(.not.associated(l%back%dontLeakMe, leaky%dontLeakMe))
-
-      call leaky%Delete()
-      leaky = l%PopBack() ! leaks with gfortran
-
-      ASSERT(leaky%name == 'bla')
-      ASSERT(associated(leaky%dontLeakMe))
-      ASSERT(l%Size() == 2)
-      ASSERT(l%front%name == 'test')
-      ASSERT(l%back%name  == 'test')
-      ASSERT(.not.associated(leaky%dontLeakMe, l%back%dontLeakMe))
-
-      ! This subroutine leaks with gfortran in the moments. I think the reason is that gfortran does not yet implement
-      ! finalization of temporaries, see: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=37336#c27
-      ! TODO: Workaround?
-
-   end subroutine
-
-
-   subroutine testMovableLeakyPushPopBack
-      type(ftlListMovableLeaky) :: l
-      type(LeakyType) :: leaky
-
-      call leaky%New('test', 100)
-      call l%New(2, leaky)
-
-      ASSERT(leaky%name == 'test')
-      ASSERT(associated(leaky%dontLeakMe))
-      ASSERT(l%Size() == 2)
-      ASSERT(l%front%name == 'test')
-      ASSERT(l%back%name  == 'test')
-      ASSERT(.not.associated(l%front%dontLeakMe, l%back%dontLeakMe))
-
-      call leaky%New('bla', 200)
-      call l%PushBack(leaky)
-
-      ASSERT(leaky%name == 'bla')
-      ASSERT(associated(leaky%dontLeakMe))
-      ASSERT(l%Size() == 3)
-      ASSERT(l%front%name == 'test')
-      ASSERT(l%back%name  == 'bla')
-      ASSERT(.not.associated(l%back%dontLeakMe, leaky%dontLeakMe))
-
-      call leaky%Delete()
-      leaky = l%PopBack() ! leaks with gfortran
-
-      ASSERT(leaky%name == 'bla')
-      ASSERT(associated(leaky%dontLeakMe))
-      ASSERT(l%Size() == 2)
-      ASSERT(l%front%name == 'test')
-      ASSERT(l%back%name  == 'test')
-      ASSERT(.not.associated(leaky%dontLeakMe, l%back%dontLeakMe))
-
-      ! This subroutine leaks with gfortran in the moments. I think the reason is that gfortran does not yet implement
-      ! finalization of temporaries, see: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=37336#c27
-      ! TODO: Workaround?
 
    end subroutine
 
