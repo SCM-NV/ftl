@@ -209,27 +209,27 @@ module ftlStringModule
    end interface
 
 
-   ! Derived-type IO
+   !! Derived-type IO
 
-   public :: write(formatted)
-   interface write(formatted)
-      module procedure writeFormatted
-   end interface
+   !public :: write(formatted)
+   !interface write(formatted)
+   !   module procedure writeFormatted
+   !end interface
 
-   public :: write(unformatted)
-   interface write(unformatted)
-      module procedure writeUnformatted
-   end interface
+   !public :: write(unformatted)
+   !interface write(unformatted)
+   !   module procedure writeUnformatted
+   !end interface
 
-   public :: read(formatted)
-   interface read(formatted)
-      module procedure readFormatted
-   end interface
+   !public :: read(formatted)
+   !interface read(formatted)
+   !   module procedure readFormatted
+   !end interface
 
-   public :: read(unformatted)
-   interface read(unformatted)
-      module procedure readUnformatted
-   end interface
+   !public :: read(unformatted)
+   !interface read(unformatted)
+   !   module procedure readUnformatted
+   !end interface
 
 
    ! Free versions of some type-bound procedures:
@@ -604,55 +604,55 @@ contains
 
 
 
-   ! =============> Derived-type IO:
+   !! =============> Derived-type IO:
 
 
 
-   subroutine writeUnformatted(self, unit, iostat, iomsg)
-      class(ftlString), intent(in)    :: self
-      integer         , intent(in)    :: unit
-      integer         , intent(out)   :: iostat
-      character(len=*), intent(inout) :: iomsg
+   !subroutine writeUnformatted(self, unit, iostat, iomsg)
+   !   class(ftlString), intent(in)    :: self
+   !   integer         , intent(in)    :: unit
+   !   integer         , intent(out)   :: iostat
+   !   character(len=*), intent(inout) :: iomsg
 
-      write (unit, iostat=iostat, iomsg=iomsg) self%raw
+   !   write (unit, iostat=iostat, iomsg=iomsg) self%raw
 
-   end subroutine
-   !
-   subroutine writeFormatted(self, unit, iotype, v_list, iostat, iomsg)
-      class(ftlString), intent(in)    :: self
-      integer         , intent(in)    :: unit
-      character(len=*), intent(in)    :: iotype
-      integer         , intent(in)    :: v_list(:)
-      integer         , intent(out)   :: iostat
-      character(len=*), intent(inout) :: iomsg
+   !end subroutine
+   !!
+   !subroutine writeFormatted(self, unit, iotype, v_list, iostat, iomsg)
+   !   class(ftlString), intent(in)    :: self
+   !   integer         , intent(in)    :: unit
+   !   character(len=*), intent(in)    :: iotype
+   !   integer         , intent(in)    :: v_list(:)
+   !   integer         , intent(out)   :: iostat
+   !   character(len=*), intent(inout) :: iomsg
 
-      write (unit, '(A)', iostat=iostat, iomsg=iomsg) self%raw
+   !   write (unit, '(A)', iostat=iostat, iomsg=iomsg) self%raw
 
-   end subroutine
+   !end subroutine
 
 
 
-   subroutine readUnformatted(self, unit, iostat, iomsg)
-      class(ftlString), intent(inout) :: self
-      integer         , intent(in)    :: unit
-      integer         , intent(out)   :: iostat
-      character(len=*), intent(inout) :: iomsg
+   !subroutine readUnformatted(self, unit, iostat, iomsg)
+   !   class(ftlString), intent(inout) :: self
+   !   integer         , intent(in)    :: unit
+   !   integer         , intent(out)   :: iostat
+   !   character(len=*), intent(inout) :: iomsg
 
-      call self%ReadLine(unit, iostat)
+   !   call self%ReadLine(unit, iostat)
 
-   end subroutine
-   !
-   subroutine readFormatted(self, unit, iotype, vlist, iostat, iomsg)
-      class(ftlString), intent(inout) :: self
-      integer         , intent(in)    :: unit
-      character(len=*), intent(in)    :: iotype
-      integer         , intent(in)    :: vlist(:)
-      integer         , intent(out)   :: iostat
-      character(len=*), intent(inout) :: iomsg
+   !end subroutine
+   !!
+   !subroutine readFormatted(self, unit, iotype, vlist, iostat, iomsg)
+   !   class(ftlString), intent(inout) :: self
+   !   integer         , intent(in)    :: unit
+   !   character(len=*), intent(in)    :: iotype
+   !   integer         , intent(in)    :: vlist(:)
+   !   integer         , intent(out)   :: iostat
+   !   character(len=*), intent(inout) :: iomsg
 
-      call self%ReadLine(unit, iostat)
+   !   call self%ReadLine(unit, iostat)
 
-   end subroutine
+   !end subroutine
 
 
    ! =============> Character wise access:
