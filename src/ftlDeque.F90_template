@@ -60,9 +60,10 @@ module CAT3(ftlDeque,FTL_TEMPLATE_TYPE_NAME,Module)
 
       integer                                     :: psize = 0
       integer                                     :: pageOffset = 0 ! offset for iterator access to pages
-      integer                                     :: frontIdx = 1 ! index of front within first page
-      integer                                     :: backIdx  = 0 ! index of back  within last  page
       type(Page)            , allocatable         :: page(:)
+      integer                                     :: firstPage, lastPage ! first and last (inclusive) page in use
+      integer                                     :: frontIdx ! index of front within first page
+      integer                                     :: backIdx  ! index of back  within last  page
       FTL_TEMPLATE_TYPE_WRAP, pointer    , public :: front => null()
       FTL_TEMPLATE_TYPE_WRAP, pointer    , public :: back => null()
 
@@ -93,6 +94,10 @@ contains
 
       allocate(self%page(1))
       allocate(self%page(1)%storage(FTL_DEQUE_PAGESIZE))
+      self%firstPage = 1
+      self%lastPage  = 1
+      self%frontIdx  = 1
+      self%backIdx   = 0
 
    end subroutine
    !
@@ -102,6 +107,10 @@ contains
 
       self%psize = other%psize
       self%page = other%page
+      self%firstPage = other%firstPage
+      self%lastPage  = other%lastPage
+      self%frontIdx  = other%frontIdx
+      self%backIdx   = other%backIdx
       call self%FixValuePtrs()
 
    end subroutine
@@ -139,11 +148,98 @@ contains
          ! not strictly necessary, because it will always crash if someone accesses front/back on an empty dynArray ...
          nullify(self%front, self%back)
       else
-         self%front => self%page(1)%storage(self%frontIdx)
-         self%back  => self%page(size(self%page))%storage(self%backIdx)
+         self%front => self%page(self%firstPage)%storage(self%frontIdx)
+         self%back  => self%page(self%lastPage)%storage(self%backIdx)
       endif
 
    end subroutine
+
+
+
+   subroutine AddPagesFront(self, n)
+      class(CAT(ftlDeque,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
+      integer                                    , intent(in)    :: n
+
+      integer :: p
+      type(Page), allocatable :: newpage(:)
+
+      allocate(newpage(size(self%page)+n))
+      do p = 1, size(self%page)
+         call move_alloc(self%page(p)%storage, newpage(n+p)%storage)
+      enddo
+      call move_alloc(newpage, self%page)
+
+      self%firstPage  = self%firstPage  + n
+      self%lastPage   = self%lastPage   + n
+      self%pageOffset = self%pageOffset + n
+
+   end subroutine
+   !
+   subroutine RemovePagesFront(self, n)
+      class(CAT(ftlDeque,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
+      integer                                    , intent(in)    :: n
+
+      integer :: p
+      type(Page), allocatable :: newpage(:)
+
+#ifndef NDEBUG
+      do p = 1, n
+         if (allocated(self%page(p)%storage)) then
+            stop 'ERROR: Removing allocated pages in ftlDeque%RemovePagesFront'
+         endif
+      enddo
+#endif
+
+      allocate(newpage(size(self%page)-n))
+      do p = 1, size(newpage)
+         call move_alloc(self%page(p+n)%storage, newpage(p)%storage)
+      enddo
+      call move_alloc(newpage, self%page)
+
+      self%firstPage  = self%firstPage  - n
+      self%lastPage   = self%lastPage   - n
+      self%pageOffset = self%pageOffset - n
+
+   end subroutine
+   !
+   subroutine AddPagesBack(self, n)
+      class(CAT(ftlDeque,FTL_TEMPLATE_TYPE_NAME)), intent(inout), target :: self
+      integer                                    , intent(in)    :: n
+
+      integer :: p
+      type(Page), allocatable :: newpage(:)
+
+      allocate(newpage(size(self%page)+n))
+      do p = 1, size(self%page)
+         call move_alloc(self%page(p)%storage, newpage(p)%storage)
+      enddo
+      call move_alloc(newpage, self%page)
+
+   end subroutine
+   !
+   subroutine RemovePagesBack(self, n)
+      class(CAT(ftlDeque,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
+      integer                                    , intent(in)    :: n
+
+      integer :: p
+      type(Page), allocatable :: newpage(:)
+
+#ifndef NDEBUG
+      do p = size(self%page)-n+1, size(self%page)
+         if (allocated(self%page(p)%storage)) then
+            stop 'ERROR: Removing allocated pages in ftlDeque%RemovePagesBack'
+         endif
+      enddo
+#endif
+
+      allocate(newpage(size(self%page)-n))
+      do p = 1, size(newpage)
+         call move_alloc(self%page(p)%storage, newpage(p)%storage)
+      enddo
+      call move_alloc(newpage, self%page)
+
+   end subroutine
+
 
 
 end module

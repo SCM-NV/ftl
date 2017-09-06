@@ -19,4 +19,5 @@
 #define FTL_TEMPLATE_TYPE integer
 #define FTL_TEMPLATE_TYPE_NAME Int
 #define FTL_INSTANTIATE_TEMPLATE
+#define FTL_DEQUE_PAGESIZE 4
 #include "ftlDeque.F90_template"

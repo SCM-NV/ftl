@@ -55,9 +55,9 @@ ifeq ($(PLATFORM)$(BUILD), gnudebug)
 else ifeq ($(PLATFORM)$(BUILD), inteldebug)
 	FLAGS += -g -O0 -check all -debug all -traceback
 else ifeq ($(PLATFORM)$(BUILD), gnurelease)
-	FLAGS += -O2 -march=native -flto
+	FLAGS += -O2 -march=native -flto -DNDEBUG
 else ifeq ($(PLATFORM)$(BUILD), intelrelease)
-	FLAGS += -O3 -ipo -xHost
+	FLAGS += -O3 -ipo -xHost -DNDEBUG
 else
   $(error unrecognized BUILD)
 endif
