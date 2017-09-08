@@ -59,11 +59,10 @@ module CAT3(ftlDeque,FTL_TEMPLATE_TYPE_NAME,Module)
       private
 
       integer                                     :: psize = 0
-      integer                                     :: pageOffset = 0 ! offset for iterator access to pages
-      type(Page)            , allocatable         :: page(:)
-      integer                                     :: firstPage, lastPage ! first and last (inclusive) page in use
-      integer                                     :: frontIdx ! index of front within first page
-      integer                                     :: backIdx  ! index of back  within last  page
+      integer                                     :: pagesOffset = 0 ! offset for iterator access to pages
+      type(Page)            , allocatable         :: pages(:)
+      integer                                     :: frontPage = 1, frontIdx = 1
+      integer                                     :: backPage  = 1, backIdx  = 0
       FTL_TEMPLATE_TYPE_WRAP, pointer    , public :: front => null()
       FTL_TEMPLATE_TYPE_WRAP, pointer    , public :: back => null()
 
@@ -77,9 +76,27 @@ module CAT3(ftlDeque,FTL_TEMPLATE_TYPE_NAME,Module)
       procedure, public :: Delete
       final             :: Finalizer
 
+      procedure         :: SizeDeque
+      generic, public   :: Size => SizeDeque
+
+      procedure, public :: PushFront
+      procedure, public :: PopFront
+      procedure, public :: PushBack
+      procedure, public :: PopBack
+
       procedure         :: FixValuePtrs
+      procedure, public :: DebugPrint
+      procedure         :: AddPagesFront
+      procedure         :: RemovePagesFront
+      procedure         :: AddPagesBack
+      procedure         :: RemovePagesBack
 
    end type
+
+   public :: Size
+   interface Size
+      module procedure SizeDeque
+   end interface
 
 
 contains
@@ -92,12 +109,8 @@ contains
    subroutine NewDefault(self)
       class(CAT(ftlDeque,FTL_TEMPLATE_TYPE_NAME)), intent(out) :: self
 
-      allocate(self%page(1))
-      allocate(self%page(1)%storage(FTL_DEQUE_PAGESIZE))
-      self%firstPage = 1
-      self%lastPage  = 1
-      self%frontIdx  = 1
-      self%backIdx   = 0
+      allocate(self%pages(1))
+      allocate(self%pages(1)%storage(FTL_DEQUE_PAGESIZE))
 
    end subroutine
    !
@@ -106,9 +119,9 @@ contains
        type(CAT(ftlDeque,FTL_TEMPLATE_TYPE_NAME)), intent(in)  :: other
 
       self%psize = other%psize
-      self%page = other%page
-      self%firstPage = other%firstPage
-      self%lastPage  = other%lastPage
+      self%pages = other%pages
+      self%frontPage = other%frontPage
+      self%backPage  = other%backPage
       self%frontIdx  = other%frontIdx
       self%backIdx   = other%backIdx
       call self%FixValuePtrs()
@@ -121,8 +134,8 @@ contains
       class(CAT(ftlDeque,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
 
       self%psize = 0
-      self%pageOffset = 0
-      if (allocated(self%page)) deallocate(self%page)
+      self%pagesOffset = 0
+      if (allocated(self%pages)) deallocate(self%pages)
       nullify(self%front)
       nullify(self%back)
 
@@ -137,6 +150,135 @@ contains
 
 
 
+   pure integer function SizeDeque(self)
+      class(CAT(ftlDeque,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: self
+
+      SizeDeque = self%psize
+
+   end function
+
+
+
+   ! =============> Modifiers:
+
+
+
+   subroutine PushBack(self, val)
+      class(CAT(ftlDeque,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
+      FTL_TEMPLATE_TYPE_WRAP                     , intent(in)    :: val
+
+      if (self%backIdx < FTL_DEQUE_PAGESIZE) then ! there is still space on the last page
+         self%backIdx = self%backIdx + 1
+         self%pages(self%backPage)%storage(self%backIdx) = val
+      else ! no space on currently last page
+         if (self%backPage == size(self%pages)) then ! no unallocated pages in reserve
+            call self%AddPagesBack(max(1,size(self%pages))) ! double number of pages, but at least one more
+         endif
+         self%backPage = self%backPage + 1
+         allocate(self%pages(self%backPage)%storage(FTL_DEQUE_PAGESIZE))
+         self%backIdx = 1
+         self%pages(self%backPage)%storage(self%backIdx) = val
+      endif
+
+      self%psize = self%psize + 1
+      call self%FixValuePtrs()
+
+   end subroutine
+
+
+
+   FTL_TEMPLATE_TYPE_WRAP function PopBack(self)
+      class(CAT(ftlDeque,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
+
+#ifdef FTL_TEMPLATE_TYPE_PROVIDES_FTLMOVE
+      call ftlMove(self%pages(self%backPage)%storage(self%backIdx), PopBack)
+#else
+      PopBack = self%pages(self%backPage)%storage(self%backIdx)
+      call TriggerFinalizer(self%pages(self%backPage)%storage(self%backIdx))
+#endif
+
+      if (self%backIdx == 1) then ! we might need to deallocate the last page
+         if (self%frontPage == self%backPage) then ! ... but don't deallocate the last remaining page
+            self%backIdx = 0
+         else
+            deallocate(self%pages(self%backPage)%storage)
+            self%backPage = self%backPage - 1
+            self%backIdx = FTL_DEQUE_PAGESIZE
+         endif
+      else ! still more stuff on last page
+         self%backIdx = self%backIdx - 1
+      endif
+
+      self%psize = self%psize - 1
+      if (self%backPage < size(self%pages) / 2) call self%RemovePagesBack(self%backPage / 2)
+      call self%FixValuePtrs()
+
+   end function
+
+
+
+   subroutine PushFront(self, val)
+      class(CAT(ftlDeque,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
+      FTL_TEMPLATE_TYPE_WRAP                     , intent(in)    :: val
+
+      if (self%psize == 0) then
+#ifndef NDEBUG
+         if (self%frontPage /= self%backPage) stop 'ERROR: frontPage /= backPage in empty ftlDeque'
+#endif
+         self%pages(self%frontPage)%storage(FTL_DEQUE_PAGESIZE) = val
+         self%frontIdx = FTL_DEQUE_PAGESIZE
+         self%backIdx  = FTL_DEQUE_PAGESIZE
+      else if (self%frontIdx > 1) then ! there is still space on the first page
+         self%frontIdx = self%frontIdx - 1
+         self%pages(self%frontPage)%storage(self%frontIdx) = val
+      else ! no space on currently first page
+         if (self%frontPage == 1) then ! no unallocated pages in reserve
+            call self%AddPagesFront(max(1,size(self%pages))) ! double number of pages, but at least one more
+         endif
+         self%frontPage = self%frontPage - 1
+         allocate(self%pages(self%frontPage)%storage(FTL_DEQUE_PAGESIZE))
+         self%frontIdx = FTL_DEQUE_PAGESIZE
+         self%pages(self%frontPage)%storage(self%frontIdx) = val
+      endif
+
+      self%psize = self%psize + 1
+      call self%FixValuePtrs()
+
+   end subroutine
+
+
+
+   FTL_TEMPLATE_TYPE_WRAP function PopFront(self)
+      class(CAT(ftlDeque,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
+
+#ifdef FTL_TEMPLATE_TYPE_PROVIDES_FTLMOVE
+      call ftlMove(self%pages(self%frontPage)%storage(self%frontIdx), PopFront)
+#else
+      PopFront = self%pages(self%frontPage)%storage(self%frontIdx)
+      call TriggerFinalizer(self%pages(self%frontPage)%storage(self%frontIdx))
+#endif
+
+      if (self%frontIdx == FTL_DEQUE_PAGESIZE) then ! we might need to deallocate the first page
+         if (self%frontPage == self%backPage) then ! ... but don't deallocate the last remaining page
+            self%frontIdx = 1
+            self%backIdx  = 0
+         else
+            deallocate(self%pages(self%frontPage)%storage)
+            self%frontPage = self%frontPage + 1
+            self%frontIdx  = 1
+         endif
+      else ! still more stuff on last page
+         self%frontIdx = self%frontIdx + 1
+      endif
+
+      self%psize = self%psize - 1
+      if (self%frontPage > size(self%pages) / 2) call self%RemovePagesFront(self%frontPage / 2)
+      call self%FixValuePtrs()
+
+   end function
+
+
+
    ! =============> Internal methods:
 
 
@@ -148,8 +290,44 @@ contains
          ! not strictly necessary, because it will always crash if someone accesses front/back on an empty dynArray ...
          nullify(self%front, self%back)
       else
-         self%front => self%page(self%firstPage)%storage(self%frontIdx)
-         self%back  => self%page(self%lastPage)%storage(self%backIdx)
+         self%front => self%pages(self%frontPage)%storage(self%frontIdx)
+         self%back  => self%pages(self%backPage)%storage(self%backIdx)
+      endif
+
+   end subroutine
+
+
+
+   subroutine DebugPrint(self)
+      class(CAT(ftlDeque,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
+
+      integer :: p
+
+      write (*,*) 'size =', self%psize
+      write (*,*) 'frontPage =', self%frontPage
+      write (*,*) 'frontIdx =', self%frontIdx
+      write (*,*) 'backPage =', self%backPage
+      write (*,*) 'backIdx =', self%backIdx
+      write (*,*) 'pagesOffset =', self%pagesOffset
+
+      if (allocated(self%pages)) then
+         do p = 1, size(self%pages)
+            if (allocated(self%pages(p)%storage)) then
+               if (p == self%frontPage .and. p == self%backPage) then
+                  write (*,*) 'Page ', p, ':', self%pages(p)%storage(self%frontIdx:self%backIdx)
+               else if (p == self%frontPage) then
+                  write (*,*) 'Page ', p, ':', self%pages(p)%storage(self%frontIdx:)
+               else if (p == self%backPage) then
+                  write (*,*) 'Page ', p, ':', self%pages(p)%storage(:self%backIdx)
+               else
+                  write (*,*) 'Page ', p, ':', self%pages(p)%storage
+               endif
+            else
+               write (*,*) 'Page ', p, ' is not allocated'
+            endif
+         enddo
+      else
+         write (*,*) 'Pages not allocated'
       endif
 
    end subroutine
@@ -163,15 +341,15 @@ contains
       integer :: p
       type(Page), allocatable :: newpage(:)
 
-      allocate(newpage(size(self%page)+n))
-      do p = 1, size(self%page)
-         call move_alloc(self%page(p)%storage, newpage(n+p)%storage)
+      allocate(newpage(size(self%pages)+n))
+      do p = 1, size(self%pages)
+         call move_alloc(self%pages(p)%storage, newpage(p+n)%storage)
       enddo
-      call move_alloc(newpage, self%page)
+      call move_alloc(newpage, self%pages)
 
-      self%firstPage  = self%firstPage  + n
-      self%lastPage   = self%lastPage   + n
-      self%pageOffset = self%pageOffset + n
+      self%frontPage   = self%frontPage   + n
+      self%backPage    = self%backPage    + n
+      self%pagesOffset = self%pagesOffset + n
 
    end subroutine
    !
@@ -184,21 +362,21 @@ contains
 
 #ifndef NDEBUG
       do p = 1, n
-         if (allocated(self%page(p)%storage)) then
+         if (allocated(self%pages(p)%storage)) then
             stop 'ERROR: Removing allocated pages in ftlDeque%RemovePagesFront'
          endif
       enddo
 #endif
 
-      allocate(newpage(size(self%page)-n))
+      allocate(newpage(size(self%pages)-n))
       do p = 1, size(newpage)
-         call move_alloc(self%page(p+n)%storage, newpage(p)%storage)
+         call move_alloc(self%pages(p+n)%storage, newpage(p)%storage)
       enddo
-      call move_alloc(newpage, self%page)
+      call move_alloc(newpage, self%pages)
 
-      self%firstPage  = self%firstPage  - n
-      self%lastPage   = self%lastPage   - n
-      self%pageOffset = self%pageOffset - n
+      self%frontPage  = self%frontPage  - n
+      self%backPage   = self%backPage   - n
+      self%pagesOffset = self%pagesOffset - n
 
    end subroutine
    !
@@ -209,11 +387,11 @@ contains
       integer :: p
       type(Page), allocatable :: newpage(:)
 
-      allocate(newpage(size(self%page)+n))
-      do p = 1, size(self%page)
-         call move_alloc(self%page(p)%storage, newpage(p)%storage)
+      allocate(newpage(size(self%pages)+n))
+      do p = 1, size(self%pages)
+         call move_alloc(self%pages(p)%storage, newpage(p)%storage)
       enddo
-      call move_alloc(newpage, self%page)
+      call move_alloc(newpage, self%pages)
 
    end subroutine
    !
@@ -225,21 +403,29 @@ contains
       type(Page), allocatable :: newpage(:)
 
 #ifndef NDEBUG
-      do p = size(self%page)-n+1, size(self%page)
-         if (allocated(self%page(p)%storage)) then
+      do p = size(self%pages)-n+1, size(self%pages)
+         if (allocated(self%pages(p)%storage)) then
             stop 'ERROR: Removing allocated pages in ftlDeque%RemovePagesBack'
          endif
       enddo
 #endif
 
-      allocate(newpage(size(self%page)-n))
+      allocate(newpage(size(self%pages)-n))
       do p = 1, size(newpage)
-         call move_alloc(self%page(p)%storage, newpage(p)%storage)
+         call move_alloc(self%pages(p)%storage, newpage(p)%storage)
       enddo
-      call move_alloc(newpage, self%page)
+      call move_alloc(newpage, self%pages)
 
    end subroutine
 
+
+
+   elemental subroutine TriggerFinalizer(instance)
+      FTL_TEMPLATE_TYPE_WRAP, intent(out) :: instance
+
+      ! Nothing to do here: intent(out) will finalize the instance and that's all we want
+
+   end subroutine
 
 
 end module
