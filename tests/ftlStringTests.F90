@@ -71,6 +71,7 @@ contains
       call testSplitLines
       call testJoin
       call testStartsWith
+      call testEndsWith
       call testStrip
       call testUpperLower
       call testReplace
@@ -984,6 +985,34 @@ contains
       prefixes(1) = 'Test'
       prefixes(2) = 'not there'
       ASSERT(.not.s%StartsWith(prefixes))
+
+   end subroutine
+
+
+   subroutine testEndsWith
+      type(ftlString) :: s
+      type(ftlString), allocatable :: postfixes(:)
+
+      s = 'Testendswith'
+      ASSERT(s%EndsWith('with'))
+
+      s = 'Testendswith'
+      ASSERT(.not.s%EndsWith('Testendswith but is toolong'))
+
+      s = 'Testendswith    '
+      ASSERT(.not.s%EndsWith('with'))
+
+      s = 'another test of endsWith'
+      ASSERT(s%EndsWith(ftlString('endsWith')))
+
+      allocate(postfixes(2))
+      postfixes(1) = 'Test'
+      postfixes(2) = 'With'
+      ASSERT(s%EndsWith(postfixes))
+
+      postfixes(1) = 'Test'
+      postfixes(2) = 'not there'
+      ASSERT(.not.s%EndsWith(postfixes))
 
    end subroutine
 

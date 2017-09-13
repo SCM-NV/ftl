@@ -117,6 +117,10 @@ module ftlStringModule
       procedure         :: StartsWithOther
       procedure         :: StartsWithArray
       generic  , public :: StartsWith => StartsWithRaw, StartsWithOther, StartsWithArray
+      procedure         :: EndsWithRaw
+      procedure         :: EndsWithOther
+      procedure         :: EndsWithArray
+      generic  , public :: EndsWith => EndsWithRaw, EndsWithOther, EndsWithArray
       procedure         :: StripWhitespace
       procedure         :: StripRaw
       procedure         :: StripString
@@ -1490,6 +1494,44 @@ contains
       do i = 1, size(prefixes)
          if (self%StartsWithRaw(prefixes(i)%raw)) then
             StartsWithArray = .true.
+            return
+         endif
+      enddo
+
+   end function
+
+
+
+   pure logical function EndsWithRaw(self, postfix)
+      class(ftlString), intent(in) :: self
+      character(len=*), intent(in) :: postfix
+
+      if (len(self) >= len(postfix)) then
+         EndsWithRaw = (self%raw(len(self%raw)-len(postfix)+1:len(self%raw)) == postfix)
+      else
+         EndsWithRaw = .false.
+      endif
+
+   end function
+   !
+   pure logical function EndsWithOther(self, postfix)
+      class(ftlString), intent(in) :: self
+       type(ftlString), intent(in) :: postfix
+
+      EndsWithOther = EndsWithRaw(self, postfix%raw)
+
+   end function
+   !
+   logical function EndsWithArray(self, postfixes)
+      class(ftlString), intent(in) :: self
+       type(ftlString), intent(in) :: postfixes(:)
+
+      integer :: i
+
+      EndsWithArray = .false.
+      do i = 1, size(postfixes)
+         if (self%EndsWithRaw(postfixes(i)%raw)) then
+            EndsWithArray = .true.
             return
          endif
       enddo
