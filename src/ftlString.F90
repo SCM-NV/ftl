@@ -130,6 +130,7 @@ module ftlStringModule
       generic  , public :: Find => FindRaw, FindOther
       procedure, public :: Upper
       procedure, public :: Lower
+      procedure, public :: IsSpace
       procedure         :: ReplaceRawWithRaw
       procedure         :: ReplaceStringWithString
       procedure         :: ReplaceRawWithString
@@ -1648,6 +1649,17 @@ contains
          ascii = iachar(Lower%raw(idx:idx))
          if (ascii >= 65 .and. ascii <= 90) Lower%raw(idx:idx) = achar(ascii+32)
       enddo
+
+   end function
+
+
+
+   ! Return true if there are only whitespace characters in the string and there is at least one character, false otherwise.
+   !
+   logical function IsSpace(self)
+      class(ftlString), intent(in) :: self
+
+      IsSpace = (len(self) > 0 .and. verify(self, FTL_STRING_WHITESPACE) == 0)
 
    end function
 

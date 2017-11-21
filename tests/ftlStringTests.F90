@@ -74,6 +74,7 @@ contains
       call testEndsWith
       call testStrip
       call testUpperLower
+      call testIsSpace
       call testReplace
 
       ! Other string methods:
@@ -1052,6 +1053,27 @@ contains
 
       s = FTL_STRING_DIGITS//FTL_STRING_UPPERCASE//FTL_STRING_WHITESPACE//FTL_STRING_PUNCTUATION
       ASSERT(s%Lower() == FTL_STRING_DIGITS//FTL_STRING_LOWERCASE//FTL_STRING_WHITESPACE//FTL_STRING_PUNCTUATION)
+
+   end subroutine
+
+
+   subroutine testIsSpace
+      type(ftlString) :: s
+
+      s = ''
+      ASSERT(.not.s%IsSpace())
+
+      s = ' '
+      ASSERT(s%IsSpace())
+
+      s = '      test   '
+      ASSERT(.not.s%IsSpace())
+
+      s = FTL_STRING_WHITESPACE
+      ASSERT(s%IsSpace())
+
+      s = FTL_STRING_PRINTABLE
+      ASSERT(.not.s%IsSpace())
 
    end subroutine
 
