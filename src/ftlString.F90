@@ -141,6 +141,7 @@ module ftlStringModule
       procedure         :: ReplaceImplementationGeneral
 
       ! Other string methods:
+      procedure, public :: ToFixedLength
       procedure, public :: CountWords
 
       ! Overloaded operators:
@@ -1805,6 +1806,19 @@ contains
 
 
    ! =============> Other string methods:
+
+
+
+   ! Converts an ftlString to a raw Fortran string of a specified width, either adding spaces in the end or by truncation.
+   !
+   function ToFixedLength(self, n)
+      class(ftlString), intent(in) :: self
+      integer         , intent(in) :: n
+      character(len=n)             :: ToFixedLength
+
+      ToFixedLength = self%raw
+
+   end function
 
 
 
