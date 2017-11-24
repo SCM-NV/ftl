@@ -587,9 +587,9 @@ contains
    ! Destroys the ftlString object. This deallocates all the storage capacity allocated by the ftlString.
    !
    subroutine Delete(self)
-      class(ftlString), intent(out) :: self
+      class(ftlString), intent(inout) :: self
 
-      ! Nothing to do here: intent(out) will deallocate self%raw
+      if (allocated(self%raw)) deallocate(self%raw)
 
    end subroutine
 
