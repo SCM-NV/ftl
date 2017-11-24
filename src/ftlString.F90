@@ -413,7 +413,7 @@ contains
    ! Constructs a string object, initializing its value depending on the constructor version used:
    !
    subroutine NewDefault(self)
-      class(ftlString), intent(out) :: self
+      class(ftlString), intent(inout) :: self
 
       ! Constructs an empty string, with a length of zero characters.
 
@@ -422,8 +422,8 @@ contains
    end subroutine
    !
    subroutine NewCopyOther(self, other)
-      class(ftlString), intent(out) :: self
-       type(ftlString), intent(in)  :: other
+      class(ftlString), intent(inout) :: self
+       type(ftlString), intent(in)    :: other
 
       ! Constructs a copy of other.
 
@@ -436,19 +436,22 @@ contains
    end subroutine
    !
    subroutine NewFromRaw(self, raw)
-      class(ftlString), intent(out) :: self
-      character(len=*), intent(in)  :: raw
+      class(ftlString), intent(inout) :: self
+      character(len=*), intent(in)    :: raw
+
+      character(len=:), allocatable :: tmp
 
       ! Constructs an ftlString from a raw Fortran string
 
-      self%raw = raw
+      tmp = raw ! raw and self%raw might alias! Make sure self%raw is not deallocated before we read from raw ...
+      call move_alloc(tmp, self%raw)
 
    end subroutine
    !
    subroutine NewFromInt(self, i, format)
-      class(ftlString), intent(out)           :: self
-      integer         , intent(in)            :: i
-      character(len=*), intent(in) , optional :: format
+      class(ftlString), intent(inout)        :: self
+      integer         , intent(in)           :: i
+      character(len=*), intent(in), optional :: format
 
       character(len=64) :: tmp
 
@@ -466,9 +469,9 @@ contains
    end subroutine
    !
    subroutine NewFromReal(self, r, format)
-      class(ftlString), intent(out)           :: self
-      real            , intent(in)            :: r
-      character(len=*), intent(in) , optional :: format
+      class(ftlString), intent(inout)        :: self
+      real            , intent(in)           :: r
+      character(len=*), intent(in), optional :: format
 
       character(len=64) :: tmp
 
@@ -485,9 +488,9 @@ contains
    end subroutine
    !
    subroutine NewFromComplex(self, c, format)
-      class(ftlString), intent(out)           :: self
-      complex         , intent(in)            :: c
-      character(len=*), intent(in) , optional :: format
+      class(ftlString), intent(inout)        :: self
+      complex         , intent(in)           :: c
+      character(len=*), intent(in), optional :: format
 
       character(len=128) :: tmp
 
@@ -504,9 +507,9 @@ contains
    end subroutine
    !
    subroutine NewFromLogical(self, l, format)
-      class(ftlString), intent(out)           :: self
-      logical         , intent(in)            :: l
-      character(len=*), intent(in) , optional :: format
+      class(ftlString), intent(out)          :: self
+      logical         , intent(in)           :: l
+      character(len=*), intent(in), optional :: format
 
       character(len=16) :: tmp
 

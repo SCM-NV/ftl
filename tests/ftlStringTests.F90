@@ -40,6 +40,8 @@ contains
       call testAssignOther
       call testRaw
 
+      call testSliceOnOwnRaw
+
       call testAllocated
 
       call testDerivedTypeIO
@@ -168,6 +170,39 @@ contains
 
       ASSERT(size(t) == 20)
       ASSERT(t == 'this test           ')
+
+   end subroutine
+
+
+   subroutine testSliceOnOwnRaw
+      type(ftlString) :: s
+
+      ! Slicing on the own raw it a very, very dangerous thing to do:
+      ! s%raw will be deallocated because of the assignment before we read the slice from s%raw.
+      ! In other words: ftlString%NewFromRaw is not aware that self%raw and raw alias!
+      ! There is some magic to make this work nonetheless ...
+
+      s = 'holladiewaldfee'
+      ASSERT(s == 'holladiewaldfee')
+
+      s = s
+      ASSERT(s == 'holladiewaldfee')
+
+      s = s%raw(:)
+      ASSERT(s == 'holladiewaldfee')
+
+      s = s%raw(2:)
+      ASSERT(s == 'olladiewaldfee')
+      s = s%raw(2:)
+      ASSERT(s == 'lladiewaldfee')
+      s = s%raw(2:)
+      ASSERT(s == 'ladiewaldfee')
+      s = s%raw(2:)
+      ASSERT(s == 'adiewaldfee')
+      s = s%raw(2:)
+      ASSERT(s == 'diewaldfee')
+      s = s%raw(2:)
+      ASSERT(s == 'iewaldfee')
 
    end subroutine
 
