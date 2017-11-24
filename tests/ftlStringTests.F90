@@ -38,6 +38,7 @@ contains
       call testNewDefault
       call testAssignRaw
       call testAssignOther
+      call testRaw
 
       call testAllocated
 
@@ -78,7 +79,6 @@ contains
       call testReplace
 
       ! Other string methods:
-      call testToFixedLength
       call testCountWords
 
       ! Tests of ftlString iterators:
@@ -152,6 +152,22 @@ contains
       ASSERT(s1%raw == 'testme')
       ASSERT(s2%raw == 'theitcrowd')
       ASSERT(s1 /= s2)
+
+   end subroutine
+
+
+   subroutine testRaw
+      type(ftlString) :: s, t
+
+      s = 'this test'
+
+      ASSERT(Raw(s,4) == 'this')
+      ASSERT(Raw(s,6) == 'this t')
+
+      t = Raw(s,20)
+
+      ASSERT(size(t) == 20)
+      ASSERT(t == 'this test           ')
 
    end subroutine
 
@@ -1098,22 +1114,6 @@ contains
       ASSERT(s%Replace('A','B') == 'BBBBBB')
       ASSERT(s%Replace('AB','B') == 'BBB')
       ASSERT(s%Replace('BA','AB') == 'AABABB')
-
-   end subroutine
-
-
-   subroutine testToFixedLength
-      type(ftlString) :: s, t
-
-      s = 'this test'
-
-      ASSERT(s%ToFixedLength(4) == 'this')
-      ASSERT(s%ToFixedLength(5) == 'this ')
-
-      t = s%ToFixedLength(20)
-
-      ASSERT(size(t) == 20)
-      ASSERT(t == 'this test           ')
 
    end subroutine
 

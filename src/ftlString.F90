@@ -141,7 +141,6 @@ module ftlStringModule
       procedure         :: ReplaceImplementationGeneral
 
       ! Other string methods:
-      procedure, public :: ToFixedLength
       procedure, public :: CountWords
 
       ! Overloaded operators:
@@ -201,13 +200,9 @@ module ftlStringModule
       module procedure AssignToAllocatableRaw
    end interface
 
-   interface operator(+)
-      module procedure CharCatOpChar
-   end interface
-
-   public :: Join
-   interface Join
-      module procedure JoinFree
+   public :: Raw
+   interface Raw
+      module procedure StringToRaw
    end interface
 
 
@@ -249,6 +244,15 @@ module ftlStringModule
    public :: size
    interface size
       module procedure ftlLen
+   end interface
+
+   interface operator(+)
+      module procedure CharCatOpChar
+   end interface
+
+   public :: Join
+   interface Join
+      module procedure JoinFree
    end interface
 
 
@@ -603,6 +607,26 @@ contains
       endif
 
    end subroutine
+
+
+
+   ! This free function can be used to convert an ftlString (e.g. returned from a function) to a raw Fortran string.
+   ! If length is specified that the raw string will have precisely this length, either padding with spaces of truncating.
+   ! If length is not specified the raw string will have exactly the size of the ftlString.
+   !
+   function StringToRaw(str, length) result(raw)
+      type(ftlString)  , intent(in) :: str
+      integer, optional, intent(in) :: length
+      character(len=:), allocatable :: raw
+
+      if (present(length)) then
+         raw = repeat(' ', length)
+         raw(1:min(len(str%raw), length)) = str%raw(1:min(len(str%raw), length))
+      else
+         raw = str%raw
+      endif
+
+   end function
 
 
 
@@ -1806,19 +1830,6 @@ contains
 
 
    ! =============> Other string methods:
-
-
-
-   ! Converts an ftlString to a raw Fortran string of a specified width, either adding spaces in the end or by truncation.
-   !
-   function ToFixedLength(self, n)
-      class(ftlString), intent(in) :: self
-      integer         , intent(in) :: n
-      character(len=n)             :: ToFixedLength
-
-      ToFixedLength = self%raw
-
-   end function
 
 
 
