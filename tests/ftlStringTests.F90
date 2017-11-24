@@ -38,6 +38,9 @@ contains
       call testNewDefault
       call testAssignRaw
       call testAssignOther
+      call testRaw
+
+      call testSliceOnOwnRaw
 
       call testAllocated
 
@@ -74,6 +77,7 @@ contains
       call testEndsWith
       call testStrip
       call testUpperLower
+      call testIsSpace
       call testReplace
 
       ! Other string methods:
@@ -150,6 +154,55 @@ contains
       ASSERT(s1%raw == 'testme')
       ASSERT(s2%raw == 'theitcrowd')
       ASSERT(s1 /= s2)
+
+   end subroutine
+
+
+   subroutine testRaw
+      type(ftlString) :: s, t
+
+      s = 'this test'
+
+      ASSERT(Raw(s,4) == 'this')
+      ASSERT(Raw(s,6) == 'this t')
+
+      t = Raw(s,20)
+
+      ASSERT(size(t) == 20)
+      ASSERT(t == 'this test           ')
+
+   end subroutine
+
+
+   subroutine testSliceOnOwnRaw
+      type(ftlString) :: s
+
+      ! Slicing on the own raw it a very, very dangerous thing to do:
+      ! s%raw will be deallocated because of the assignment before we read the slice from s%raw.
+      ! In other words: ftlString%NewFromRaw is not aware that self%raw and raw alias!
+      ! There is some magic to make this work nonetheless ...
+
+      s = 'holladiewaldfee'
+      ASSERT(s == 'holladiewaldfee')
+
+      s = s
+      ASSERT(s == 'holladiewaldfee')
+
+      s = s%raw(:)
+      ASSERT(s == 'holladiewaldfee')
+
+      s = s%raw(2:)
+      ASSERT(s == 'olladiewaldfee')
+      s = s%raw(2:)
+      ASSERT(s == 'lladiewaldfee')
+      s = s%raw(2:)
+      ASSERT(s == 'ladiewaldfee')
+      s = s%raw(2:)
+      ASSERT(s == 'adiewaldfee')
+      s = s%raw(2:)
+      ASSERT(s == 'diewaldfee')
+      s = s%raw(2:)
+      ASSERT(s == 'iewaldfee')
 
    end subroutine
 
@@ -1052,6 +1105,27 @@ contains
 
       s = FTL_STRING_DIGITS//FTL_STRING_UPPERCASE//FTL_STRING_WHITESPACE//FTL_STRING_PUNCTUATION
       ASSERT(s%Lower() == FTL_STRING_DIGITS//FTL_STRING_LOWERCASE//FTL_STRING_WHITESPACE//FTL_STRING_PUNCTUATION)
+
+   end subroutine
+
+
+   subroutine testIsSpace
+      type(ftlString) :: s
+
+      s = ''
+      ASSERT(.not.s%IsSpace())
+
+      s = ' '
+      ASSERT(s%IsSpace())
+
+      s = '      test   '
+      ASSERT(.not.s%IsSpace())
+
+      s = FTL_STRING_WHITESPACE
+      ASSERT(s%IsSpace())
+
+      s = FTL_STRING_PRINTABLE
+      ASSERT(.not.s%IsSpace())
 
    end subroutine
 

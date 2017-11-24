@@ -130,6 +130,7 @@ module ftlStringModule
       generic  , public :: Find => FindRaw, FindOther
       procedure, public :: Upper
       procedure, public :: Lower
+      procedure, public :: IsSpace
       procedure         :: ReplaceRawWithRaw
       procedure         :: ReplaceStringWithString
       procedure         :: ReplaceRawWithString
@@ -199,13 +200,9 @@ module ftlStringModule
       module procedure AssignToAllocatableRaw
    end interface
 
-   interface operator(+)
-      module procedure CharCatOpChar
-   end interface
-
-   public :: Join
-   interface Join
-      module procedure JoinFree
+   public :: Raw
+   interface Raw
+      module procedure StringToRaw
    end interface
 
 
@@ -247,6 +244,15 @@ module ftlStringModule
    public :: size
    interface size
       module procedure ftlLen
+   end interface
+
+   interface operator(+)
+      module procedure CharCatOpChar
+   end interface
+
+   public :: Join
+   interface Join
+      module procedure JoinFree
    end interface
 
 
@@ -407,7 +413,7 @@ contains
    ! Constructs a string object, initializing its value depending on the constructor version used:
    !
    subroutine NewDefault(self)
-      class(ftlString), intent(out) :: self
+      class(ftlString), intent(inout) :: self
 
       ! Constructs an empty string, with a length of zero characters.
 
@@ -416,8 +422,8 @@ contains
    end subroutine
    !
    subroutine NewCopyOther(self, other)
-      class(ftlString), intent(out) :: self
-       type(ftlString), intent(in)  :: other
+      class(ftlString), intent(inout) :: self
+       type(ftlString), intent(in)    :: other
 
       ! Constructs a copy of other.
 
@@ -430,19 +436,22 @@ contains
    end subroutine
    !
    subroutine NewFromRaw(self, raw)
-      class(ftlString), intent(out) :: self
-      character(len=*), intent(in)  :: raw
+      class(ftlString), intent(inout) :: self
+      character(len=*), intent(in)    :: raw
+
+      character(len=:), allocatable :: tmp
 
       ! Constructs an ftlString from a raw Fortran string
 
-      self%raw = raw
+      tmp = raw ! raw and self%raw might alias! Make sure self%raw is not deallocated before we read from raw ...
+      call move_alloc(tmp, self%raw)
 
    end subroutine
    !
    subroutine NewFromInt(self, i, format)
-      class(ftlString), intent(out)           :: self
-      integer         , intent(in)            :: i
-      character(len=*), intent(in) , optional :: format
+      class(ftlString), intent(inout)        :: self
+      integer         , intent(in)           :: i
+      character(len=*), intent(in), optional :: format
 
       character(len=64) :: tmp
 
@@ -460,9 +469,9 @@ contains
    end subroutine
    !
    subroutine NewFromReal(self, r, format)
-      class(ftlString), intent(out)           :: self
-      real            , intent(in)            :: r
-      character(len=*), intent(in) , optional :: format
+      class(ftlString), intent(inout)        :: self
+      real            , intent(in)           :: r
+      character(len=*), intent(in), optional :: format
 
       character(len=64) :: tmp
 
@@ -479,9 +488,9 @@ contains
    end subroutine
    !
    subroutine NewFromComplex(self, c, format)
-      class(ftlString), intent(out)           :: self
-      complex         , intent(in)            :: c
-      character(len=*), intent(in) , optional :: format
+      class(ftlString), intent(inout)        :: self
+      complex         , intent(in)           :: c
+      character(len=*), intent(in), optional :: format
 
       character(len=128) :: tmp
 
@@ -498,9 +507,9 @@ contains
    end subroutine
    !
    subroutine NewFromLogical(self, l, format)
-      class(ftlString), intent(out)           :: self
-      logical         , intent(in)            :: l
-      character(len=*), intent(in) , optional :: format
+      class(ftlString), intent(out)          :: self
+      logical         , intent(in)           :: l
+      character(len=*), intent(in), optional :: format
 
       character(len=16) :: tmp
 
@@ -601,6 +610,26 @@ contains
       endif
 
    end subroutine
+
+
+
+   ! This free function can be used to convert an ftlString (e.g. returned from a function) to a raw Fortran string.
+   ! If length is specified that the raw string will have precisely this length, either padding with spaces of truncating.
+   ! If length is not specified the raw string will have exactly the size of the ftlString.
+   !
+   function StringToRaw(str, length) result(raw)
+      type(ftlString)  , intent(in) :: str
+      integer, optional, intent(in) :: length
+      character(len=:), allocatable :: raw
+
+      if (present(length)) then
+         raw = repeat(' ', length)
+         raw(1:min(len(str%raw), length)) = str%raw(1:min(len(str%raw), length))
+      else
+         raw = str%raw
+      endif
+
+   end function
 
 
 
@@ -1648,6 +1677,17 @@ contains
          ascii = iachar(Lower%raw(idx:idx))
          if (ascii >= 65 .and. ascii <= 90) Lower%raw(idx:idx) = achar(ascii+32)
       enddo
+
+   end function
+
+
+
+   ! Return true if there are only whitespace characters in the string and there is at least one character, false otherwise.
+   !
+   logical function IsSpace(self)
+      class(ftlString), intent(in) :: self
+
+      IsSpace = (len(self) > 0 .and. verify(self, FTL_STRING_WHITESPACE) == 0)
 
    end function
 
