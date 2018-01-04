@@ -70,11 +70,12 @@ module CAT4(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME,Module)
 
 ! ====== Type of the ftlHashMap container itself ============================================================================
 
-   type :: BaseEntry
-      class(BaseEntry), pointer :: next => null()
+   type :: BucketEntry
+      type(DataEntry), pointer :: first => null()
    end type
 
-   type, extends(BaseEntry) :: DataEntry
+   type :: DataEntry
+      type(DataEntry), pointer  :: next => null()
       FTL_TEMPLATE_KEYTYPE_WRAP :: key
       FTL_TEMPLATE_TYPE_WRAP    :: value
    end type
@@ -83,9 +84,9 @@ module CAT4(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME,Module)
    type, public :: CAT3(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME)
       private
 
-      integer                      :: psize = 0
-      real                         :: maxLoadFactor = 1.0
-      type(BaseEntry), allocatable :: buckets(:)
+      integer                        :: psize = 0
+      real                           :: maxLoadFactor = 1.0
+      type(BucketEntry), allocatable :: buckets(:)
 
    contains
       private
@@ -178,10 +179,10 @@ module CAT4(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME,Module)
    type, public :: CAT4(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME,Iterator)
       private
 
-      type(BaseEntry)          , pointer         :: buckets(:) => null()
-      integer                                    :: bIdx = 0
-      class(BaseEntry)         , pointer         :: entr => null()
-      FTL_TEMPLATE_TYPE_WRAP   , pointer, public :: value => null()
+      type(BucketEntry)     , pointer         :: buckets(:) => null()
+      integer                                 :: bIdx = 0
+      type(DataEntry)       , pointer         :: entr => null()
+      FTL_TEMPLATE_TYPE_WRAP, pointer, public :: value => null()
 
    contains
       private
@@ -226,7 +227,7 @@ contains
       class(CAT3(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME)), intent(out), target :: self
       class(CAT3(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME)), intent(in) , target :: other
 
-      class(BaseEntry), pointer :: getter, putter
+      class(DataEntry), pointer :: getter, putter
       integer :: b
 
       self%psize = other%psize
@@ -235,27 +236,22 @@ contains
          allocate(self%buckets(size(other%buckets)))
          do b = 1, size(self%buckets)
 
-            getter => other%buckets(b)
-            putter => self%buckets(b)
-            do while (.true.)
-               select type(getter)
-               type is (DataEntry)
+            ! nothing to do for empty buckets
+            if (.not.associated(other%buckets(b)%first)) cycle
 
-                  allocate(DataEntry::putter%next)
-                  putter => putter%next
-                  select type(putter)
-                  type is (DataEntry) ! always true
-                     putter%key = getter%key
-                     putter%value = getter%value
-                  end select
+            getter => other%buckets(b)%first
+            allocate(self%buckets(b)%first)
+            putter => self%buckets(b)%first
+            putter%key   = getter%key
+            putter%value = getter%value
 
-               end select
-               if (associated(getter%next)) then
-                  getter => getter%next
-               else
-                  exit
-               endif
-            end do
+            do while (associated(getter%next))
+               getter => getter%next
+               allocate(putter%next)
+               putter => putter%next
+               putter%key   = getter%key
+               putter%value = getter%value
+            enddo
 
          enddo
       endif
@@ -292,12 +288,9 @@ contains
       Begin%bIdx = 1
 
       do while (Begin%bIdx <= size(Begin%buckets))
-         if (associated(Begin%buckets(Begin%bIdx)%next)) then
-            Begin%entr => Begin%buckets(Begin%bIdx)%next
-            select type (entr => Begin%entr)
-            type is (DataEntry) ! always true
-               Begin%value => entr%value
-            end select
+         if (associated(Begin%buckets(Begin%bIdx)%first)) then
+            Begin%entr => Begin%buckets(Begin%bIdx)%first
+            Begin%value => Begin%entr%value
             return
          endif
          Begin%bIdx = Begin%bIdx + 1
@@ -348,34 +341,33 @@ contains
       FTL_TEMPLATE_KEYTYPE_WRAP                                               , intent(in)            :: key
       FTL_TEMPLATE_TYPE_WRAP                                                  , intent(in)            :: value
 
-      class(BaseEntry), pointer :: entr
+      integer :: b
+      class(DataEntry), pointer :: entr
 
-      entr => self%buckets(self%Bucket(key))
-      do while (.true.)
-         select type(entr)
-         type is (DataEntry)
+      b = self%Bucket(key)
+      if (.not.associated(self%buckets(b)%first)) then
+         allocate(self%buckets(b)%first)
+         self%buckets(b)%first%key = key
+         self%buckets(b)%first%value = value
+      else
+         entr => self%buckets(b)%first
+         do while (.true.)
             if (key == entr%key) then
                entr%value = value
                return
             endif
-         end select
-         if (associated(entr%next)) then
-            entr => entr%next
-         else
-            exit
-         endif
-      end do
+            if (associated(entr%next)) then
+               entr => entr%next
+            else
+               allocate(entr%next)
+               entr%next%key = key
+               entr%next%value = value
+               exit
+            endif
+         enddo
+      endif
 
-      allocate(DataEntry::entr%next)
       self%psize = self%psize + 1
-
-      entr => entr%next
-      select type (entr)
-      type is (DataEntry)
-         entr%key = key
-         entr%value = value
-      end select
-
       if (self%LoadFactor() > self%maxLoadFactor) call self%Rehash(2 * self%BucketCount())
 
    end subroutine
@@ -387,22 +379,16 @@ contains
       FTL_TEMPLATE_KEYTYPE_WRAP                                               , intent(in)         :: key
       FTL_TEMPLATE_TYPE_WRAP, pointer                                                              :: value
 
-      class(BaseEntry), pointer :: entr
+      type(DataEntry), pointer :: entr
 
-      entr => self%buckets(self%Bucket(key))
-
+      entr => self%buckets(self%Bucket(key))%first
       do while (associated(entr))
-         select type(entr)
-         type is (DataEntry)
-            if (key == entr%key) then
-               value => entr%value
-               return
-            endif
-         end select
+         if (key == entr%key) then
+            value => entr%value
+            return
+         endif
          entr => entr%next
       end do
-
-      ! key not found
       nullify(value)
 
    end function
@@ -413,21 +399,16 @@ contains
       class(CAT3(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME)), intent(in), target :: self
       FTL_TEMPLATE_KEYTYPE_WRAP                                               , intent(in)         :: key
 
-      class(BaseEntry), pointer :: entr
+      type(DataEntry), pointer :: entr
 
-      entr => self%buckets(self%Bucket(key))
-
+      entr => self%buckets(self%Bucket(key))%first
       do while (associated(entr))
-         select type(entr)
-         type is (DataEntry)
-            if (key == entr%key) then
-               Has = .true.
-               return
-            endif
-         end select
+         if (key == entr%key) then
+            Has = .true.
+            return
+         endif
          entr => entr%next
       end do
-
       Has = .false.
 
    end function
@@ -448,19 +429,17 @@ contains
 
       Find%buckets => self%buckets
       Find%bidx = self%Bucket(key)
-      Find%entr => Find%buckets(Find%bidx)
+      Find%entr => Find%buckets(Find%bidx)%first
 
       do while (associated(Find%entr))
-         select type(entr => Find%entr)
-         type is (DataEntry)
-            if (key == entr%key) then
-               Find%value => entr%value
-               return
-            endif
-         end select
+         if (key == Find%entr%key) then
+            Find%value => Find%entr%value
+            return
+         endif
          Find%entr => Find%entr%next
       end do
 
+      ! Not found? Let's make the End() iterator ...
       Find%bIdx = size(self%buckets) + 1
       nullify(Find%entr)
 
@@ -485,36 +464,23 @@ contains
    !
    subroutine EraseSingleIterator(self, it)
       class(CAT3(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME))        , intent(inout), target :: self
-      type(CAT4(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)            :: it
+      type(CAT4(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(inout)         :: it
 
-      class(BaseEntry), pointer :: trailer, scout, deleter
-      logical :: deleteThis
+      type(DataEntry), pointer :: entr
 
       if (.not.associated(it%buckets,self%buckets)) return
 
-      scout => self%buckets(it%bIdx)
-
-      do while (associated(scout))
-         deleteThis = .false.
-         select type(scout)
-         type is (DataEntry)
-            deleteThis = (it%Key() == scout%key)
-         end select
-         if (deleteThis) then
-            deleter => scout
-            scout => scout%next
-            if (associated(scout)) then
-               trailer%next => scout
-            else
-               nullify(trailer%next)
-            endif
-            deallocate(deleter)
-            self%psize = self%psize - 1
-            return
-         endif
-         trailer => scout
-         scout => scout%next
-      end do
+      if (associated(it%entr, self%buckets(it%bIdx)%first)) then
+         self%buckets(it%bIdx)%first => it%entr%next
+      else
+         entr => self%buckets(it%bIdx)%first
+         do while (.not.associated(entr%next,it%entr))
+            entr => entr%next
+         enddo
+         entr%next => it%entr%next
+      endif
+      deallocate(it%entr)
+      self%psize = self%psize - 1
 
    end subroutine
    !
@@ -539,22 +505,19 @@ contains
       class(CAT3(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME)), intent(inout), target :: self
 
       integer :: b
-      class(BaseEntry), pointer :: walker, deleter
+      type(DataEntry), pointer :: walker, deleter
 
       if (allocated(self%buckets)) then
          do b = 1, size(self%buckets)
-            walker => self%buckets(b)
-            nullify(deleter)
-            if (associated(walker%next)) then
-               walker => walker%next
-               deleter => walker
-            endif
+            if (.not.associated(self%buckets(b)%first)) cycle
+            walker  => self%buckets(b)%first
+            deleter => walker
             do while (associated(walker%next))
                walker => walker%next
                deallocate(deleter)
                deleter => walker
             enddo
-            if (associated(deleter)) deallocate(deleter)
+            deallocate(deleter)
          enddo
       endif
       self%psize = 0
@@ -580,14 +543,18 @@ contains
       class(CAT3(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME)), intent(in), target :: self
       integer                                                                 , intent(in)         :: n
 
-      class(BaseEntry), pointer :: entr
+      type(DataEntry), pointer :: entr
 
-      entr => self%buckets(n)
-      BucketSize = 0
-      do while (associated(entr%next))
-         BucketSize = BucketSize + 1
-         entr => entr%next
-      enddo
+      entr => self%buckets(n)%first
+      if (.not.associated(entr)) then
+         BucketSize = 0
+      else
+         BucketSize = 1
+         do while (associated(entr%next))
+            BucketSize = BucketSize + 1
+            entr => entr%next
+         enddo
+      endif
 
    end function
 
@@ -638,32 +605,33 @@ contains
       class(CAT3(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME)), intent(inout), target :: self
       integer                                                                 , intent(in)            :: n
 
-      type(BaseEntry), allocatable, target :: newbuckets(:)
-      class(BaseEntry), pointer :: eorg, tmp, enew
-      integer :: borg
+      type(BucketEntry), allocatable, target :: newbuckets(:)
+      type(DataEntry), pointer :: eorg, tmp, enew
+      integer :: borg, bnew
 
       if (n <= 0) return
 
       allocate(newbuckets(n))
 
       do borg = 1, size(self%buckets)
-         eorg => self%buckets(borg)
+         eorg => self%buckets(borg)%first
          do while (associated(eorg))
+
             tmp => eorg
             eorg => eorg%next
-            select type (tmp)
-            type is (DataEntry)
+            nullify(tmp%next)
 
-               nullify(tmp%next)
-
-               enew => newbuckets(mod(ftlHash(tmp%key), n) + 1)
+            bnew = mod(ftlHash(tmp%key), n) + 1
+            if (.not.associated(newbuckets(bnew)%first)) then
+               newbuckets(bnew)%first => tmp
+            else
+               enew => newbuckets(bnew)%first
                do while (associated(enew%next))
                   enew => enew%next
                enddo
-
                enew%next => tmp
+            endif
 
-            end select
          enddo
       enddo
 
@@ -779,30 +747,19 @@ contains
       self%buckets => other%buckets
       self%bIdx = other%bIdx
       self%entr => other%entr
-
-      if (associated(self%entr)) then
-         select type (entr => self%entr)
-         type is (DataEntry)
-            self%value => entr%value
-         end select
-      endif
+      if (associated(self%entr)) self%value => self%entr%value
 
    end subroutine
 
 
 
-   ! Getter method for the key of the entry an interator is pointing to. We have to make this a method so that the
+   ! Getter method for the key of the entry an iterator is pointing to. We have to make this a method so that the
    ! key can not be changed through the iterator. This would seriously mess up the hash map ...
    !
    FTL_TEMPLATE_KEYTYPE_WRAP function Key(self)
       class(CAT4(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: self
 
-      if (associated(self%entr)) then
-         select type (entr => self%entr)
-         type is (DataEntry)
-            key = entr%key
-         end select
-      endif
+      if (associated(self%entr)) key = self%entr%key
 
    end function
 
@@ -816,11 +773,8 @@ contains
       class(CAT4(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(inout) :: self
 
       if (associated(self%entr%next)) then
-         self%entr => self%entr%next
-         select type (entr => self%entr)
-         type is (DataEntry) ! always true
-            self%value => entr%value
-         end select
+         self%entr  => self%entr%next
+         self%value => self%entr%value
       else
          do while (.true.)
             self%bIdx = self%bIdx + 1
@@ -829,12 +783,9 @@ contains
                nullify(self%value)
                return
             endif
-            if (associated(self%buckets(self%bIdx)%next)) then
-               self%entr => self%buckets(self%bIdx)%next
-               select type (entr => self%entr)
-               type is (DataEntry) ! always true
-                  self%value => entr%value
-               end select
+            if (associated(self%buckets(self%bIdx)%first)) then
+               self%entr  => self%buckets(self%bIdx)%first
+               self%value => self%entr%value
                return
             endif
          enddo

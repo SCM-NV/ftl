@@ -469,7 +469,8 @@ contains
       ASSERT(size(um) == 11)
 
       ASSERT(um%Has('fort'))
-      call um%Erase(um%Find('fort'))
+      it = um%Find('fort')
+      call um%Erase(it)
       ASSERT(.not.um%Has('fort'))
 
       ASSERT(size(um) == 10)
