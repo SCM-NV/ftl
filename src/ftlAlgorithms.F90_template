@@ -42,7 +42,7 @@
 #if !defined(FTL_CONTAINER_PROVIDES_FORWARD_ITERATOR)       && \
     !defined(FTL_CONTAINER_PROVIDES_BIDIRECTIONAL_ITERATOR) && \
     !defined(FTL_CONTAINER_PROVIDES_RANDOM_ACCESS_ITERATOR)
-#error FTL_CONTAINER_PROVIDES_*_INTERATOR must be defined when instantiating ftlAlgorithms
+#error FTL_CONTAINER_PROVIDES_*_ITERATOR must be defined when instantiating ftlAlgorithms
 #endif
 
 #include "ftlMacros.inc"
