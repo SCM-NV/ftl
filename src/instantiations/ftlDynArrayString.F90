@@ -15,6 +15,12 @@
 ! You should have received a copy of the GNU Lesser General Public License along
 ! with the Fortran Template Library.  If not, see <http://www.gnu.org/licenses/>.
 
+#if 0
+   ! For build systems that pick up Fortran module dependencies from the unpreprocessed source code:
+   module ftlDynArrayStringModule
+      use ftlStringModule
+   end module
+#endif
 
 #define FTL_TEMPLATE_TYPE ftlString
 #define FTL_TEMPLATE_TYPE_IS_DERIVED
