@@ -1160,7 +1160,14 @@ contains
          self%raw = self%raw//buff(:nRead)
       enddo
    10 self%raw = self%raw//buff(:nRead)
-      if (present(iostat)) iostat = ios
+      if (present(iostat)) then
+         if (is_iostat_eor(ios)) then
+            ! EOR is not an error for us but just an implementation detail
+            iostat = 0
+         else
+            iostat = ios
+         endif
+      endif
 
    end subroutine
 
