@@ -526,6 +526,7 @@ contains
 
    subroutine testMove
       type(ftlDynArrayInt) :: v, u, uninit
+      integer, allocatable :: raw(:)
 
       v = [42,34,67,8,3,5]
       u = [3,4,41,2]
@@ -543,6 +544,15 @@ contains
 
       ASSERT(size(u) == 0)
       ASSERT(.not.associated(u%data))
+
+      raw = [1,2,3,4,5]
+      call ftlMove(raw, v)
+
+      ASSERT(.not.allocated(raw))
+      ASSERT(all(v%data == [1,2,3,4,5]))
+      ASSERT(size(v) == 5)
+      ASSERT(v%front == 1)
+      ASSERT(v%back == 5)
 
    end subroutine
 

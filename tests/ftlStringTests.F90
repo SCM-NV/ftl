@@ -305,6 +305,7 @@ contains
 
    subroutine testMove
       type(ftlString) :: s1, s2, uninit
+      character(len=:), allocatable :: r
 
       s1 = 'one string'
       ASSERT(.not.s2%Allocated())
@@ -318,6 +319,19 @@ contains
 
       ASSERT(.not.s2%Allocated())
       ASSERT(.not.uninit%Allocated())
+
+      r = 'this is a raw allocatable string'
+      call ftlMove(r, s1)
+
+      ASSERT(.not.allocated(r))
+      ASSERT(s1%Allocated())
+      ASSERT(s1 == 'this is a raw allocatable string')
+
+      call ftlMove(s1, r)
+
+      ASSERT(allocated(r))
+      ASSERT(.not.s1%Allocated())
+      ASSERT(r == 'this is a raw allocatable string')
 
    end subroutine
 
