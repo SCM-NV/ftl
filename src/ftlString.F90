@@ -341,6 +341,8 @@ module ftlStringModule
    public :: ftlMove
    interface ftlMove
       module procedure ftlMoveString
+      module procedure ftlMoveRawToString
+      module procedure ftlMoveStringToRaw
    end interface
 
 
@@ -1943,6 +1945,23 @@ contains
       call move_alloc(src%raw, dest%raw)
 
    end subroutine
+   !
+   subroutine ftlMoveRawToString(src, dest)
+      character(len=:), allocatable, intent(inout) :: src
+      type(ftlString)              , intent(out)   :: dest
+
+      call move_alloc(src, dest%raw)
+
+   end subroutine
+   !
+   subroutine ftlMoveStringToRaw(src, dest)
+      type(ftlString)              , intent(inout) :: src
+      character(len=:), allocatable, intent(out)   :: dest
+
+      call move_alloc(src%raw, dest)
+
+   end subroutine
+
 
 
 
