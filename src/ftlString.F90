@@ -149,7 +149,7 @@ module ftlStringModule
 
       ! Overloaded operators:
 
-      generic  , public :: assignment(=) => NewCopyOther, NewFromRaw
+      generic  , public :: assignment(=) => NewCopyOther, NewFromRaw ! IDEA: make elemental?
 
       ! == comparison like for raw strings
       procedure, pass(lhs) :: StringEqualString
@@ -441,7 +441,7 @@ contains
 
    end subroutine
    !
-   subroutine NewFromRaw(self, raw)
+   subroutine NewFromRaw(self, raw) ! IDEA: make elemental for assignment of arrays?
       class(ftlString), intent(inout) :: self
       character(len=*), intent(in)    :: raw
 

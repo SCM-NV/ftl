@@ -22,10 +22,7 @@
    end module
 #endif
 
-#define FTL_TEMPLATE_TYPE ftlString
-#define FTL_TEMPLATE_TYPE_IS_DERIVED
-#define FTL_TEMPLATE_TYPE_PROVIDES_FTLMOVE
-#define FTL_TEMPLATE_TYPE_MODULE ftlStringModule
+#define FTL_TEMPLATE_TYPE_IS_FTLSTRING
 #define FTL_TEMPLATE_TYPE_NAME String
 #define FTL_INSTANTIATE_TEMPLATE
 #include "ftlDynArray.F90_template"
