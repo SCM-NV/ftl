@@ -38,6 +38,8 @@ contains
       call testNewDefault
       call testAssignRaw
       call testAssignOther
+      call testAssignRawArrays
+      call testAssignOtherArrays
       call testRaw
 
       call testSliceOnOwnRaw
@@ -137,7 +139,7 @@ contains
 
 
    subroutine testAssignOther
-      type(ftlString) :: s1, s2
+      type(ftlString) :: s1, s2, uninit
 
       s1 = s2 ! assignment of uninitialized strings (should not cause a debug build to freak out)
 
@@ -156,6 +158,84 @@ contains
       ASSERT(s1%raw == 'testme')
       ASSERT(s2%raw == 'theitcrowd')
       ASSERT(s1 /= s2)
+
+      s1 = uninit
+
+      ASSERT(.not.s1%Allocated())
+
+   end subroutine
+
+
+   subroutine testAssignRawArrays
+      type(ftlString), allocatable :: words(:)
+      type(ftlString), allocatable :: tab(:,:)
+
+      allocate(words(2))
+      words = ['hello','world']
+
+      ASSERT(words(1) == 'hello')
+      ASSERT(words(2) == 'world')
+
+      allocate(tab(2,3))
+      tab      = 'none'
+      tab(:,1) = ['hello','world']
+      tab(:,2) = ['a','b']
+
+      ASSERT(tab(1,1) == 'hello')
+      ASSERT(tab(2,1) == 'world')
+      ASSERT(tab(1,2) == 'a')
+      ASSERT(tab(2,2) == 'b')
+      ASSERT(tab(1,3) == 'none')
+      ASSERT(tab(2,3) == 'none')
+
+   end subroutine
+
+
+   subroutine testAssignOtherArrays
+      type(ftlString) :: s
+      type(ftlString), allocatable :: words1(:), words2(:)
+      type(ftlString), allocatable :: tab1(:,:), tab2(:,:)
+
+      s = 'hello fortran world'
+      words1 = s%Split()
+
+      words2 = words1
+
+      ASSERT(allocated(words2))
+      ASSERT(size(words2) == 3)
+      ASSERT(words2(1) == 'hello')
+      ASSERT(words2(2) == 'fortran')
+      ASSERT(words2(3) == 'world')
+
+      allocate(tab1(3,3))
+      tab1      = ftlString('none')
+      tab1(:,1) = ftlString('first column')
+      tab1(:,2) = words1
+
+      ASSERT(tab1(1,1) == 'first column')
+      ASSERT(tab1(2,1) == 'first column')
+      ASSERT(tab1(3,1) == 'first column')
+      ASSERT(tab1(1,2) == 'hello')
+      ASSERT(tab1(2,2) == 'fortran')
+      ASSERT(tab1(3,2) == 'world')
+      ASSERT(tab1(1,3) == 'none')
+      ASSERT(tab1(2,3) == 'none')
+      ASSERT(tab1(3,3) == 'none')
+
+      tab2 = tab1
+
+      ASSERT(allocated(tab2))
+      ASSERT(size(tab2,1) == 3)
+      ASSERT(size(tab2,2) == 3)
+      ASSERT(tab2(1,1) == 'first column')
+      ASSERT(tab2(2,1) == 'first column')
+      ASSERT(tab2(3,1) == 'first column')
+      ASSERT(tab2(1,2) == 'hello')
+      ASSERT(tab2(2,2) == 'fortran')
+      ASSERT(tab2(3,2) == 'world')
+      ASSERT(tab2(1,3) == 'none')
+      ASSERT(tab2(2,3) == 'none')
+      ASSERT(tab2(3,3) == 'none')
 
    end subroutine
 

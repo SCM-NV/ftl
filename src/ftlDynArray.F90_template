@@ -641,13 +641,8 @@ contains
       class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(out) :: self
       character(len=*)                              , intent(in)  :: array(:)
 
-      integer :: i
-
       call self%NewFill(size(array))
-      do i = 1, size(array)
-         self%data(i) = array(i)
-      enddo
-      ! IDEA: self%data = array doable?
+      self%data = array
 
    end subroutine
 
@@ -655,15 +650,11 @@ contains
       class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
       character(*)                                  , intent(in)    :: array(:)
 
-      integer :: i
-
       ! TODO: This can be done more efficiently. We don't really need to copy
       ! during the Reserve if we are going to overwrite anyway ...
 
       call self%Reserve(size(array))
-      do i = 1, size(array)
-         self%storage(i) = array(i)
-      enddo
+      self%storage(1:size(array)) = array
       call TriggerFinalizer(self%storage(size(array)+1:))
       self%psize = size(array)
       call self%FixValuePtrs()
@@ -730,12 +721,8 @@ contains
       integer                                       , intent(in)    :: position
       character(*)                                  , intent(in)    :: array(:)
 
-      integer :: i
-
       call self%ShiftByN(position, size(array))
-      do i = 1, size(array)
-         self%storage(position+i-1) = array(i)
-      enddo
+      self%storage(position:position+size(array)-1) = array
       self%psize = self%psize + size(array)
       call self%FixValuePtrs()
 
