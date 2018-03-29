@@ -282,32 +282,32 @@ module CAT3(FTL_CONTAINER,FTL_TEMPLATE_TYPE_NAME,AlgorithmsModule)
 
 
       logical function UnaryPredicate(a)
-#ifdef FTL_TEMPLATE_TYPE_IS_DERIVED
-         import :: FTL_TEMPLATE_TYPE
+#ifdef FTL_TEMPLATE_TYPE_MODULE
+         use FTL_TEMPLATE_TYPE_MODULE
 #endif
          FTL_TEMPLATE_TYPE_WRAP, intent(in) :: a
       end function
 
 
       logical function Comparator(a, b)
-#ifdef FTL_TEMPLATE_TYPE_IS_DERIVED
-         import :: FTL_TEMPLATE_TYPE
+#ifdef FTL_TEMPLATE_TYPE_MODULE
+         use FTL_TEMPLATE_TYPE_MODULE
 #endif
          FTL_TEMPLATE_TYPE_WRAP, intent(in) :: a, b
       end function
 
 
       subroutine UnarySubroutine(a)
-#ifdef FTL_TEMPLATE_TYPE_IS_DERIVED
-         import :: FTL_TEMPLATE_TYPE
+#ifdef FTL_TEMPLATE_TYPE_MODULE
+         use FTL_TEMPLATE_TYPE_MODULE
 #endif
          FTL_TEMPLATE_TYPE_WRAP, intent(inout) :: a
       end subroutine
 
 
       FTL_TEMPLATE_TYPE_WRAP function Generator()
-#ifdef FTL_TEMPLATE_TYPE_IS_DERIVED
-         import :: FTL_TEMPLATE_TYPE
+#ifdef FTL_TEMPLATE_TYPE_MODULE
+         use FTL_TEMPLATE_TYPE_MODULE
 #endif
       end function
 
