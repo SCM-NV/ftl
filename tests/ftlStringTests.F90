@@ -38,6 +38,8 @@ contains
       call testNewDefault
       call testAssignRaw
       call testAssignOther
+      call testAssignRawArrays
+      call testAssignOtherArrays
       call testRaw
 
       call testSliceOnOwnRaw
@@ -97,6 +99,7 @@ contains
 
       ! Tests of ftl Containers containing ftlStrings:
       call testSplitWordsIntoDynArray
+      call testDynArrayStringSpecialization
 
    end subroutine
 
@@ -136,7 +139,7 @@ contains
 
 
    subroutine testAssignOther
-      type(ftlString) :: s1, s2
+      type(ftlString) :: s1, s2, uninit
 
       s1 = s2 ! assignment of uninitialized strings (should not cause a debug build to freak out)
 
@@ -155,6 +158,84 @@ contains
       ASSERT(s1%raw == 'testme')
       ASSERT(s2%raw == 'theitcrowd')
       ASSERT(s1 /= s2)
+
+      s1 = uninit
+
+      ASSERT(.not.s1%Allocated())
+
+   end subroutine
+
+
+   subroutine testAssignRawArrays
+      type(ftlString), allocatable :: words(:)
+      type(ftlString), allocatable :: tab(:,:)
+
+      allocate(words(2))
+      words = ['hello','world']
+
+      ASSERT(words(1) == 'hello')
+      ASSERT(words(2) == 'world')
+
+      allocate(tab(2,3))
+      tab      = 'none'
+      tab(:,1) = ['hello','world']
+      tab(:,2) = ['a','b']
+
+      ASSERT(tab(1,1) == 'hello')
+      ASSERT(tab(2,1) == 'world')
+      ASSERT(tab(1,2) == 'a')
+      ASSERT(tab(2,2) == 'b')
+      ASSERT(tab(1,3) == 'none')
+      ASSERT(tab(2,3) == 'none')
+
+   end subroutine
+
+
+   subroutine testAssignOtherArrays
+      type(ftlString) :: s
+      type(ftlString), allocatable :: words1(:), words2(:)
+      type(ftlString), allocatable :: tab1(:,:), tab2(:,:)
+
+      s = 'hello fortran world'
+      words1 = s%Split()
+
+      words2 = words1
+
+      ASSERT(allocated(words2))
+      ASSERT(size(words2) == 3)
+      ASSERT(words2(1) == 'hello')
+      ASSERT(words2(2) == 'fortran')
+      ASSERT(words2(3) == 'world')
+
+      allocate(tab1(3,3))
+      tab1      = ftlString('none')
+      tab1(:,1) = ftlString('first column')
+      tab1(:,2) = words1
+
+      ASSERT(tab1(1,1) == 'first column')
+      ASSERT(tab1(2,1) == 'first column')
+      ASSERT(tab1(3,1) == 'first column')
+      ASSERT(tab1(1,2) == 'hello')
+      ASSERT(tab1(2,2) == 'fortran')
+      ASSERT(tab1(3,2) == 'world')
+      ASSERT(tab1(1,3) == 'none')
+      ASSERT(tab1(2,3) == 'none')
+      ASSERT(tab1(3,3) == 'none')
+
+      tab2 = tab1
+
+      ASSERT(allocated(tab2))
+      ASSERT(size(tab2,1) == 3)
+      ASSERT(size(tab2,2) == 3)
+      ASSERT(tab2(1,1) == 'first column')
+      ASSERT(tab2(2,1) == 'first column')
+      ASSERT(tab2(3,1) == 'first column')
+      ASSERT(tab2(1,2) == 'hello')
+      ASSERT(tab2(2,2) == 'fortran')
+      ASSERT(tab2(3,2) == 'world')
+      ASSERT(tab2(1,3) == 'none')
+      ASSERT(tab2(2,3) == 'none')
+      ASSERT(tab2(3,3) == 'none')
 
    end subroutine
 
@@ -1398,6 +1479,97 @@ contains
       enddo
 
       ASSERT(snew == 'This is a sentence. Then we will put it into a ftlDynArray.')
+
+   end subroutine
+
+
+   subroutine testDynArrayStringSpecialization
+      type(ftlDynArrayString) :: v
+
+      call v%New(['hello','world'])
+
+      ASSERT(size(v) == 2)
+      ASSERT(v%front == 'hello')
+      ASSERT(v%back  == 'world')
+
+      call v%New()
+      call v%PushBack('hello')
+
+      ASSERT(size(v) == 1)
+      ASSERT(v%front == 'hello')
+      ASSERT(v%back  == 'hello')
+      ASSERT(v%data(1) == 'hello')
+
+      call v%PushBack('world')
+      call v%PushBack('of')
+      call v%PushBack('fortran')
+
+      ASSERT(size(v) == 4)
+      ASSERT(v%front == 'hello')
+      ASSERT(v%back  == 'fortran')
+      ASSERT(v%data(1) == 'hello')
+      ASSERT(v%data(2) == 'world')
+      ASSERT(v%data(3) == 'of')
+      ASSERT(v%data(4) == 'fortran')
+
+      call v%Resize(6, 'two more')
+
+      ASSERT(size(v) == 6)
+      ASSERT(v%front == 'hello')
+      ASSERT(v%back  == 'two more')
+      ASSERT(v%data(1) == 'hello')
+      ASSERT(v%data(2) == 'world')
+      ASSERT(v%data(3) == 'of')
+      ASSERT(v%data(4) == 'fortran')
+      ASSERT(v%data(5) == 'two more')
+      ASSERT(v%data(6) == 'two more')
+
+      v = ['a','b','c']
+
+      ASSERT(size(v) == 3)
+      ASSERT(v%front == 'a')
+      ASSERT(v%back  == 'c')
+      ASSERT(v%data(1) == 'a')
+      ASSERT(v%data(2) == 'b')
+      ASSERT(v%data(3) == 'c')
+
+      call v%Insert(2, 'blub')
+
+      ASSERT(size(v) == 4)
+      ASSERT(v%front == 'a')
+      ASSERT(v%back  == 'c')
+      ASSERT(v%data(1) == 'a')
+      ASSERT(v%data(2) == 'blub')
+      ASSERT(v%data(3) == 'b')
+      ASSERT(v%data(4) == 'c')
+
+      call v%Insert(2, ['hallo','world'])
+
+      ASSERT(size(v) == 6)
+      ASSERT(v%front == 'a')
+      ASSERT(v%back  == 'c')
+      ASSERT(v%data(1) == 'a')
+      ASSERT(v%data(2) == 'hallo')
+      ASSERT(v%data(3) == 'world')
+      ASSERT(v%data(4) == 'blub')
+      ASSERT(v%data(5) == 'b')
+      ASSERT(v%data(6) == 'c')
+
+      call v%Resize(10, 'end')
+
+      ASSERT(size(v) == 10)
+      ASSERT(v%front == 'a')
+      ASSERT(v%back  == 'end')
+      ASSERT(v%data( 1) == 'a')
+      ASSERT(v%data( 2) == 'hallo')
+      ASSERT(v%data( 3) == 'world')
+      ASSERT(v%data( 4) == 'blub')
+      ASSERT(v%data( 5) == 'b')
+      ASSERT(v%data( 6) == 'c')
+      ASSERT(v%data( 7) == 'end')
+      ASSERT(v%data( 8) == 'end')
+      ASSERT(v%data( 9) == 'end')
+      ASSERT(v%data(10) == 'end')
 
    end subroutine
 
