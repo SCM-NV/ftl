@@ -581,7 +581,7 @@ contains
 
    ! Checks whether an ftlString is initialized (that is the raw string is allocated)
    !
-   pure logical function AllocatedString(self)
+   elemental logical function AllocatedString(self)
       class(ftlString), intent(in) :: self
 
       AllocatedString = allocated(self%raw)
@@ -592,7 +592,7 @@ contains
 
    ! Destroys the ftlString object. This deallocates all the storage capacity allocated by the ftlString.
    !
-   subroutine Delete(self)
+   elemental subroutine Delete(self)
       class(ftlString), intent(inout) :: self
 
       if (allocated(self%raw)) deallocate(self%raw)
