@@ -27,6 +27,7 @@ program tests
    use ftlDynArrayTestsModule
    use ftlListTestsModule
    use ftlHashMapTestsModule
+   use ftlHashSetTestsModule
    use ftlSharedPtrTestsModule
    use ftlAlgorithmsTestsModule
 
@@ -39,6 +40,7 @@ program tests
    call ftlDynArrayTests
    call ftlListTests
    call ftlHashMapTests
+   call ftlHashSetTests
    call ftlSharedPtrTests
    call ftlAlgorithmsTests
 
