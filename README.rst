@@ -111,12 +111,16 @@ ftlHashMap
    ftlHashMap is very similar to C++'s std::unordered_map (though its interface
    is a bit less awkward).
 
+ftlHashSet
+   A container representing a set of unique elements. It's pretty much like an
+   ftlHashMap where the key is at the same time also the value.
+
 ftlHash
    A small utility library that provides hash functions for the Fortran
-   intrinsic types. This allows them to be used as key types in ftlHashMap.
-   Furthermore these basic has functions can be used to implement hash functions
-   for other derived types, so that these can also be used as keys in
-   ftlHashMap. This file is not a template.
+   intrinsic types. This allows them to be used as key types in ftlHashMap and
+   as elements in ftlHashSet. Furthermore these basic has functions can be used
+   to implement hash functions for other derived types, so that these can also
+   be used as keys in ftlHashMap. This file is not a template.
 
 ftlString
    A variable length string type that integrates seamlessly with plain Fortran
@@ -127,7 +131,8 @@ ftlString
 
 ftlRegex
    A convenient Fortran wrapper around the POSIX regular expression
-   functionality in the C standard library (aka ``regex.h``). It's nicely
+   functionality in the C standard library (aka ``regex.h``) or alternatively
+   the PCRE (Perl Compatible Regular Expressions) library. It's nicely
    integrated with the ftlString type. ftlRegex is not a template.
 
 ftlAlgorithms
@@ -147,8 +152,8 @@ ftlSharedPtr
 Implementation progress
 #######################
 
-ftlDynArray, ftlList, ftlHashMap and the plain Fortran array wrapper ftlArray
-are pretty much finished.
+ftlDynArray, ftlList, ftlHashMap, ftlHashSet and the plain Fortran array wrapper
+ftlArray are pretty much finished.
 
 ftlAlgorithms is incomplete. Ultimately I would like all of the algorithms in
 C++'s std::algorithm header to be implemented, but so far I only did maybe 30%
@@ -164,9 +169,6 @@ Definitely on the TODO list are:
 + An equivalent of std::deque, a double-ended queue. A container with random
   access iterators but constant time insertion at both ends. It should be
   reasonably local in memory.
-
-+ An equivalent of std::set. Should probably share code with ftlHashMap, as it
-  is essentially a hash table without a value associated with the keys.
 
 These things might be nice:
 
