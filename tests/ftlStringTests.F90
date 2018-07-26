@@ -79,6 +79,7 @@ contains
       call testEndsWith
       call testStrip
       call testRStrip
+      call testLStrip
       call testUpperLower
       call testIsSpace
       call testReplace
@@ -1220,6 +1221,30 @@ contains
       stripme = './!@#$%^&*()-_ '
       ASSERT(s%RStrip('./!@#$%^&*()-_ ') == './!@#$%^&*()-_ hello world')
       ASSERT(s%RStrip(stripme) == './!@#$%^&*()-_ hello world')
+
+   end subroutine
+
+
+   subroutine testLStrip
+      type(ftlString) :: s, stripme
+
+      s = '   hohoho   '
+      ASSERT(s%LStrip(' ') == 'hohoho   ')
+      ASSERT(s%LStrip()    == 'hohoho   ')
+
+      s = '   '
+      ASSERT(s%LStrip(' ') == '')
+
+      s = 'helloworld'
+      ASSERT(s%LStrip(' ') == 'helloworld')
+
+      s = ''
+      ASSERT(s%LStrip(' ') == '')
+
+      s = './!@#$%^&*()-_ hello world  _)(*&^%$#@!'
+      stripme = './!@#$%^&*()-_ '
+      ASSERT(s%LStrip('./!@#$%^&*()-_ ') == 'hello world  _)(*&^%$#@!')
+      ASSERT(s%LStrip(stripme) == 'hello world  _)(*&^%$#@!')
 
    end subroutine
 

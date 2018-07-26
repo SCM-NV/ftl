@@ -129,6 +129,10 @@ module ftlStringModule
       procedure         :: RStripRaw
       procedure         :: RStripString
       generic  , public :: RStrip => RStripWhitespace, RStripRaw, RStripString
+      procedure         :: LStripWhitespace
+      procedure         :: LStripRaw
+      procedure         :: LStripString
+      generic  , public :: LStrip => LStripWhitespace, LStripRaw, LStripString
       procedure         :: FindRaw
       procedure         :: FindOther
       generic  , public :: Find => FindRaw, FindOther
@@ -1657,6 +1661,50 @@ contains
        type(ftlString), intent(in) :: chars
 
       stripped = self%RStripRaw(chars%raw)
+
+   end function
+
+
+   ! Return a copy of the string with leading characters removed. The chars argument is a string specifying the set of
+   ! characters to be removed. If omitted or None, the chars argument defaults to removing whitespace. The chars
+   ! argument is not a prefix; rather, all combinations of its values are stripped:
+   !
+   type(ftlString) function LStripWhitespace(self) result(stripped)
+      class(ftlString), intent(in) :: self
+
+      integer :: first
+
+      first = verify(self%raw, FTL_STRING_WHITESPACE)
+
+      if (first == 0) then
+         stripped%raw = ''
+      else
+         stripped%raw = self%raw(first:)
+      endif
+
+   end function
+   !
+   type(ftlString) function LStripRaw(self, chars) result(stripped)
+      class(ftlString), intent(in) :: self
+      character(len=*), intent(in) :: chars
+
+      integer :: first
+
+      first = verify(self%raw, chars)
+
+      if (first == 0) then
+         stripped%raw = ''
+      else
+         stripped%raw = self%raw(first:)
+      endif
+
+   end function
+   !
+   type(ftlString) function LStripString(self, chars) result(stripped)
+      class(ftlString), intent(in) :: self
+       type(ftlString), intent(in) :: chars
+
+      stripped = self%LStripRaw(chars%raw)
 
    end function
 
