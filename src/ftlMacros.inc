@@ -19,7 +19,7 @@
 #ifndef FTL_MACROS_INCLUDED
 #define FTL_MACROS_INCLUDED
 
-#ifdef __GFORTRAN__
+#if defined(__GFORTRAN__) || defined(NAGFOR)
 #define PASTE(a) a
 #define CAT(a,b) PASTE(a)b
 #define CAT3(a,b,c) CAT(a,b)c

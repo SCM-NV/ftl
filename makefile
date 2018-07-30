@@ -31,12 +31,24 @@ DEFINES =
 ifeq ($(PLATFORM), gnu)
 	COMPILER = gfortran
 	FLAGS = -std=f2008 -fall-intrinsics -ffree-line-length-none -Wall -Wextra -Wpedantic -Wno-target-lifetime -Wno-compare-reals -J$(BUILDDIR)
+	SOFLAGS = -fPIC
+	SOLDFLAGS = -shared
 	CXXCOMPILER = g++
 	CXXFLAGS = -std=c++11 -Ofast -march=native
 	SUPPRESSIONS = --suppressions=gfortran.supp
 else ifeq ($(PLATFORM), intel)
 	COMPILER = ifort
+	SOFLAGS = -fPIC
+	SOLDFLAGS = -shared
 	FLAGS = -stand f08 -warn -diag-disable=5268 -module $(BUILDDIR)
+	CXXCOMPILER = g++
+	CXXFLAGS = -std=c++11 -fast -xHost
+	SUPPRESSIONS =
+else ifeq ($(PLATFORM), nag)
+	COMPILER = nagfor
+	FLAGS = -fpp -colour -I$(BUILDDIR) -mdir $(BUILDDIR)
+	SOFLAGS = -PIC
+	SOLDFLAGS = -Wl,-shared
 	CXXCOMPILER = g++
 	CXXFLAGS = -std=c++11 -fast -xHost
 	SUPPRESSIONS =
@@ -54,10 +66,14 @@ ifeq ($(PLATFORM)$(BUILD), gnudebug)
 	FLAGS += -g -Og -fcheck=bounds,do,mem,pointer,recursion
 else ifeq ($(PLATFORM)$(BUILD), inteldebug)
 	FLAGS += -g -O0 -check all -debug all -traceback
+else ifeq ($(PLATFORM)$(BUILD), nagdebug)
+	FLAGS += -g
 else ifeq ($(PLATFORM)$(BUILD), gnurelease)
 	FLAGS += -O2 -march=native -flto
 else ifeq ($(PLATFORM)$(BUILD), intelrelease)
 	FLAGS += -O3 -ipo -xHost
+else ifeq ($(PLATFORM)$(BUILD), nagrelease)
+	FLAGS += -O
 else
   $(error unrecognized BUILD)
 endif
@@ -102,7 +118,7 @@ cleanall:
 # Shared library of non-template components:
 
 $(BUILDDIR)/libftl.so: $(BUILDDIR)/ftlString.o $(BUILDDIR)/ftlHash.o $(BUILDDIR)/ftlRegex.o
-	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) $^ $(LDFLAGS) -shared -o $@
+	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) $^ $(LDFLAGS) $(SOLDFLAGS) -o $@
 
 
 # Unit tests:
@@ -219,13 +235,13 @@ $(BUILDDIR)/ftlSharedPtrInt.o: instantiations/ftlSharedPtrInt.F90 src/ftlSharedP
 # Non-template FTL modules:
 
 $(BUILDDIR)/ftlHash.o: src/ftlHash.F90 | $(BUILDDIR)
-	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -fPIC -c $< -o $@
+	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) $(SOFLAGS) -c $< -o $@
 
 $(BUILDDIR)/ftlString.o: src/ftlString.F90 $(BUILDDIR)/ftlHash.o | $(BUILDDIR)
-	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -fPIC -c $< -o $@
+	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) $(SOFLAGS) -c $< -o $@
 
 $(BUILDDIR)/ftlRegex.o: src/ftlRegex.F90 src/configure_ftlRegex.inc $(BUILDDIR)/ftlString.o | $(BUILDDIR)
-	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -fPIC -c $< -o $@
+	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) $(SOFLAGS) -c $< -o $@
 
 src/configure_ftlRegex.inc: configure/configure_ftlRegex.c
 	$(CXXCOMPILER) $(DEFINES) configure/configure_ftlRegex.c -o configure/configure_ftlRegex

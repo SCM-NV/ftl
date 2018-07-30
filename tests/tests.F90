@@ -31,14 +31,16 @@ program tests
    use ftlSharedPtrTestsModule
    use ftlAlgorithmsTestsModule
 
+#if !defined(NAGFOR)
    ! dummy assertion to test that assertions themselves work ...
    ASSERT(.false.)
+#endif
 
    call ftlRegexTests
    call ftlStringTests
    call ftlArrayTests
    call ftlDynArrayTests
-   call ftlListTests
+   !call ftlListTests
    call ftlHashMapTests
    call ftlHashSetTests
    call ftlSharedPtrTests

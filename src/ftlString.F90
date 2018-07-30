@@ -1064,7 +1064,6 @@ contains
       integer :: stat
 
       read(self%raw,*,iostat=stat) ToInt
-      if (stat /= 0) ToInt = -huge(ToInt)
 
       ! TODO: handle strings like '1e3' in gfortran
 
@@ -1089,10 +1088,6 @@ contains
       integer :: stat
 
       read(self%raw,*,iostat=stat) ToReal
-      if (stat /= 0) then
-         ToReal = 0.0
-         ToReal = ToReal/ToReal ! results in NaN
-      endif
 
    end function
 
@@ -1115,10 +1110,6 @@ contains
       integer :: stat
 
       read(self%raw,*,iostat=stat) ToComplex
-      if (stat /= 0) then
-         ToComplex = (0.0,0.0)
-         ToComplex = ToComplex/ToComplex ! results in NaN
-      endif
 
    end function
 

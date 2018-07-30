@@ -478,10 +478,9 @@ contains
 
       s = 'not a number'
       ASSERT(.not.s%IsInt())
-      ASSERT(int(s) == -huge(1))
 
       s = '1e6'
-#ifdef __GFORTRAN__
+#if defined(__GFORTRAN__) || defined(NAGFOR)
       ASSERT(.not.s%IsInt())
 #else
       ASSERT(s%IsInt())
@@ -501,7 +500,6 @@ contains
 
       s = 'not a number'
       ASSERT(.not.s%IsReal())
-      ASSERT(real(s) /= real(s))
 
       s = '(0.0,1.0)'
       ASSERT(s%IsComplex())
