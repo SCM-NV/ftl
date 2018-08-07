@@ -318,7 +318,7 @@ contains
 
       match%matches = .true.
 
-      if (and(self%cflags,REG_NOSUB) == REG_NOSUB) then
+      if (iand(self%cflags,REG_NOSUB) == REG_NOSUB) then
          nGroups = 0
       else
          match%text    = string(pmatch(1)%rm_so+1:pmatch(1)%rm_eo)

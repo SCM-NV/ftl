@@ -1,4 +1,4 @@
-! Copyright (c) 2016, 2017  Robert Rüger
+! Copyright (c) 2018  Robert Rüger
 !
 ! This file is part of of the Fortran Template Library.
 !
@@ -16,19 +16,7 @@
 ! with the Fortran Template Library.  If not, see <http://www.gnu.org/licenses/>.
 
 
-#ifndef FTL_MACROS_INCLUDED
-#define FTL_MACROS_INCLUDED
-
-#if defined(__GFORTRAN__) || defined(NAGFOR)
-#define PASTE(a) a
-#define CAT(a,b) PASTE(a)b
-#define CAT3(a,b,c) CAT(a,b)c
-#define CAT4(a,b,c,d) CAT3(a,b,c)d
-#else
-#define PCAT(a,b,c,d) a ## b ## c ## d
-#define CAT(a,b) PCAT(a,b,,)
-#define CAT3(a,b,c) PCAT(a,b,c,)
-#define CAT4(a,b,c,d) PCAT(a,b,c,d)
-#endif
-
-#endif
+#define FTL_TEMPLATE_TYPE integer
+#define FTL_TEMPLATE_TYPE_NAME Int
+#define FTL_INSTANTIATE_TEMPLATE
+#include <ftlHashSet.F90_template>

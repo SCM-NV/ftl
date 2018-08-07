@@ -25,23 +25,35 @@ module ftlTestToolsModule
 
 contains
 
+#if defined(NAGFOR)
+   subroutine assert(cond, file, line)
+#else
    subroutine assert(cond, str, file, line)
+#endif
       logical         , intent(in) :: cond
+#if !defined(NAGFOR)
       character(len=*), intent(in) :: str
+#endif
       character(len=*), intent(in) :: file
       integer         , intent(in) :: line
 
       num_asserts = num_asserts + 1
 
       if (.not.cond) then
+#if defined(NAGFOR)
+         write (*,'(A,A,A,I0,A,A)') 'Failed assertion at ',file,'(',line,')'
+#else
          write (*,'(A,A,A,I0,A,A)') 'Failed assertion at ',file,'(',line,'): ',str
+#endif
          num_failed = num_failed + 1
 
+#if !defined(NAGFOR)
          if (str == '.false.') then
             write (*,'(A)') '(This was a dummy assertion to test if assertions themselves work ...)'
             num_asserts = num_asserts - 1
             num_failed = num_failed - 1
          endif
+#endif
       endif
 
    end subroutine

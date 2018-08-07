@@ -144,6 +144,7 @@ contains
 
    subroutine testAssignments
       type(ftlListInt) :: l, o
+      type(ftlListIntIterator) :: it
 
       call o%New([5,13,41,97,17,10,88])
       l = o
@@ -154,6 +155,22 @@ contains
       ASSERT(l%back == 88)
       ASSERT(.not.associated(o%front,l%front))
       ASSERT(.not.associated(o%back,l%back))
+      it = l%Begin()
+      ASSERT(it%value == 5)
+      call it%Inc()
+      ASSERT(it%value == 13)
+      call it%Inc()
+      ASSERT(it%value == 41)
+      call it%Inc()
+      ASSERT(it%value == 97)
+      call it%Inc()
+      ASSERT(it%value == 17)
+      call it%Inc()
+      ASSERT(it%value == 10)
+      call it%Inc()
+      ASSERT(it%value == 88)
+      call it%Inc()
+      ASSERT(it == l%End())
 
       l = [23,446,864,3]
       ASSERT(l%Size() == 4)

@@ -16,8 +16,10 @@
 ! with the Fortran Template Library.  If not, see <http://www.gnu.org/licenses/>.
 
 
-#ifdef __GFORTRAN__
+#if defined(__GFORTRAN__)
 #define ASSERT(x) call assert(x,"x",__FILE__,__LINE__)
+#elif defined(NAGFOR)
+#define ASSERT(x) call assert(x,__FILE__,__LINE__)
 #else
 #define ASSERT(x) call assert(x,#x,__FILE__,__LINE__)
 #endif

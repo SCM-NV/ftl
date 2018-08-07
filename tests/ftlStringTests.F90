@@ -79,6 +79,7 @@ contains
       call testEndsWith
       call testStrip
       call testRStrip
+      call testLStrip
       call testUpperLower
       call testIsSpace
       call testReplace
@@ -477,10 +478,9 @@ contains
 
       s = 'not a number'
       ASSERT(.not.s%IsInt())
-      ASSERT(int(s) == -huge(1))
 
       s = '1e6'
-#ifdef __GFORTRAN__
+#if defined(__GFORTRAN__) || defined(NAGFOR)
       ASSERT(.not.s%IsInt())
 #else
       ASSERT(s%IsInt())
@@ -500,7 +500,6 @@ contains
 
       s = 'not a number'
       ASSERT(.not.s%IsReal())
-      ASSERT(real(s) /= real(s))
 
       s = '(0.0,1.0)'
       ASSERT(s%IsComplex())
@@ -1220,6 +1219,30 @@ contains
       stripme = './!@#$%^&*()-_ '
       ASSERT(s%RStrip('./!@#$%^&*()-_ ') == './!@#$%^&*()-_ hello world')
       ASSERT(s%RStrip(stripme) == './!@#$%^&*()-_ hello world')
+
+   end subroutine
+
+
+   subroutine testLStrip
+      type(ftlString) :: s, stripme
+
+      s = '   hohoho   '
+      ASSERT(s%LStrip(' ') == 'hohoho   ')
+      ASSERT(s%LStrip()    == 'hohoho   ')
+
+      s = '   '
+      ASSERT(s%LStrip(' ') == '')
+
+      s = 'helloworld'
+      ASSERT(s%LStrip(' ') == 'helloworld')
+
+      s = ''
+      ASSERT(s%LStrip(' ') == '')
+
+      s = './!@#$%^&*()-_ hello world  _)(*&^%$#@!'
+      stripme = './!@#$%^&*()-_ '
+      ASSERT(s%LStrip('./!@#$%^&*()-_ ') == 'hello world  _)(*&^%$#@!')
+      ASSERT(s%LStrip(stripme) == 'hello world  _)(*&^%$#@!')
 
    end subroutine
 
