@@ -101,7 +101,7 @@ contains
 
 
    subroutine testNewCopyOther
-      type(ftlDynArrayInt) :: v,o
+      type(ftlDynArrayInt) :: v,o,uninit
 
       call o%New([5,13,41,97,17,10,88])
       call v%New(o)
@@ -117,6 +117,17 @@ contains
       ASSERT(.not.associated(o%data,v%data))
       ASSERT(.not.associated(o%front,v%front))
       ASSERT(.not.associated(o%back,v%back))
+
+      call v%New(uninit)
+
+      ASSERT(v%Empty())
+      ASSERT(v%Size() == 0)
+      ASSERT(Size(v) == 0)
+      ASSERT(size(v%data) == 0)
+      ASSERT(.not.associated(v%front))
+      ASSERT(.not.associated(v%back))
+      ASSERT(v%End() == v%Begin())
+      ASSERT(v%Capacity() == 0)
 
    end subroutine
 
@@ -162,7 +173,8 @@ contains
 
 
    subroutine testAssignment
-      type(ftlDynArrayInt) :: v1, v2
+      type(ftlDynArrayInt) :: v1, v2, v3, uninit
+      integer, allocatable :: a(:)
 
       v1 = [5,13,41,97,17,10,88]
 
@@ -197,6 +209,32 @@ contains
       ASSERT(v1%back == 2)
       ASSERT(v1%End() - v1%Begin() == 2)
       ASSERT(v1%Capacity() == 7) ! no reallocation on smaller assignment
+
+      allocate(a(0))
+
+      v1 = a
+
+      ASSERT(v1%Empty())
+      ASSERT(v1%Size() == 0)
+      ASSERT(Size(v1) == 0)
+      ASSERT(size(v1%data) == 0)
+      ASSERT(v1%End() == v1%Begin())
+      ASSERT(v1%Capacity() == 7) ! no reallocation on smaller assignment
+
+      v3 = a ! assignment of 0 sized array to something that wasn't constructed before ...
+             ! ... don't ask ... yes, that happens ...
+
+      ASSERT(v3%Empty())
+      ASSERT(v3%Size() == 0)
+      ASSERT(Size(v3) == 0)
+      ASSERT(size(v3%data) == 0)
+      ASSERT(v3%End() == v3%Begin())
+
+      v2 = uninit ! assigning an uninitialized dynArray is equivalent to deleting ...
+
+      ASSERT(.not.associated(v2%data))
+      ASSERT(.not.associated(v2%front))
+      ASSERT(.not.associated(v2%back))
 
    end subroutine
 
