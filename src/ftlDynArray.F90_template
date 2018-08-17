@@ -257,7 +257,7 @@ contains
       class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(in)  :: other
 
       allocate(self%storage(other%psize))
-      self%storage = other%storage(1:other%psize)
+      if (other%psize > 0) self%storage = other%storage(1:other%psize)
       self%psize = other%psize
       call self%FixValuePtrs()
 
@@ -279,7 +279,6 @@ contains
       class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(out) :: self
       FTL_TEMPLATE_TYPE_WRAP                        , intent(in)  :: array(:)
 
-      allocate(self%storage(size(array)))
       self%storage = array
       self%psize = size(array)
       call self%FixValuePtrs()
@@ -312,14 +311,16 @@ contains
       class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
       FTL_TEMPLATE_TYPE_WRAP                        , intent(in)    :: array(:)
 
-      ! TODO: This can be done more efficiently. We don't really need to copy
-      ! during the Reserve if we are going to overwrite anyway ...
-
-      call self%Reserve(size(array))
-      self%storage(1:size(array)) = array
-      call TriggerFinalizer(self%storage(size(array)+1:))
-      self%psize = size(array)
-      call self%FixValuePtrs()
+      if (.not.allocated(self%storage)) then
+         call self%New(array)
+      else if (size(self%storage) < size(array)) then
+         call self%New(array)
+      else
+         if (size(array) > 0) self%storage(1:size(array)) = array
+         if (size(self%storage) > size(array)) call TriggerFinalizer(self%storage(size(array)+1:))
+         self%psize = size(array)
+         call self%FixValuePtrs()
+      endif
 
    end subroutine
    !
@@ -327,7 +328,12 @@ contains
       class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
       class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(in)    :: other
 
-      call self%AssignArray(other%data)
+      if (.not.allocated(other%storage)) then
+         ! other wasn't initialized, i.e. it's constructor wasn't called ...
+         call self%Delete()
+      else
+         call self%AssignArray(other%data)
+      endif
 
    end subroutine
 
@@ -650,14 +656,16 @@ contains
       class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
       character(*)                                  , intent(in)    :: array(:)
 
-      ! TODO: This can be done more efficiently. We don't really need to copy
-      ! during the Reserve if we are going to overwrite anyway ...
-
-      call self%Reserve(size(array))
-      self%storage(1:size(array)) = array
-      call TriggerFinalizer(self%storage(size(array)+1:))
-      self%psize = size(array)
-      call self%FixValuePtrs()
+      if (.not.allocated(self%storage)) then
+         call self%New(array)
+      else if (size(self%storage) < size(array)) then
+         call self%New(array)
+      else
+         if (size(array) > 0) self%storage(1:size(array)) = array
+         if (size(self%storage) > size(array)) call self%storage(size(array)+1:)%Delete()
+         self%psize = size(array)
+         call self%FixValuePtrs()
+      endif
 
    end subroutine
 
