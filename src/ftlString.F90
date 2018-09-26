@@ -153,7 +153,14 @@ module ftlStringModule
 
       ! Overloaded operators:
 
+#if __INTEL_COMPILER
+      ! ifort seems to have problems with cleaning up the left hand side of a character(:), allocatable assignment.
+      ! This is normally what would happen in the intrinsic assignments of ftlStrings. Therefore we make a defined assignment
+      ! for ftlString that does the cleanup of the lhs explicitly, to at least fix these memory leaks when using ftlStrings ...
+      generic  , public :: assignment(=) => NewFromRaw, NewCopyOther
+#else
       generic  , public :: assignment(=) => NewFromRaw
+#endif
 
       ! == comparison like for raw strings
       procedure, pass(lhs) :: StringEqualString
@@ -437,10 +444,19 @@ contains
 
       ! Constructs a copy of other.
 
-      if (allocated(other%raw)) then
+      if (.not.allocated(self%raw) .and. .not.allocated(other%raw)) then
+         return
+      else if (.not.allocated(self%raw)) then
          self%raw = other%raw
+      else if (.not.allocated(other%raw)) then
+         deallocate(self%raw)
       else
-         if (allocated(self%raw)) deallocate(self%raw)
+         if (len(self%raw) == len(other%raw)) then
+            self%raw(:) = other%raw(:)
+         else
+            deallocate(self%raw)
+            self%raw = other%raw
+         endif
       endif
 
    end subroutine

@@ -194,47 +194,34 @@ module CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Module)
       procedure, public :: Inc
       procedure, public :: Dec
 
+      ! Overloaded operators:
+
+      procedure, pass(lhs) :: AdvanceN
+      generic  , public    :: operator(+) => AdvanceN
+
+      procedure, pass(lhs) :: ReverseN
+      procedure, pass(lhs) :: DiffOther
+      generic  , public    :: operator(-) => ReverseN, DiffOther
+
+      procedure, pass(lhs) :: EqualOther
+      generic  , public    :: operator(==) => EqualOther
+
+      procedure, pass(lhs) :: UnequalOther
+      generic  , public    :: operator(/=) => UnequalOther
+
+      procedure, pass(lhs) :: SmallerOther
+      generic  , public    :: operator(<) => SmallerOther
+
+      procedure, pass(lhs) :: SmallerEqualOther
+      generic  , public    :: operator(<=) => SmallerEqualOther
+
+      procedure, pass(lhs) :: GreaterOther
+      generic  , public    :: operator(>) => GreaterOther
+
+      procedure, pass(lhs) :: GreaterEqualOther
+      generic  , public    :: operator(>=) => GreaterEqualOther
+
    end type
-
-   public :: operator(+)
-   interface operator(+)
-      module procedure AdvanceN
-   end interface
-
-   public :: operator(-)
-   interface operator(-)
-      module procedure ReverseN, DiffOther
-   end interface
-
-   public :: operator(==)
-   interface operator(==)
-      module procedure EqualOther
-   end interface
-
-   public :: operator(/=)
-   interface operator(/=)
-      module procedure UnequalOther
-   end interface
-
-   public :: operator(<)
-   interface operator(<)
-      module procedure SmallerOther
-   end interface
-
-   public :: operator(<=)
-   interface operator(<=)
-      module procedure SmallerEqualOther
-   end interface
-
-   public :: operator(>)
-   interface operator(>)
-      module procedure GreaterOther
-   end interface
-
-   public :: operator(>=)
-   interface operator(>=)
-      module procedure GreaterEqualOther
-   end interface
 
 
 contains
@@ -254,10 +241,14 @@ contains
    !
    subroutine NewCopyOther(self, other)
       class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(out) :: self
-      class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(in)  :: other
+       type(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(in)  :: other
+
+      integer :: i
 
       allocate(self%storage(other%psize))
-      if (other%psize > 0) self%storage = other%storage(1:other%psize)
+      do i = 1, other%psize
+         self%storage(i) = other%storage(i)
+      enddo
       self%psize = other%psize
       call self%FixValuePtrs()
 
@@ -268,8 +259,14 @@ contains
       integer                                       , intent(in)           :: n
       FTL_TEMPLATE_TYPE_WRAP                        , intent(in), optional :: val
 
+      integer :: i
+
       allocate(self%storage(n))
-      if (present(val)) self%storage = val
+      if (present(val)) then
+         do i = 1, n
+            self%storage(i) = val
+         enddo
+      endif
       self%psize = n
       call self%FixValuePtrs()
 
@@ -279,7 +276,12 @@ contains
       class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(out) :: self
       FTL_TEMPLATE_TYPE_WRAP                        , intent(in)  :: array(:)
 
-      self%storage = array
+      integer :: i
+
+      allocate(self%storage(size(array)))
+      do i = 1, size(array)
+         self%storage(i) = array(i)
+      enddo
       self%psize = size(array)
       call self%FixValuePtrs()
 
@@ -311,13 +313,19 @@ contains
       class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
       FTL_TEMPLATE_TYPE_WRAP                        , intent(in)    :: array(:)
 
+      integer :: i
+
       if (.not.allocated(self%storage)) then
          call self%New(array)
       else if (size(self%storage) < size(array)) then
          call self%New(array)
       else
-         if (size(array) > 0) self%storage(1:size(array)) = array
-         if (size(self%storage) > size(array)) call TriggerFinalizer(self%storage(size(array)+1:))
+         do i = 1, size(array)
+            self%storage(i) = array(i)
+         enddo
+         do i = size(array)+1, size(self%storage)
+            call TriggerFinalizer(self%storage(i))
+         enddo
          self%psize = size(array)
          call self%FixValuePtrs()
       endif
@@ -326,7 +334,7 @@ contains
    !
    impure elemental subroutine AssignOther(self, other)
       class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
-      class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(in)    :: other
+       type(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(in)    :: other
 
       if (.not.allocated(other%storage)) then
          ! other wasn't initialized, i.e. it's constructor wasn't called ...
@@ -429,11 +437,19 @@ contains
       integer                                       , intent(in)           :: n
       FTL_TEMPLATE_TYPE_WRAP                        , intent(in), optional :: val
 
+      integer :: i
+
       if (n == self%psize) return
 
       if (n > self%Capacity()) call self%ChangeCapacity(n)
-      if (n < self%psize) call TriggerFinalizer(self%storage(n+1:self%psize))
-      if (present(val) .and. n > self%psize) self%storage(self%psize+1:n) = val
+      do i = n+1, self%psize
+         call TriggerFinalizer(self%storage(i))
+      enddo
+      if (present(val) .and. n > self%psize) then
+         do i = self%psize+1, n
+            self%storage(i) = val
+         enddo
+      endif
       self%psize = n
       call self%FixValuePtrs()
 
@@ -497,9 +513,13 @@ contains
       integer                                       , intent(in)    :: n
       FTL_TEMPLATE_TYPE_WRAP                        , intent(in)    :: val
 
+      integer :: i
+
       if (n <= 0) return
       call self%ShiftByN(position, n)
-      self%storage(position:position+n-1) = val
+      do i = 1, n
+         self%storage(position+i-1) = val
+      enddo
       self%psize = self%psize + n
       call self%FixValuePtrs()
 
@@ -520,8 +540,13 @@ contains
       integer                                       , intent(in)    :: position
       FTL_TEMPLATE_TYPE_WRAP                        , intent(in)    :: array(:)
 
+      integer :: i
+
+      if (size(array) == 0) return
       call self%ShiftByN(position, size(array))
-      self%storage(position:position+size(array)-1) = array
+      do i = 1, size(array)
+         self%storage(position+i-1) = array(i)
+      enddo
       self%psize = self%psize + size(array)
       call self%FixValuePtrs()
 
@@ -647,8 +672,14 @@ contains
       class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(out) :: self
       character(len=*)                              , intent(in)  :: array(:)
 
-      call self%NewFill(size(array))
-      self%data = array
+      integer :: i
+
+      allocate(self%storage(size(array)))
+      do i = 1, size(array)
+         self%storage(i) = array(i)
+      enddo
+      self%psize = size(array)
+      call self%FixValuePtrs()
 
    end subroutine
 
@@ -656,13 +687,19 @@ contains
       class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
       character(*)                                  , intent(in)    :: array(:)
 
+      integer :: i
+
       if (.not.allocated(self%storage)) then
          call self%New(array)
       else if (size(self%storage) < size(array)) then
          call self%New(array)
       else
-         if (size(array) > 0) self%storage(1:size(array)) = array
-         if (size(self%storage) > size(array)) call self%storage(size(array)+1:)%Delete()
+         do i = 1, size(array)
+            self%storage(i) = array(i)
+         enddo
+         do i = size(array)+1, size(self%storage)
+            call self%storage(i)%Delete()
+         enddo
          self%psize = size(array)
          call self%FixValuePtrs()
       endif
@@ -729,8 +766,13 @@ contains
       integer                                       , intent(in)    :: position
       character(*)                                  , intent(in)    :: array(:)
 
+      integer :: i
+
+      if (size(array) == 0) return
       call self%ShiftByN(position, size(array))
-      self%storage(position:position+size(array)-1) = array
+      do i = 1, size(array)
+         self%storage(position+i-1) = array(i)
+      enddo
       self%psize = self%psize + size(array)
       call self%FixValuePtrs()
 
@@ -906,7 +948,7 @@ contains
    !
    subroutine NewItCopyOther(self, other)
       class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(out) :: self
-      class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)  :: other
+       type(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in)  :: other
 
       self%dynArray => other%dynArray
       self%index = other%index
@@ -946,11 +988,11 @@ contains
 
 
 
-   type(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)) function AdvanceN(self, n)
-      class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: self
+   type(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)) function AdvanceN(lhs, n)
+      class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: lhs
       integer                                                 , intent(in) :: n
 
-      call AdvanceN%New(self)
+      call AdvanceN%New(lhs)
       AdvanceN%index = AdvanceN%index + n
       if (AdvanceN%index <= AdvanceN%dynArray%psize) then
          AdvanceN%value => AdvanceN%dynArray%storage(AdvanceN%index)
@@ -960,11 +1002,11 @@ contains
 
    end function
    !
-   type(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)) function ReverseN(self, n)
-      class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: self
+   type(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)) function ReverseN(lhs, n)
+      class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: lhs
       integer                                                 , intent(in) :: n
 
-      call ReverseN%New(self)
+      call ReverseN%New(lhs)
       ReverseN%index = ReverseN%index - n
       if (ReverseN%index > 0) then
          ReverseN%value => ReverseN%dynArray%storage(ReverseN%index)
@@ -976,12 +1018,12 @@ contains
 
 
 
-   pure integer function DiffOther(self, other)
-      class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: self
-      class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: other
+   pure integer function DiffOther(lhs, other)
+      class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: lhs
+       type(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: other
 
-      if (associated(self%dynArray,other%dynArray)) then
-         DiffOther = self%index - other%index
+      if (associated(lhs%dynArray,other%dynArray)) then
+         DiffOther = lhs%index - other%index
       else
          DiffOther = huge(0)
       endif
@@ -994,51 +1036,51 @@ contains
 
 
 
-   pure logical function EqualOther(self, other)
-      class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: self
-      class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: other
+   pure logical function EqualOther(lhs, other)
+      class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: lhs
+       type(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: other
 
-      EqualOther = associated(self%dynArray,other%dynArray) .and. (self%index == other%index)
-
-   end function
-   !
-   pure logical function UnequalOther(self, other)
-      class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: self
-      class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: other
-
-      UnequalOther = .not.associated(self%dynArray,other%dynArray) .or. (self%index /= other%index)
+      EqualOther = associated(lhs%dynArray,other%dynArray) .and. (lhs%index == other%index)
 
    end function
    !
-   pure logical function SmallerOther(self, other)
-      class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: self
-      class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: other
+   pure logical function UnequalOther(lhs, other)
+      class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: lhs
+       type(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: other
 
-      SmallerOther = associated(self%dynArray,other%dynArray) .and. (self%index < other%index)
-
-   end function
-   !
-   pure logical function SmallerEqualOther(self, other)
-      class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: self
-      class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: other
-
-      SmallerEqualOther = associated(self%dynArray,other%dynArray) .and. (self%index <= other%index)
+      UnequalOther = .not.associated(lhs%dynArray,other%dynArray) .or. (lhs%index /= other%index)
 
    end function
    !
-   pure logical function GreaterOther(self, other)
-      class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: self
-      class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: other
+   pure logical function SmallerOther(lhs, other)
+      class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: lhs
+       type(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: other
 
-      GreaterOther = associated(self%dynArray,other%dynArray) .and. (self%index > other%index)
+      SmallerOther = associated(lhs%dynArray,other%dynArray) .and. (lhs%index < other%index)
 
    end function
    !
-   pure logical function GreaterEqualOther(self, other)
-      class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: self
-      class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: other
+   pure logical function SmallerEqualOther(lhs, other)
+      class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: lhs
+       type(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: other
 
-      GreaterEqualOther = associated(self%dynArray,other%dynArray) .and. (self%index >= other%index)
+      SmallerEqualOther = associated(lhs%dynArray,other%dynArray) .and. (lhs%index <= other%index)
+
+   end function
+   !
+   pure logical function GreaterOther(lhs, other)
+      class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: lhs
+       type(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: other
+
+      GreaterOther = associated(lhs%dynArray,other%dynArray) .and. (lhs%index > other%index)
+
+   end function
+   !
+   pure logical function GreaterEqualOther(lhs, other)
+      class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: lhs
+       type(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: other
+
+      GreaterEqualOther = associated(lhs%dynArray,other%dynArray) .and. (lhs%index >= other%index)
 
    end function
 
