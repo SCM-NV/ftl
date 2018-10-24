@@ -1069,6 +1069,14 @@ contains
 
       integer :: tester, stat
 
+#if __INTEL_COMPILER
+      ! ifort reads 5.9 as 5 into an integer, with iostat=0. We want a consistent behaviour
+      ! across compilers, so we check for the decimal point explicitly ...
+      if ('.' .in. self) then
+         IsInt = .false.
+         return
+      endif
+#endif
       read(self%raw,*,iostat=stat) tester
       IsInt = (stat == 0)
 
