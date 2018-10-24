@@ -479,6 +479,12 @@ contains
       s = 'not a number'
       ASSERT(.not.s%IsInt())
 
+      s = '5.9'
+      ASSERT(.not.s%IsInt())
+
+      s = '6.0'
+      ASSERT(.not.s%IsInt())
+
       s = '1e6'
 #if defined(__GFORTRAN__) || defined(NAGFOR)
       ASSERT(.not.s%IsInt())
