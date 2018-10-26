@@ -1055,7 +1055,7 @@ contains
 
 
 
-   pure logical function IsNumber(self)
+   elemental logical function IsNumber(self)
       class(ftlString), intent(in) :: self
 
       IsNumber = self%IsInt() .or. self%IsReal() .or. self%IsComplex()
@@ -1064,7 +1064,7 @@ contains
 
 
 
-   pure logical function IsInt(self)
+   elemental logical function IsInt(self)
       class(ftlString), intent(in) :: self
 
       integer :: tester, stat
@@ -1082,7 +1082,7 @@ contains
 
    end function
    !
-   pure integer function ToInt(self)
+   elemental integer function ToInt(self)
       class(ftlString), intent(in) :: self
 
       integer :: stat
@@ -1095,7 +1095,7 @@ contains
 
 
 
-   pure logical function IsReal(self)
+   elemental logical function IsReal(self)
       class(ftlString), intent(in) :: self
 
       integer :: stat
@@ -1106,7 +1106,7 @@ contains
 
    end function
    !
-   pure real function ToReal(self)
+   elemental real function ToReal(self)
       class(ftlString), intent(in) :: self
 
       integer :: stat
@@ -1117,7 +1117,7 @@ contains
 
 
 
-   pure logical function IsComplex(self)
+   elemental logical function IsComplex(self)
       class(ftlString), intent(in) :: self
 
       integer :: stat
@@ -1128,7 +1128,7 @@ contains
 
    end function
    !
-   pure complex function ToComplex(self)
+   elemental complex function ToComplex(self)
       class(ftlString), intent(in) :: self
 
       integer :: stat
@@ -1139,7 +1139,7 @@ contains
 
 
 
-   pure logical function IsLogical(self)
+   elemental logical function IsLogical(self)
       class(ftlString), intent(in) :: self
 
       logical :: tester
@@ -1150,7 +1150,7 @@ contains
 
    end function
    !
-   pure logical function ToLogical(self)
+   elemental logical function ToLogical(self)
       class(ftlString), intent(in) :: self
 
       integer :: stat

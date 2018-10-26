@@ -463,6 +463,7 @@ contains
 
    subroutine testStringToNumeric
       type(ftlString) :: s
+      type(ftlString) :: strs(3)
 
       s = '25'
       ASSERT(s%IsInt())
@@ -475,6 +476,12 @@ contains
       s = '   -12'
       ASSERT(s%IsInt())
       ASSERT(int(s) == -12)
+
+      strs(1) = '57'
+      strs(2) = '3'
+      strs(3) = '-34'
+      ASSERT(all(strs%IsInt()))
+      ASSERT(all(int(strs) == [57,3,-34]))
 
       s = 'not a number'
       ASSERT(.not.s%IsInt())
@@ -503,6 +510,12 @@ contains
       s = '1'
       ASSERT(s%IsReal())
       ASSERT(real(s) == 1.0)
+
+      strs(1) = '57.45'
+      strs(2) = '3.3'
+      strs(3) = '-34.7'
+      ASSERT(all(strs%IsReal()))
+      ASSERT(all(real(strs) == [57.45,3.3,-34.7]))
 
       s = 'not a number'
       ASSERT(.not.s%IsReal())
