@@ -288,6 +288,11 @@ module ftlStringModule
       module procedure ToComplex
    end interface
 
+   public :: logical
+   interface logical
+      module procedure ToLogical
+   end interface
+
 
    ! Fortran standard methods:
 
