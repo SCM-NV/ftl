@@ -543,6 +543,17 @@ contains
       s = 'N'
       ASSERT(.not.s%IsLogical())
 
+      strs(1) = 'True'
+      strs(2) = 'true'
+      strs(3) = 'false'
+      ASSERT(all(strs%IsLogical()))
+      ASSERT(all(logical(strs) .eqv. [.true.,.true.,.false.]))
+
+      strs(1) = 'True'
+      strs(2) = 'holla'
+      strs(3) = 'false'
+      ASSERT(.not.all(strs%IsLogical()))
+
    end subroutine
 
 
