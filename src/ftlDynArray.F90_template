@@ -882,6 +882,7 @@ contains
       FTL_TEMPLATE_TYPE_WRAP, intent(out) :: instance
 
       ! Nothing to do here: intent(out) will finalize the instance and that's all we want
+      associate(instance => instance); end associate ! <--- suppresses an unhelpful warning from gfortran
 
    end subroutine
 
