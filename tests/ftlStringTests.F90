@@ -543,6 +543,36 @@ contains
       s = 'N'
       ASSERT(.not.s%IsLogical())
 
+      s = "'"
+      ASSERT(.not.s%IsLogical())
+
+      s = "''"
+      ASSERT(.not.s%IsLogical())
+
+      s = "'' "
+      ASSERT(.not.s%IsLogical())
+
+      s = "'''"
+      ASSERT(.not.s%IsLogical())
+
+      s = '"'
+      ASSERT(.not.s%IsLogical())
+
+      s = '""'
+      ASSERT(.not.s%IsLogical())
+
+      s = '"" '
+      ASSERT(.not.s%IsLogical())
+
+      s = '"""'
+      ASSERT(.not.s%IsLogical())
+
+      s = " "
+      ASSERT(.not.s%IsLogical())
+
+      s = "  "
+      ASSERT(.not.s%IsLogical())
+
       strs(1) = 'True'
       strs(2) = 'true'
       strs(3) = 'false'
