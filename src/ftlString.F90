@@ -1150,6 +1150,15 @@ contains
       logical :: tester
       integer :: stat
 
+#if __INTEL_COMPILER
+      ! For some reason ifort considers '' and "" valid logical values.
+      ! We want consistent behaviour across compilers, so we "fix" this ...
+      if (self%raw == '""' .or. self%raw == "''") then
+         IsLogical = .false.
+         return
+      endif
+#endif
+
       read(self%raw,*,iostat=stat) tester
       IsLogical = (stat == 0)
 
