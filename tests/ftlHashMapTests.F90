@@ -20,6 +20,7 @@
 
 module ftlHashMapTestsModule
 
+   use ftlKindsModule
    use ftlTestToolsModule
    use ftlHashMapStrIntModule
    use ftlStringModule
@@ -262,7 +263,7 @@ contains
       type(ftlHashMapStrInt) :: um
 
       call um%New(10)
-      call um%SetMaxLoadFactor(1.0)
+      call um%SetMaxLoadFactor(1.0_FTL_KREAL)
 
       ASSERT(um%BucketCount() == 10)
 

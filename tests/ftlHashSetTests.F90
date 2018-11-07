@@ -20,6 +20,7 @@
 
 module ftlHashSetTestsModule
 
+   use ftlKindsModule
    use ftlTestToolsModule
    use ftlHashSetIntModule
    use ftlHashSetStringModule
@@ -237,7 +238,7 @@ contains
       type(ftlHashSetInt) :: set
 
       call set%New(10)
-      call set%SetMaxLoadFactor(1.0)
+      call set%SetMaxLoadFactor(1.0_FTL_KREAL)
 
       ASSERT(set%BucketCount() == 10)
 
