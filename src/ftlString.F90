@@ -32,6 +32,8 @@
 
 module ftlStringModule
 
+   use ftlKindsModule
+
    implicit none
    private
 
@@ -501,7 +503,7 @@ contains
    !
    subroutine NewFromReal(self, r, format)
       class(ftlString), intent(inout)        :: self
-      real            , intent(in)           :: r
+      real(FTL_KREAL) , intent(in)           :: r
       character(len=*), intent(in), optional :: format
 
       character(len=64) :: tmp
@@ -519,9 +521,9 @@ contains
    end subroutine
    !
    subroutine NewFromComplex(self, c, format)
-      class(ftlString), intent(inout)        :: self
-      complex         , intent(in)           :: c
-      character(len=*), intent(in), optional :: format
+      class(ftlString)  , intent(inout)        :: self
+      complex(FTL_KREAL), intent(in)           :: c
+      character(len=*)  , intent(in), optional :: format
 
       character(len=128) :: tmp
 
@@ -585,14 +587,14 @@ contains
    end function
    !
    type(ftlString) function NewFromRealConstr(r, format) result(str)
-      real            , intent(in)           :: r
+      real(FTL_KREAL) , intent(in)           :: r
       character(len=*), intent(in), optional :: format
       call str%NewFromReal(r, format)
    end function
    !
    type(ftlString) function NewFromComplexConstr(c, format) result(str)
-      complex         , intent(in)           :: c
-      character(len=*), intent(in), optional :: format
+      complex(FTL_KREAL), intent(in)           :: c
+      character(len=*)  , intent(in), optional :: format
       call str%NewFromComplex(c, format)
    end function
    !
@@ -1104,14 +1106,14 @@ contains
       class(ftlString), intent(in) :: self
 
       integer :: stat
-      real :: tester
+      real(FTL_KREAL) :: tester
 
       read(self%raw,*,iostat=stat) tester
       IsReal = (stat == 0)
 
    end function
    !
-   elemental real function ToReal(self)
+   elemental real(FTL_KREAL) function ToReal(self)
       class(ftlString), intent(in) :: self
 
       integer :: stat
@@ -1126,7 +1128,7 @@ contains
       class(ftlString), intent(in) :: self
 
       integer :: stat
-      complex :: tester
+      complex(FTL_KREAL) :: tester
 
       read(self%raw,*,iostat=stat) tester
       IsComplex = (stat == 0)

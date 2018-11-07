@@ -27,6 +27,8 @@
 
 module ftlHashModule
 
+   use ftlKindsModule
+
    implicit none
    private
 
@@ -57,11 +59,11 @@ contains
 
 
    integer function ftlHashReal(r) result(hash)
-      real, intent(in) :: r
+      real(FTL_KREAL), intent(in) :: r
 
       ! TODO: handle +inf, -inf and NaN. didn't test this ...
 
-      real :: rPosZero
+      real(FTL_KREAL) :: rPosZero
       character(len=32) :: str
 
       rPosZero = r

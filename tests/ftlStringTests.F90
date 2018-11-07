@@ -20,6 +20,7 @@
 
 module ftlStringTestsModule
 
+   use ftlKindsModule
    use ftlTestToolsModule
    use ftlStringModule
    use ftlDynArrayStringModule
@@ -431,18 +432,18 @@ contains
       ASSERT(s%IsInt())
       ASSERT(int(s) == 42)
 
-      s = ftlString(2.0)
+      s = ftlString(2.0_FTL_KREAL)
       ! not sure what the default output will look like, but it shouldn't contain trailing or leading whitespace ...
       ASSERT(trim(adjustl(s)) == s)
       ASSERT(s%IsReal())
       ASSERT(real(s) == 2.0)
 
-      s = ftlString(2.0,'(F3.1)')
+      s = ftlString(2.0_FTL_KREAL,'(F3.1)')
       ASSERT(s == '2.0')
       ASSERT(s%IsReal())
       ASSERT(real(s) == 2.0)
 
-      s = ftlString((1.0,2.3))
+      s = ftlString((1.0_FTL_KREAL,2.3_FTL_KREAL))
       ! not sure what the default output will look like, but it shouldn't contain trailing or leading whitespace ...
       ASSERT(trim(adjustl(s)) == s)
       ASSERT(s%IsComplex())
@@ -515,7 +516,7 @@ contains
       strs(2) = '3.3'
       strs(3) = '-34.7'
       ASSERT(all(strs%IsReal()))
-      ASSERT(all(real(strs) == [57.45,3.3,-34.7]))
+      ASSERT(all(real(strs) == [57.45_FTL_KREAL,3.3_FTL_KREAL,-34.7_FTL_KREAL]))
 
       s = 'not a number'
       ASSERT(.not.s%IsReal())
