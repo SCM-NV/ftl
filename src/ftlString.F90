@@ -1772,7 +1772,7 @@ contains
          end_ = len(self%raw) + 1
       endif
 
-      idx = index(self%raw(begin:end_-1), sub) + begin_ - 1
+      idx = index(self%raw(begin_:end_-1), sub) + begin_ - 1
 
    end function
 
