@@ -87,6 +87,7 @@ install: libftl
 	mkdir -p $(PREFIX)/lib
 	cp $(BUILDDIR)/libftl.so $(PREFIX)/lib/
 	mkdir -p $(PREFIX)/include/ftl
+	cp $(BUILDDIR)/ftlkindsmodule.mod $(PREFIX)/include/ftl
 	cp $(BUILDDIR)/ftlhashmodule.mod $(PREFIX)/include/ftl
 	cp $(BUILDDIR)/ftlregexmodule.mod $(PREFIX)/include/ftl
 	cp $(BUILDDIR)/ftlstringmodule.mod $(PREFIX)/include/ftl
@@ -117,7 +118,7 @@ cleanall:
 
 # Shared library of non-template components:
 
-$(BUILDDIR)/libftl.so: $(BUILDDIR)/ftlString.o $(BUILDDIR)/ftlHash.o $(BUILDDIR)/ftlRegex.o
+$(BUILDDIR)/libftl.so: $(BUILDDIR)/ftlKinds.o $(BUILDDIR)/ftlString.o $(BUILDDIR)/ftlHash.o $(BUILDDIR)/ftlRegex.o
 	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) $^ $(LDFLAGS) $(SOLDFLAGS) -o $@
 
 
