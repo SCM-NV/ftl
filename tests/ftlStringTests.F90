@@ -1,4 +1,5 @@
 ! Copyright (c) 2016, 2017  Robert Rüger
+! Copyright (c) 2018  Software for Chemistry & Materials BV
 !
 ! This file is part of of the Fortran Template Library.
 !
@@ -1190,6 +1191,7 @@ contains
 
       s = 'another test of startsWith'
       ASSERT(s%StartsWith(ftlString('another')))
+      ASSERT(s%StartsWith(''))
 
       ! the following two lines leak memory with gfortran, see: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=79053
       !ASSERT(s%StartsWith([ftlString('Test'),ftlString('anot')]))
