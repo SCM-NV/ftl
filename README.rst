@@ -182,7 +182,11 @@ These things might be nice:
 License
 #######
 
-The Fortran Template Library is published under the GNU Lesser General Public
-License. This should permit virtually any use, including the use in closed
-source software according to section 3 ("Object Code Incorporating Material from
-Library Header Files") of the GNU Lesser General Public License.
+The Fortran Template Library is an Open Source project supported by Software
+for Chemistry and Materials BV (SCM). The terms of the `LGPL-3.0 license`_
+apply. As an exception to the LGPL-3.0 license, you agree to grant SCM a
+`BSD 3-clause license`_ to the contributions you commit to this Github
+repository or provide to SCM in another manner.
+
+.. _`LGPL-3.0 license`: https://opensource.org/licenses/LGPL-3.0
+.. _`BSD 3-clause license`: https://opensource.org/licenses/BSD-3-Clause
