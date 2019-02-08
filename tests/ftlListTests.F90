@@ -26,6 +26,8 @@ module ftlListTestsModule
    use LeakyModule
    use ftlListMovableLeakyModule
    use ftlListLeakyModule
+   use AnimalsModule
+   use ftlListAnimalsModule
 
    implicit none
    private
@@ -73,6 +75,9 @@ contains
 
       ! Tests with a movable type that needs to be cleaned up through a finalizer
       call testMovableLeakyPushPopBack
+
+      ! Test a list of polymorphic objects
+      call testPolymorphic
 
    end subroutine
 
@@ -688,6 +693,74 @@ contains
       ! This subroutine leaks with gfortran in the moments. I think the reason is that gfortran does not yet implement
       ! finalization of temporaries, see: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=37336#c27
       ! TODO: Workaround?
+
+   end subroutine
+
+
+   subroutine testPolymorphic
+      type(ftlListAnimals) :: l
+      type(Bird) :: b
+      type(Insect) :: i
+      class(Animal), allocatable :: a
+      type(ftlListAnimalsIterator) :: it
+
+      ! Make a list of 3 birds and 2 insects
+
+      call l%New(3, b)
+      call l%PushBack(i)
+      call l%PushBack(i)
+
+      ASSERT(size(l) == 5)
+      it = l%Begin()
+      ASSERT(it%value%NumberOfLegs() == 2)
+      call it%Inc()
+      ASSERT(it%value%NumberOfLegs() == 2)
+      call it%Inc()
+      ASSERT(it%value%NumberOfLegs() == 2)
+      call it%Inc()
+      ASSERT(it%value%NumberOfLegs() == 6)
+      call it%Inc()
+      ASSERT(it%value%NumberOfLegs() == 6)
+      call it%Inc()
+      ASSERT(it == l%End())
+
+      ! Insert an insect at the 2nd position
+
+      it = l%Begin()
+      call it%Inc()
+      call l%Insert(it, i)
+
+      ASSERT(size(l) == 6)
+      it = l%Begin()
+      ASSERT(it%value%NumberOfLegs() == 2)
+      call it%Inc()
+      ASSERT(it%value%NumberOfLegs() == 6)
+      call it%Inc()
+      ASSERT(it%value%NumberOfLegs() == 2)
+      call it%Inc()
+      ASSERT(it%value%NumberOfLegs() == 2)
+      call it%Inc()
+      ASSERT(it%value%NumberOfLegs() == 6)
+      call it%Inc()
+      ASSERT(it%value%NumberOfLegs() == 6)
+      call it%Inc()
+      ASSERT(it == l%End())
+
+      ! Remove all animals from the list again
+
+      a = l%PopFront()
+      ASSERT(a%NumberOfLegs() == 2)
+      a = l%PopFront()
+      ASSERT(a%NumberOfLegs() == 6)
+      a = l%PopFront()
+      ASSERT(a%NumberOfLegs() == 2)
+      a = l%PopFront()
+      ASSERT(a%NumberOfLegs() == 2)
+      a = l%PopFront()
+      ASSERT(a%NumberOfLegs() == 6)
+      a = l%PopFront()
+      ASSERT(a%NumberOfLegs() == 6)
+      ASSERT(l%Empty())
 
    end subroutine
 

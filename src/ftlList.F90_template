@@ -30,7 +30,9 @@
 
 #include "ftlMacros.inc"
 
-#ifdef FTL_TEMPLATE_TYPE_IS_DERIVED
+#if defined(FTL_TEMPLATE_TYPE_IS_CLASS)
+#define FTL_TEMPLATE_TYPE_WRAP class(FTL_TEMPLATE_TYPE)
+#elif defined(FTL_TEMPLATE_TYPE_IS_DERIVED)
 #define FTL_TEMPLATE_TYPE_WRAP type(FTL_TEMPLATE_TYPE)
 #else
 #define FTL_TEMPLATE_TYPE_WRAP FTL_TEMPLATE_TYPE
@@ -55,7 +57,11 @@ module CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Module)
    end type
 
    type, extends(ListNode) :: DataNode
+#if defined(FTL_TEMPLATE_TYPE_IS_CLASS)
+      FTL_TEMPLATE_TYPE_WRAP, allocatable :: data
+#else
       FTL_TEMPLATE_TYPE_WRAP :: data
+#endif
    end type
 
 
@@ -430,13 +436,23 @@ contains
 
 
 
-   FTL_TEMPLATE_TYPE_WRAP function PopFront(self)
+   function PopFront(self)
       class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(inout), target :: self
+#ifdef FTL_TEMPLATE_TYPE_IS_CLASS
+      FTL_TEMPLATE_TYPE_WRAP, allocatable :: PopFront
+#else
+      FTL_TEMPLATE_TYPE_WRAP :: PopFront
+#endif
 
       class(ListNode), pointer :: oldfirst
       oldfirst => self%sentinel%next
 
-#ifdef FTL_TEMPLATE_TYPE_PROVIDES_FTLMOVE
+#if defined(FTL_TEMPLATE_TYPE_IS_CLASS)
+      select type (oldfirst)
+      type is (DataNode)
+         call move_alloc(oldfirst%data, PopFront)
+      end select
+#elif defined(FTL_TEMPLATE_TYPE_PROVIDES_FTLMOVE)
       call ftlMove(self%front, PopFront)
 #else
       PopFront = self%front
@@ -462,13 +478,23 @@ contains
 
 
 
-   FTL_TEMPLATE_TYPE_WRAP function PopBack(self)
+   function PopBack(self)
       class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(inout), target :: self
+#ifdef FTL_TEMPLATE_TYPE_IS_CLASS
+      FTL_TEMPLATE_TYPE_WRAP, allocatable :: PopBack
+#else
+      FTL_TEMPLATE_TYPE_WRAP :: PopBack
+#endif
 
       class(ListNode), pointer :: oldlast
       oldlast => self%sentinel%prev
 
-#ifdef FTL_TEMPLATE_TYPE_PROVIDES_FTLMOVE
+#if defined(FTL_TEMPLATE_TYPE_IS_CLASS)
+      select type (oldlast)
+      type is (DataNode)
+         call move_alloc(oldlast%data, PopBack)
+      end select
+#elif defined(FTL_TEMPLATE_TYPE_PROVIDES_FTLMOVE)
       call ftlMove(self%back, PopBack)
 #else
       PopBack = self%back

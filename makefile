@@ -137,7 +137,7 @@ $(BUILDDIR)/ftlArrayTests.o: tests/ftlArrayTests.F90 $(BUILDDIR)/ftlArrayIntAlgo
 $(BUILDDIR)/ftlDynArrayTests.o: tests/ftlDynArrayTests.F90 $(BUILDDIR)/ftlDynArrayInt.o $(BUILDDIR)/ftlDynArrayPoint2D.o $(BUILDDIR)/ftlDynArrayLeaky.o $(BUILDDIR)/ftlDynArrayMovableLeaky.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
-$(BUILDDIR)/ftlListTests.o: tests/ftlListTests.F90 $(BUILDDIR)/ftlListInt.o $(BUILDDIR)/ftlListLeaky.o $(BUILDDIR)/ftlListMovableLeaky.o | $(BUILDDIR)
+$(BUILDDIR)/ftlListTests.o: tests/ftlListTests.F90 $(BUILDDIR)/ftlListInt.o $(BUILDDIR)/ftlListLeaky.o $(BUILDDIR)/ftlListMovableLeaky.o $(BUILDDIR)/ftlListPolymorphic.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
 $(BUILDDIR)/ftlHashMapTests.o: tests/ftlHashMapTests.F90 $(BUILDDIR)/ftlHashMapStrInt.o $(BUILDDIR)/ftlHashMapStringInt.o | $(BUILDDIR)
@@ -195,6 +195,9 @@ $(BUILDDIR)/ftlListLeaky.o: instantiations/ftlListLeaky.F90 src/ftlList.F90_temp
 	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
 $(BUILDDIR)/ftlListMovableLeaky.o: instantiations/ftlListMovableLeaky.F90 src/ftlList.F90_template $(BUILDDIR)/Leaky.o | $(BUILDDIR)
+	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
+
+$(BUILDDIR)/ftlListPolymorphic.o: instantiations/ftlListPolymorphic.F90 src/ftlList.F90_template $(BUILDDIR)/Animals.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
 $(BUILDDIR)/ftlHashMapStrInt.o: instantiations/ftlHashMapStrInt.F90 src/ftlHashMap.F90_template $(BUILDDIR)/ftlKinds.o $(BUILDDIR)/ftlHash.o | $(BUILDDIR)
@@ -260,4 +263,7 @@ $(BUILDDIR)/Point2D.o: instantiations/derived_types/Point2D.F90 | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
 $(BUILDDIR)/Leaky.o: instantiations/derived_types/Leaky.F90 | $(BUILDDIR)
+	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
+
+$(BUILDDIR)/Animals.o: instantiations/derived_types/Animals.F90 | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
