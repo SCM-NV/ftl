@@ -1,4 +1,5 @@
 ! Copyright (c) 2016, 2017  Robert Rüger
+! Copyright (c) 2019  Software for Chemistry & Materials
 !
 ! This file is part of of the Fortran Template Library.
 !
@@ -46,6 +47,7 @@ contains
       call testArrayFinalizer
 
       call testInsertSingle
+      call testInsertIntoEmpty
       call testInsertFill
       call testInsertArray
       call testInsertIteratorPair
@@ -224,6 +226,30 @@ contains
       ASSERT(it%value == 42)
       call it%Dec()
       ASSERT(it%value == 23)
+
+   end subroutine
+
+
+   subroutine testInsertIntoEmpty
+      type(ftlListInt) :: l
+      type(ftlListIntIterator) :: it
+
+      call l%New()
+      it = l%Begin()
+      call l%Insert(it, 5)
+
+      ASSERT(size(l) == 1)
+      ASSERT(l%front == 5)
+      ASSERT(l%back == 5)
+
+      call l%Insert(it, 42)
+
+      ASSERT(size(l) == 2)
+      ASSERT(l%front == 5)
+      ASSERT(l%back == 42)
+
+      ! Note: This behaviour is a bit counter intuitive, but keep in mind
+      !       that Begin() == End() when the list is empty ...
 
    end subroutine
 

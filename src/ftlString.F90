@@ -737,9 +737,9 @@ contains
 
 
 
-   ! /= comparison like for raw strings
+   ! == comparison like for raw strings
    !
-   pure logical function StringEqualString(lhs, rhs) result(equal)
+   elemental logical function StringEqualString(lhs, rhs) result(equal)
       class(ftlString), intent(in) :: lhs
        type(ftlString), intent(in) :: rhs
 
@@ -751,7 +751,7 @@ contains
 
    end function
    !
-   pure logical function StringEqualChar(lhs, rhs) result(equal)
+   elemental logical function StringEqualChar(lhs, rhs) result(equal)
       class(ftlString), intent(in) :: lhs
       character(len=*), intent(in) :: rhs
 
@@ -763,7 +763,7 @@ contains
 
    end function
    !
-   pure logical function CharEqualString(lhs, rhs) result(equal)
+   elemental logical function CharEqualString(lhs, rhs) result(equal)
       character(len=*), intent(in) :: lhs
       class(ftlString), intent(in) :: rhs
 
@@ -779,7 +779,7 @@ contains
 
    ! /= comparison like for raw strings
    !
-   pure logical function StringUnequalString(lhs, rhs) result(unequal)
+   elemental logical function StringUnequalString(lhs, rhs) result(unequal)
       class(ftlString), intent(in) :: lhs
        type(ftlString), intent(in) :: rhs
 
@@ -787,7 +787,7 @@ contains
 
    end function
    !
-   pure logical function StringUnequalChar(lhs, rhs) result(unequal)
+   elemental logical function StringUnequalChar(lhs, rhs) result(unequal)
       class(ftlString), intent(in) :: lhs
       character(len=*), intent(in) :: rhs
 
@@ -795,7 +795,7 @@ contains
 
    end function
    !
-   pure logical function CharUnequalString(lhs, rhs) result(unequal)
+   elemental logical function CharUnequalString(lhs, rhs) result(unequal)
       character(len=*), intent(in) :: lhs
       class(ftlString), intent(in) :: rhs
 

@@ -96,7 +96,7 @@ ftlDynArray
    A resizeable array container. It can slowly grow in size as elements are
    added at its end. Note that insertion at the end is an amortized constant
    time operation. Basically, ftlDynArray is *exactly* the same as C++'s
-   std::vector. I just changed the name because calling a resizeable array a
+   std::vector. We just changed the name because calling a resizeable array a
    vector makes no sense from a mathematical point of view.
 
 ftlList
@@ -155,12 +155,12 @@ Implementation progress
 ftlDynArray, ftlList, ftlHashMap, ftlHashSet and the plain Fortran array wrapper
 ftlArray are pretty much finished.
 
-ftlAlgorithms is incomplete. Ultimately I would like all of the algorithms in
-C++'s std::algorithm header to be implemented, but so far I only did maybe 30%
-of them. It's quite a lot of work as there are many algorithms to implement. I
+ftlAlgorithms is incomplete. Ultimately we would like all of the algorithms in
+C++'s std::algorithm header to be implemented, but so far we only did maybe 30%
+of them. It's quite a lot of work as there are many algorithms to implement. We
 would absolutely appreciate some help here.
 
-ftlString is incomplete. The basics are there, but I would like to have all
+ftlString is incomplete. The basics are there, but we would like to have all
 Python string manipulation methods. Only a handful are implemented at the
 moment. Again, there are just many of them. Help is much appreciated.
 
@@ -177,6 +177,13 @@ These things might be nice:
 + File system access like std::filesystem.
 
 + Parsing and evaluating equations from strings.
+
+
+Documentation
+#############
+
+The documentation of the Fortran Template Library is hosted on the `Wiki
+<https://github.com/SCM-NV/ftl/wiki>`_ associated with this GitHub repository.
 
 
 License
