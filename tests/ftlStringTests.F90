@@ -591,6 +591,7 @@ contains
 
    subroutine testComparison
       type(ftlString) :: s1, s2
+      type(ftlString) :: a1(3), a2(3)
 
       s1 = 'test'
       s2 = 'foobar'
@@ -612,6 +613,20 @@ contains
       ASSERT('test' /= s1)
       ASSERT(s1 /= s2)
       ASSERT(.not.(s1 == s2))
+
+      ! comparison of arrays
+
+      a1(1) = 'hola'
+      a1(2) = 'diew'
+      a1(3) = 'wald'
+
+      ASSERT(all(a1 == ['hola','diew','wald']))
+
+      a2(1) = 'hola'
+      a2(2) = 'die'
+      a2(3) = 'waldfee'
+
+      ASSERT(all( (a1==a2) .eqv. [.true.,.false.,.false.] ))
 
    end subroutine
 
