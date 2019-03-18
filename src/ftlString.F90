@@ -154,16 +154,19 @@ module ftlStringModule
       ! Other string methods:
       procedure, public :: CountWords
 
-      ! Overloaded operators:
+      ! Assignment:
 
-#if __INTEL_COMPILER
-      ! ifort seems to have problems with cleaning up the left hand side of a character(:), allocatable assignment.
-      ! This is normally what would happen in the intrinsic assignments of ftlStrings. Therefore we make a defined assignment
-      ! for ftlString that does the cleanup of the lhs explicitly, to at least fix these memory leaks when using ftlStrings ...
+#if defined(__INTEL_COMPILER) && __INTEL_COMPILER < 1900
+      ! ifort 18 (and possibly <18) seems to have problems with cleaning up the left hand side of a character(:), allocatable
+      ! assignment.  This is normally what would happen in the intrinsic assignments of ftlStrings. Therefore we make a defined
+      ! assignment for ftlString that does the cleanup of the lhs explicitly, to at least fix these memory leaks when using
+      ! ftlStrings ...
       generic  , public :: assignment(=) => NewFromRaw, NewCopyOther
 #else
       generic  , public :: assignment(=) => NewFromRaw
 #endif
+
+      ! Overloaded operators:
 
       ! == comparison like for raw strings
       procedure, pass(lhs) :: StringEqualString
