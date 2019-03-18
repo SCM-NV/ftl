@@ -56,7 +56,7 @@ contains
 
       tmp = int(i)
       if (tmp >= 0) then
-         hash = int(tmp)
+         hash = tmp
       else
          hash = (huge(tmp) + tmp) + 1
       endif
@@ -71,7 +71,7 @@ contains
 
       tmp = int(i)
       if (tmp >= 0) then
-         hash = int(tmp)
+         hash = tmp
       else
          hash = (huge(tmp) + tmp) + 1
       endif
