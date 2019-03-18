@@ -28,14 +28,17 @@
 module ftlHashModule
 
    use ftlKindsModule
+   use iso_fortran_env
 
    implicit none
    private
 
    public :: ftlHash
    interface ftlHash
-      module procedure ftlHashInteger
-      module procedure ftlHashReal
+      module procedure ftlHashInt32
+      module procedure ftlHashInt64
+      module procedure ftlHashReal32
+      module procedure ftlHashReal64
       module procedure ftlHashCharacterString
       module procedure ftlHashLogical
    end interface
@@ -46,24 +49,59 @@ contains
    ! Note: These hash functions are probably pretty bad. I didn't really test any of this ...
 
 
-   pure integer function ftlHashInteger(i) result(hash)
-      integer, intent(in) :: i
+   pure integer function ftlHashInt32(i) result(hash)
+      integer(INT32), intent(in) :: i
 
-      if (i >= 0) then
-         hash = i
+      integer :: tmp
+
+      tmp = int(i)
+      if (tmp >= 0) then
+         hash = int(tmp)
       else
-         hash = (huge(i) + i) + 1
+         hash = (huge(tmp) + tmp) + 1
       endif
 
    end function
 
 
-   integer function ftlHashReal(r) result(hash)
-      real(FTL_KREAL), intent(in) :: r
+   pure integer function ftlHashInt64(i) result(hash)
+      integer(INT64), intent(in) :: i
+
+      integer :: tmp
+
+      tmp = int(i)
+      if (tmp >= 0) then
+         hash = int(tmp)
+      else
+         hash = (huge(tmp) + tmp) + 1
+      endif
+
+   end function
+
+
+   pure integer function ftlHashReal32(r) result(hash)
+      real(REAL32), intent(in) :: r
 
       ! TODO: handle +inf, -inf and NaN. didn't test this ...
 
-      real(FTL_KREAL) :: rPosZero
+      real(REAL32) :: rPosZero
+      character(len=32) :: str
+
+      rPosZero = r
+      if (rPosZero == 0.0) rPosZero = 0.0 ! this turns a potential -0.0 into +0.0 (they also compare equal with ==)
+
+      write (str,*) rPosZero
+      hash = ftlHashCharacterString(trim(str))
+
+   end function
+
+
+   pure integer function ftlHashReal64(r) result(hash)
+      real(REAL64), intent(in) :: r
+
+      ! TODO: handle +inf, -inf and NaN. didn't test this ...
+
+      real(REAL64) :: rPosZero
       character(len=32) :: str
 
       rPosZero = r
