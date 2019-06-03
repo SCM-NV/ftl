@@ -71,6 +71,7 @@ module ftlStringModule
       procedure         :: NewFromComplex
       procedure         :: NewFromLogical
       generic  , public :: New => NewDefault, NewCopyOther, NewFromRaw, NewFromInt, NewFromReal, NewFromComplex, NewFromLogical
+      procedure, public :: NewFromCString ! not in New interface, because signature clashes with elemental NewFromRaw
 
       procedure         :: AllocatedString
       generic  , public :: Allocated => AllocatedString
@@ -485,6 +486,27 @@ contains
 
    end subroutine
    !
+   subroutine NewFromCString(self, cstr)
+      use, intrinsic :: iso_c_binding
+      class(ftlString)      , intent(inout) :: self
+      character(kind=C_CHAR), intent(in)    :: cstr(*)
+
+      integer :: i, strlen
+
+      ! Constructs an ftlString from a C_NULL_CHAR terminated C string.
+
+      i = 1
+      do while (cstr(i) /= C_NULL_CHAR)
+         i = i + 1
+      enddo
+      strlen = i - 1 ! exclude terminating C_NULL_CHAR
+      self%raw = repeat(C_NULL_CHAR, strlen)
+      do i = 1, strlen
+         self%raw(i:i) = cstr(i)
+      enddo
+
+   end subroutine
+   !
    subroutine NewFromInt(self, i, format)
       class(ftlString), intent(inout)        :: self
       integer         , intent(in)           :: i
@@ -501,7 +523,6 @@ contains
          write (tmp,*) i
          self%raw = trim(adjustl(tmp))
       endif
-
 
    end subroutine
    !

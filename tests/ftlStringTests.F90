@@ -38,6 +38,7 @@ contains
       write (*,'(A)') 'Running ftlString tests ...'
 
       call testNewDefault
+      call testNewFromCString
       call testAssignRaw
       call testAssignOther
       call testAssignRawArrays
@@ -111,6 +112,34 @@ contains
       type(ftlString) :: s
 
       call s%New()
+
+   end subroutine
+
+
+   subroutine testNewFromCString
+      use, intrinsic :: iso_c_binding
+      type(ftlString) :: s
+      character(kind=C_CHAR) :: cstr(15)
+
+      cstr( 1) = 'H'
+      cstr( 2) = 'e'
+      cstr( 3) = 'l'
+      cstr( 4) = 'l'
+      cstr( 5) = 'o'
+      cstr( 6) = ','
+      cstr( 7) = ' '
+      cstr( 8) = 'W'
+      cstr( 9) = 'o'
+      cstr(10) = 'r'
+      cstr(11) = 'l'
+      cstr(12) = 'd'
+      cstr(13) = '!'
+      cstr(14) = C_NULL_CHAR
+
+      call s%NewFromCString(cstr)
+
+      ASSERT(len(s) == 13)
+      ASSERT(s == 'Hello, World!')
 
    end subroutine
 
