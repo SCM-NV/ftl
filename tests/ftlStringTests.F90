@@ -517,6 +517,18 @@ contains
       s = 'not a number'
       ASSERT(.not.s%IsInt())
 
+      s = '1 2 3'
+      ASSERT(.not.s%IsInt())
+
+      s = '1/bla'
+      ASSERT(.not.s%IsInt())
+
+      s = '1'//FTL_STRING_NEWLINE
+      ASSERT(.not.s%IsInt())
+
+      s = '1'//FTL_STRING_NEWLINE//'2'
+      ASSERT(.not.s%IsInt())
+
       s = '5.9'
       ASSERT(.not.s%IsInt())
 
@@ -524,11 +536,11 @@ contains
       ASSERT(.not.s%IsInt())
 
       s = '1e6'
-#if defined(__GFORTRAN__) || defined(NAGFOR)
       ASSERT(.not.s%IsInt())
-#else
-      ASSERT(s%IsInt())
-#endif
+
+      s = ftlString('1/10000')
+      ASSERT(s == '1/10000')
+      ASSERT(.not.s%IsInt())
 
       s = '1.0'
       ASSERT(s%IsReal())
@@ -542,6 +554,9 @@ contains
       ASSERT(s%IsReal())
       ASSERT(real(s) == 1.0)
 
+      s = '1.0/100'
+      ASSERT(.not.s%IsReal())
+
       strs(1) = '57.45'
       strs(2) = '3.3'
       strs(3) = '-34.7'
@@ -554,6 +569,12 @@ contains
       s = '(0.0,1.0)'
       ASSERT(s%IsComplex())
       ASSERT(complex(s) == (0.0,1.0))
+
+      s = '(0.0,1.0)/100'
+      ASSERT(.not.s%IsComplex())
+
+      s = '(0.0,1.0)'//FTL_STRING_NEWLINE
+      ASSERT(.not.s%IsComplex())
 
       s = 'T'
       ASSERT(s%IsLogical())

@@ -1101,16 +1101,12 @@ contains
 
       integer :: tester, stat
 
-#if __INTEL_COMPILER
-      ! ifort reads 5.9 as 5 into an integer, with iostat=0. We want a consistent behaviour
-      ! across compilers, so we check for the decimal point explicitly ...
-      if ('.' .in. self) then
+      if (self%CountWords() /= 1) then
          IsInt = .false.
-         return
+      else
+         read(self%raw,'(I128)',iostat=stat) tester
+         IsInt = (stat == 0)
       endif
-#endif
-      read(self%raw,*,iostat=stat) tester
-      IsInt = (stat == 0)
 
    end function
    !
@@ -1133,8 +1129,12 @@ contains
       integer :: stat
       real(FTL_KREAL) :: tester
 
-      read(self%raw,*,iostat=stat) tester
-      IsReal = (stat == 0)
+      if (self%CountWords() /= 1) then
+         IsReal = .false.
+      else
+         read(self%raw,'(G128.64)',iostat=stat) tester
+         IsReal = (stat == 0)
+      endif
 
    end function
    !
@@ -1155,8 +1155,16 @@ contains
       integer :: stat
       complex(FTL_KREAL) :: tester
 
-      read(self%raw,*,iostat=stat) tester
-      IsComplex = (stat == 0)
+      if (self%CountWords() /= 1) then
+         IsComplex = .false.
+      else if (('/' .in. self) .or. (FTL_STRING_NEWLINE .in. self)) then
+         ! Not sure what the right format string for reading complex should be.
+         ! The * below doesn't really do the job, so we check for some things explicitly ...
+         IsComplex = .false.
+      else
+         read(self%raw,*,iostat=stat) tester
+         IsComplex = (stat == 0)
+      endif
 
    end function
    !
@@ -1989,7 +1997,7 @@ contains
 
    ! Count the number of words separated by whitespace (spaces or tabs). Ignores leading and trailing whitespace.
    !
-   integer function CountWords(self)
+   elemental integer function CountWords(self)
       class(ftlString), intent(in) :: self
 
       integer :: idx
@@ -2006,7 +2014,7 @@ contains
       endif
       idx = 1
       do idx = 2, len(self%raw)
-         if (CharIsWhitespace(self%At(idx-1)) .and. .not.CharIsWhitespace(self%At(idx))) then
+         if (CharIsWhitespace(self%raw(idx-1:idx-1)) .and. .not.CharIsWhitespace(self%raw(idx:idx))) then
             CountWords = CountWords + 1
          endif
       enddo
