@@ -197,8 +197,8 @@ contains
       class(CAT(ftlSharedPtr,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
       type (CAT(ftlSharedPtr,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: other
 
-      FTL_TEMPLATE_TYPE, pointer :: tmpValue
-      integer          , pointer :: tmpRefcount
+      FTL_TEMPLATE_TYPE_WRAP, pointer :: tmpValue
+      integer               , pointer :: tmpRefcount
 
       tmpValue => self%value
       self%value => other%value
