@@ -83,6 +83,7 @@ contains
       call testStrip
       call testRStrip
       call testLStrip
+      call testStripArray
       call testUpperLower
       call testIsSpace
       call testReplace
@@ -1375,12 +1376,34 @@ contains
    end subroutine
 
 
+   subroutine testStripArray
+      type(ftlString) :: s
+      type(ftlString), allocatable :: words(:)
+
+      s = '[angstrom] [bohr] [z-matrix]   '
+      words = s%Split()
+      words = words%Strip('[]')
+
+      ASSERT(words(1) == 'angstrom')
+      ASSERT(words(2) == 'bohr')
+      ASSERT(words(3) == 'z-matrix')
+
+   end subroutine
+
+
    subroutine testUpperLower
       type(ftlString) :: s
+      type(ftlString), allocatable :: words(:)
 
       s = 'This is .A. [test]!'
       ASSERT(s%Upper() == 'THIS IS .A. [TEST]!')
       ASSERT(s%Lower() == 'this is .a. [test]!')
+
+      words = s%Split()
+      ASSERT(any(words%Upper() == 'IS'))
+      ASSERT(.not.any(words%Upper() == 'MISSING'))
+      ASSERT(any(words%Lower() == 'is'))
+      ASSERT(.not.any(words%Lower() == 'missing'))
 
       s = FTL_STRING_DIGITS//FTL_STRING_LOWERCASE//FTL_STRING_WHITESPACE//FTL_STRING_PUNCTUATION
       ASSERT(s%Upper() == FTL_STRING_DIGITS//FTL_STRING_UPPERCASE//FTL_STRING_WHITESPACE//FTL_STRING_PUNCTUATION)

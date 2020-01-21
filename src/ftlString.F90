@@ -1653,7 +1653,7 @@ contains
    ! specifying the set of characters to be removed. If chars is omitted it defaults to removing whitespace. The chars
    ! argument is not a prefix or suffix; rather, all combinations of its values are stripped.
    !
-   type(ftlString) function StripWhitespace(self) result(stripped)
+   elemental type(ftlString) function StripWhitespace(self) result(stripped)
       class(ftlString), intent(in) :: self
 
       integer :: first, last
@@ -1669,7 +1669,7 @@ contains
 
    end function
    !
-   type(ftlString) function StripRaw(self, chars) result(stripped)
+   elemental type(ftlString) function StripRaw(self, chars) result(stripped)
       class(ftlString), intent(in) :: self
       character(len=*), intent(in) :: chars
 
@@ -1686,7 +1686,7 @@ contains
 
    end function
    !
-   type(ftlString) function StripString(self, chars) result(stripped)
+   elemental type(ftlString) function StripString(self, chars) result(stripped)
       class(ftlString), intent(in) :: self
        type(ftlString), intent(in) :: chars
 
@@ -1699,7 +1699,7 @@ contains
    ! of characters to be removed. If chars is omitted it defaults to removing whitespace. The chars argument is not a
    ! prefix or suffix; rather, all combinations of its values are stripped.
    !
-   type(ftlString) function RStripWhitespace(self) result(stripped)
+   elemental type(ftlString) function RStripWhitespace(self) result(stripped)
       class(ftlString), intent(in) :: self
 
       integer :: last
@@ -1709,7 +1709,7 @@ contains
 
    end function
    !
-   type(ftlString) function RStripRaw(self, chars) result(stripped)
+   elemental type(ftlString) function RStripRaw(self, chars) result(stripped)
       class(ftlString), intent(in) :: self
       character(len=*), intent(in) :: chars
 
@@ -1720,7 +1720,7 @@ contains
 
    end function
    !
-   type(ftlString) function RStripString(self, chars) result(stripped)
+   elemental type(ftlString) function RStripString(self, chars) result(stripped)
       class(ftlString), intent(in) :: self
        type(ftlString), intent(in) :: chars
 
@@ -1733,7 +1733,7 @@ contains
    ! characters to be removed. If omitted or None, the chars argument defaults to removing whitespace. The chars
    ! argument is not a prefix; rather, all combinations of its values are stripped:
    !
-   type(ftlString) function LStripWhitespace(self) result(stripped)
+   elemental type(ftlString) function LStripWhitespace(self) result(stripped)
       class(ftlString), intent(in) :: self
 
       integer :: first
@@ -1748,7 +1748,7 @@ contains
 
    end function
    !
-   type(ftlString) function LStripRaw(self, chars) result(stripped)
+   elemental type(ftlString) function LStripRaw(self, chars) result(stripped)
       class(ftlString), intent(in) :: self
       character(len=*), intent(in) :: chars
 
@@ -1764,7 +1764,7 @@ contains
 
    end function
    !
-   type(ftlString) function LStripString(self, chars) result(stripped)
+   elemental type(ftlString) function LStripString(self, chars) result(stripped)
       class(ftlString), intent(in) :: self
        type(ftlString), intent(in) :: chars
 
@@ -1813,7 +1813,7 @@ contains
 
    ! Return a copy of the string with all the cased characters converted to uppercase/lowercase.
    !
-   type(ftlString) function Upper(self)
+   elemental type(ftlString) function Upper(self)
       class(ftlString), intent(in) :: self
 
       integer :: idx, ascii
@@ -1826,7 +1826,7 @@ contains
 
    end function
    !
-   type(ftlString) function Lower(self)
+   elemental type(ftlString) function Lower(self)
       class(ftlString), intent(in) :: self
 
       integer :: idx, ascii
@@ -1843,7 +1843,7 @@ contains
 
    ! Return true if there are only whitespace characters in the string and there is at least one character, false otherwise.
    !
-   logical function IsSpace(self)
+   elemental logical function IsSpace(self)
       class(ftlString), intent(in) :: self
 
       IsSpace = (len(self) > 0 .and. verify(self, FTL_STRING_WHITESPACE) == 0)
