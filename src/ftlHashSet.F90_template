@@ -487,7 +487,11 @@ contains
    pure integer function BucketCount(self)
       class(CAT(ftlHashSet,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: self
 
-      BucketCount = size(self%buckets)
+      if (allocated(self%buckets)) then
+         BucketCount = size(self%buckets)
+      else
+         BucketCount = 0
+      endif
 
    end function
 

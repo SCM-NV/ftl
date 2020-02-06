@@ -42,6 +42,7 @@ contains
       call testNewDefault
       call testNewCopyOther
       call testAssignment
+      call testClear
       call testSetAndGet
       call testRehash
       call testIterators
@@ -159,6 +160,36 @@ contains
 
       ASSERT(copy%Size() == 0)
       ASSERT(copy%Empty())
+
+   end subroutine
+
+
+   subroutine testClear
+      type(ftlHashMapStrInt) :: um
+      integer :: b
+
+      call um%New(10)
+      call um%Set('foo ', 42)
+      call um%Set('bar ',  1)
+      call um%Set('test',  2)
+      call um%Set('blub',  3)
+      call um%Set('jipi',  4)
+      call um%Set('fort',  5)
+      call um%Set('ran ',  6)
+      call um%Set('is m',  7)
+      call um%Set('y fa',  8)
+      call um%Set('vour',  9)
+      call um%Set('ite ', 10)
+      call um%Set('lang', 11)
+      call um%Set('not ', 12)
+      call um%Set('rly!', 13)
+
+      call um%Clear()
+
+      ASSERT(um%Size() == 0)
+      do b = 1, um%BucketCount()
+         ASSERT(um%BucketSize(b) == 0)
+      enddo
 
    end subroutine
 
