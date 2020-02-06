@@ -520,6 +520,7 @@ contains
                deleter => walker
             enddo
             deallocate(deleter)
+            nullify(self%buckets(b)%first)
          enddo
       endif
       self%psize = 0
@@ -535,7 +536,11 @@ contains
    pure integer function BucketCount(self)
       class(CAT3(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME)), intent(in) :: self
 
-      BucketCount = size(self%buckets)
+      if (allocated(self%buckets)) then
+         BucketCount = size(self%buckets)
+      else
+         BucketCount = 0
+      endif
 
    end function
 
