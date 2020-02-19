@@ -1701,16 +1701,7 @@ contains
       class(ftlString), intent(in) :: self
        type(ftlString), intent(in) :: chars
 
-      integer :: first, last
-
-      first = verify(self%raw, chars%raw)
-      last = verify(self%raw, chars%raw, .true.)
-
-      if (first == 0) then
-         stripped%raw = ''
-      else
-         stripped%raw = self%raw(first:last)
-      endif
+      stripped = self%StripRaw(chars%raw)
 
    end function
 
@@ -1744,10 +1735,7 @@ contains
       class(ftlString), intent(in) :: self
        type(ftlString), intent(in) :: chars
 
-      integer :: last
-
-      last = verify(self%raw, chars%raw, .true.)
-      stripped%raw = self%raw(1:last)
+      stripped = self%RStripRaw(chars%raw)
 
    end function
 
@@ -1791,15 +1779,7 @@ contains
       class(ftlString), intent(in) :: self
        type(ftlString), intent(in) :: chars
 
-      integer :: first
-
-      first = verify(self%raw, chars%raw)
-
-      if (first == 0) then
-         stripped%raw = ''
-      else
-         stripped%raw = self%raw(first:)
-      endif
+      stripped = self%LStripRaw(chars%raw)
 
    end function
 
@@ -1849,7 +1829,7 @@ contains
 
       integer :: idx, ascii
 
-      Upper%raw = self%raw
+      Upper = self
       do idx = 1, len(Upper%raw)
          ascii = iachar(Upper%raw(idx:idx))
          if (ascii >= 97 .and. ascii <= 122) Upper%raw(idx:idx) = achar(ascii-32)
@@ -1862,7 +1842,7 @@ contains
 
       integer :: idx, ascii
 
-      Lower%raw = self%raw
+      Lower = self
       do idx = 1, len(Lower%raw)
          ascii = iachar(Lower%raw(idx:idx))
          if (ascii >= 65 .and. ascii <= 90) Lower%raw(idx:idx) = achar(ascii+32)
