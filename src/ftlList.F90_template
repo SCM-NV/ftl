@@ -180,7 +180,9 @@ contains
 
 
    subroutine NewDefault(self)
-      class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(out), target :: self
+      class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(inout), target :: self
+
+      call self%Delete()
 
       self%sentinel%next => self%sentinel
       self%sentinel%prev => self%sentinel
@@ -332,14 +334,6 @@ contains
       class(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
        type(CAT(ftlList,FTL_TEMPLATE_TYPE_NAME)), intent(in)    :: other
 
-#if defined(NAGFOR)
-      ! For some reason NAGFOR needs a special implementation here.  I suspect that this is a compiler bug.  The normal
-      ! implementation, as in %NewCopyOther doesn't work, because the iterator into other never becomes equal to other%End(),
-      ! causing an infinite loop until we run out of memory.
-      ! For some reason this seems to be related to this method being called through the assignment statement, because this doesn't
-      ! happen if %NewCopyOther is called directly, or %AssignOther is made public and called directly. I don't really understand
-      ! this, it's either a NAGFOR bug or I'm totally not understanding something about user defined assignment in Fortran ...
-
       type(CAT3(ftlList,FTL_TEMPLATE_TYPE_NAME,Iterator)) :: it
       integer :: i
 
@@ -351,9 +345,6 @@ contains
          i = i + 1
          call it%Inc()
       enddo
-#else
-      call self%New(other)
-#endif
 
    end subroutine
    !
