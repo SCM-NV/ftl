@@ -571,10 +571,28 @@ contains
       ASSERT(s%IsComplex())
       ASSERT(complex(s) == (0.0,1.0))
 
-      s = '(0.0,1.0)/100'
+      s = '(0.0, 1.0)'
+      ASSERT(s%IsComplex())
+      ASSERT(complex(s) == (0.0,1.0))
+
+      s = ' ( 0.0, 1.0 )'
+      ASSERT(s%IsComplex())
+      ASSERT(complex(s) == (0.0,1.0))
+
+      s = ' ( 0.0, 1.0 )'
+      ASSERT(s%IsComplex())
+      ASSERT(complex(s) == (0.0,1.0))
+
+      s = '0.0 1.0'
       ASSERT(.not.s%IsComplex())
 
-      s = '(0.0,1.0)'//FTL_STRING_NEWLINE
+      s = '0.0,1.0'
+      ASSERT(.not.s%IsComplex())
+
+      s = '(0.0,1.0) 100.0'
+      ASSERT(.not.s%IsComplex())
+
+      s = '(0.0,1.0)/100'
       ASSERT(.not.s%IsComplex())
 
       s = 'T'
