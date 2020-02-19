@@ -43,6 +43,9 @@ contains
       call testReplace
       call testReplaceGroupSub
 
+      ! Tests for issues reported on GitHub:
+      call testIssue4
+
       call testArrayFinalization
 
    end subroutine
@@ -212,6 +215,26 @@ contains
       ASSERT(r%Replace(line, '\2', doGroupSub=.true.) == 'Element: 12 6 C Carbon')
       ASSERT(r%Replace(line, 'XXX', doGroupSub=.true.) == 'Element: XXX XXX XXX XXX')
       ASSERT(r%Replace(line, '\2->\1\1', doGroupSub=.true.) == 'Element: 12->massmass 6->ZZ C->symbolsymbol Carbon->namename')
+
+   end subroutine
+
+
+   subroutine testIssue4
+      type(ftlString) :: line
+      type(ftlRegex) :: r
+      type(ftlRegexMatch), allocatable :: m(:)
+
+      line = 'keyword option1=value option2=othervalue'
+      call r%New('(\w+)\s*=\s*(\w+)')
+      m = r%Match(line)
+
+      ! m(1)%text now holds 'option1=value'
+      ASSERT(m(1)%text == 'option1=value')
+      ! m(2)%text now holds 'option2=othervalue'
+      ASSERT(m(2)%text == 'option2=othervalue')
+      ! m(:)%group is also populated with the contents of the capture groups.
+      ! e.g. m(1)%group(2)%text holds 'value'
+      ASSERT(m(1)%group(2)%text == 'value')
 
    end subroutine
 
