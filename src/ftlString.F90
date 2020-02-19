@@ -450,7 +450,7 @@ contains
 
    end subroutine
    !
-   subroutine NewCopyOther(self, other)
+   pure subroutine NewCopyOther(self, other)
       class(ftlString), intent(inout) :: self
        type(ftlString), intent(in)    :: other
 
@@ -1154,17 +1154,28 @@ contains
 
       integer :: stat
       complex(FTL_KREAL) :: tester
+      type(ftlString), allocatable :: splitOnComma(:)
+      type(ftlString) :: re, im
 
-      if (self%CountWords() /= 1) then
-         IsComplex = .false.
-      else if (('/' .in. self) .or. (FTL_STRING_NEWLINE .in. self)) then
-         ! Not sure what the right format string for reading complex should be.
-         ! The * below doesn't really do the job, so we check for some things explicitly ...
-         IsComplex = .false.
-      else
-         read(self%raw,*,iostat=stat) tester
-         IsComplex = (stat == 0)
-      endif
+      IsComplex = .false.
+
+      ! We need to check a couple of things manually, since the read below is to
+      ! liberal in accepting things as a complex number ...
+      splitOnComma = self%Split(',')
+      if (size(splitOnComma) /= 2) return
+      re = splitOnComma(1)%Strip()
+      if (.not.re%StartsWith('(')) return
+      re%raw = re%raw(2:)
+      re = re%LStrip()
+      if (.not.re%IsReal()) return
+      im = splitOnComma(2)%Strip()
+      if (.not.im%EndsWith(')')) return
+      im%raw = im%raw(:len(im%raw)-1)
+      im = im%RStrip()
+      if (.not.im%IsReal()) return
+
+      read(self%raw,*,iostat=stat) tester
+      IsComplex = (stat == 0)
 
    end function
    !
@@ -1314,7 +1325,7 @@ contains
    ! Return the number of non-overlapping occurrences of substring sub in the range [start, end). Optional arguments
    ! start and end are interpreted as in Python slice notation.
    !
-   integer function CountRaw(self, sub, start, end) result(count)
+   integer pure function CountRaw(self, sub, start, end) result(count)
       class(ftlString), intent(in)           :: self
       character(len=*), intent(in)           :: sub
       integer         , intent(in), optional :: start, end
@@ -1331,7 +1342,7 @@ contains
 
    end function
    !
-   integer function CountOther(self, sub, start, end) result(count)
+   integer pure function CountOther(self, sub, start, end) result(count)
       class(ftlString), intent(in)           :: self
        type(ftlString), intent(in)           :: sub
       integer         , intent(in), optional :: start, end
@@ -1340,7 +1351,7 @@ contains
 
    end function
    !
-   integer function CountImplementation(raw, sub) result(count)
+   integer pure function CountImplementation(raw, sub) result(count)
       character(len=*), intent(in) :: raw, sub
 
       integer doneEnd, next
@@ -1499,7 +1510,7 @@ contains
    ! (for example, '1<>2<>3'%split('<>') returns ['1', '2', '3']). Splitting an empty string with a specified
    ! separator returns [''].
    !
-   function SplitSepRaw(self, sep, maxsplit) result(words)
+   pure function SplitSepRaw(self, sep, maxsplit) result(words)
       class(ftlString), intent(in)           :: self
       character(len=*), intent(in)           :: sep
       integer         , intent(in), optional :: maxsplit
@@ -1528,7 +1539,7 @@ contains
 
    end function
    !
-   function SplitSepOther(self, sep, maxsplit) result(words)
+   pure function SplitSepOther(self, sep, maxsplit) result(words)
       class(ftlString), intent(in)           :: self
       type(ftlString) , intent(in)           :: sep
       integer         , intent(in), optional :: maxsplit
