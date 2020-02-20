@@ -281,11 +281,16 @@ contains
 
       begin = 1
       numMatches = 0
-      do while (begin <= len(string))
+      do while (begin <= len(string)+1)
          m = self%MatchFirst(string(begin:))
          if (.not.m%matches) exit
          numMatches = numMatches + 1
-         begin = begin + m%end - 1
+         if (m%begin == m%end) then
+            ! In case we matched the empty string, we still need to move on ...
+            begin = begin + 1
+         else
+            begin = begin + m%end - 1
+         endif
       enddo
 
    end function
@@ -365,7 +370,12 @@ contains
                matches(iMatch)%group(iGroup)%end   = matches(iMatch)%group(iGroup)%end + begin - 1
             enddo
          endif
-         begin = matches(iMatch)%end
+         if (matches(iMatch)%begin == matches(iMatch)%end) then
+            ! In case we matched the empty string, we still need to move on ...
+            begin = begin + 1
+         else
+            begin = matches(iMatch)%end
+         endif
       enddo
 
    end function
