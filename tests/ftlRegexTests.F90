@@ -44,7 +44,8 @@ contains
       call testReplaceGroupSub
 
       ! Tests for issues reported on GitHub:
-      call testIssue4
+      call testIssue4 ! example from the documentation
+      call testIssue5 ! regular expressions that match the empty string
 
       call testArrayFinalization
 
@@ -235,6 +236,32 @@ contains
       ! m(:)%group is also populated with the contents of the capture groups.
       ! e.g. m(1)%group(2)%text holds 'value'
       ASSERT(m(1)%group(2)%text == 'value')
+
+   end subroutine
+
+
+   subroutine testIssue5
+      type(ftlString) :: line
+      type(ftlRegex) :: r
+      type(ftlRegexMatch), allocatable :: m(:)
+
+      integer :: i
+
+      line = 'foo'
+      call r%New('w*')
+      m = r%Match(line)
+
+      ! The regular expression "w*" matches the empty string, so it should match 4 times in the string "foo", namely here:
+      !
+      !  f o o
+      ! ^ ^ ^ ^
+
+      ASSERT(size(m) == 4)
+      do i = 1, size(m)
+         ASSERT(m(i)%begin == i)
+         ASSERT(m(i)%end == i)
+         ASSERT(m(i)%text == '')
+      enddo
 
    end subroutine
 
