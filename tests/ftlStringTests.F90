@@ -683,6 +683,16 @@ contains
       ASSERT(s1 /= s2)
       ASSERT(.not.(s1 == s2))
 
+      ! less and greater comparison
+
+      s1 = 'aaaa'
+      s2 = 'zzzz'
+
+      ASSERT(s1 < s2)
+      ASSERT(.not.(s1 > s2))
+      ASSERT(s2 > s1)
+      ASSERT(.not.(s2 < s1))
+
       ! comparison of arrays
 
       a1(1) = 'hola'
