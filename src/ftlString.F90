@@ -156,7 +156,6 @@ module ftlStringModule
       procedure, public :: CountWords
 
       ! Assignment:
-
 #if defined(__INTEL_COMPILER) && __INTEL_COMPILER < 1900
       ! ifort 18 (and possibly <18) seems to have problems with cleaning up the left hand side of a character(:), allocatable
       ! assignment.  This is normally what would happen in the intrinsic assignments of ftlStrings. Therefore we make a defined
@@ -180,6 +179,18 @@ module ftlStringModule
       procedure, pass(lhs) :: StringUnequalChar
       procedure, pass(rhs) :: CharUnequalString
       generic  , public    :: operator(/=) => StringUnequalString, StringUnequalChar, CharUnequalString
+
+      ! < comparison like for raw strings
+      procedure, pass(lhs) :: StringLessString
+      procedure, pass(lhs) :: StringLessChar
+      procedure, pass(rhs) :: CharLessString
+      generic  , public    :: operator(<) => StringLessString, StringLessChar, CharLessString
+
+      ! > comparison like for raw strings
+      procedure, pass(lhs) :: StringGreaterString
+      procedure, pass(lhs) :: StringGreaterChar
+      procedure, pass(rhs) :: CharGreaterString
+      generic  , public    :: operator(>) => StringGreaterString, StringGreaterChar, CharGreaterString
 
       ! // operator with raw Fortran string output
       procedure, pass(lhs) :: StringCatString
@@ -824,6 +835,62 @@ contains
       class(ftlString), intent(in) :: rhs
 
       unequal = .not.(lhs == rhs)
+
+   end function
+
+
+
+   ! < comparison like for raw strings
+   !
+   elemental logical function StringLessString(lhs, rhs) result(less)
+      class(ftlString), intent(in) :: lhs
+       type(ftlString), intent(in) :: rhs
+
+      less = lhs%raw < rhs%raw
+
+   end function
+   !
+   elemental logical function StringLessChar(lhs, rhs) result(less)
+      class(ftlString), intent(in) :: lhs
+      character(len=*), intent(in) :: rhs
+
+      less = lhs%raw < rhs
+
+   end function
+   !
+   elemental logical function CharLessString(lhs, rhs) result(less)
+      character(len=*), intent(in) :: lhs
+      class(ftlString), intent(in) :: rhs
+
+      less = lhs < rhs%raw
+
+   end function
+
+
+
+   ! > comparison like for raw strings
+   !
+   elemental logical function StringGreaterString(lhs, rhs) result(greater)
+      class(ftlString), intent(in) :: lhs
+       type(ftlString), intent(in) :: rhs
+
+      greater = lhs%raw > rhs%raw
+
+   end function
+   !
+   elemental logical function StringGreaterChar(lhs, rhs) result(greater)
+      class(ftlString), intent(in) :: lhs
+      character(len=*), intent(in) :: rhs
+
+      greater = lhs%raw > rhs
+
+   end function
+   !
+   elemental logical function CharGreaterString(lhs, rhs) result(greater)
+      character(len=*), intent(in) :: lhs
+      class(ftlString), intent(in) :: rhs
+
+      greater = lhs > rhs%raw
 
    end function
 
