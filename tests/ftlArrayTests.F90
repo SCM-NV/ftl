@@ -37,6 +37,8 @@ contains
       call testBegin
       call testEnd
 
+      call testEmpty
+
       call testNewItDefault
       call testNewItCopyOther
 
@@ -74,6 +76,15 @@ contains
       ASSERT(associated(it%value,v(9)))
       ASSERT(it%value == 27)
       ASSERT(it%value == v(9))
+
+   end subroutine
+
+
+   subroutine testEmpty
+      integer, allocatable, target :: v(:)
+
+      allocate(v(0))
+      ASSERT(Begin(v) == End(v))
 
    end subroutine
 
