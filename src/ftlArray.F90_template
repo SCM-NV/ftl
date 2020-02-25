@@ -252,7 +252,20 @@ contains
       class(CAT3(ftlArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: self
       class(CAT3(ftlArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: other
 
-      EqualOther = associated(self%array,other%array) .and. (self%index == other%index)
+      if (associated(self%array) .and. associated(other%array)) then
+         if (size(self%array) == 0 .and. size(other%array) == 0) then
+            ! Special case: For size 0 arrays, all iterators compare equal. This
+            ! is so that we get Begin == End on zero sized arrays.  For some
+            ! reason it seems like it's not possible to have two pointers to the
+            ! same 0 sized array associated with each other, so the normal
+            ! branch below does not work ...
+            EqualOther = .true.
+         else
+            EqualOther = associated(self%array,other%array) .and. (self%index == other%index)
+         endif
+      else
+         EqualOther = .false.
+      endif
 
    end function
    !
@@ -260,7 +273,7 @@ contains
       class(CAT3(ftlArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: self
       class(CAT3(ftlArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: other
 
-      UnequalOther = .not.associated(self%array,other%array) .or. (self%index /= other%index)
+      UnequalOther = .not.(self == other)
 
    end function
    !
@@ -268,7 +281,16 @@ contains
       class(CAT3(ftlArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: self
       class(CAT3(ftlArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: other
 
-      SmallerOther = associated(self%array,other%array) .and. (self%index < other%index)
+      if (associated(self%array) .and. associated(other%array)) then
+         if (size(self%array) == 0 .and. size(other%array) == 0) then
+            ! Special case: See above ...
+            SmallerOther = .true.
+         else
+            SmallerOther = associated(self%array,other%array) .and. (self%index < other%index)
+         endif
+      else
+         SmallerOther = .false.
+      endif
 
    end function
    !
@@ -276,7 +298,7 @@ contains
       class(CAT3(ftlArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: self
       class(CAT3(ftlArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: other
 
-      SmallerEqualOther = associated(self%array,other%array) .and. (self%index <= other%index)
+      SmallerEqualOther = (self < other) .or. (self == other)
 
    end function
    !
@@ -284,7 +306,7 @@ contains
       class(CAT3(ftlArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: self
       class(CAT3(ftlArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: other
 
-      GreaterOther = associated(self%array,other%array) .and. (self%index > other%index)
+      GreaterOther = .not.(self <= other)
 
    end function
    !
@@ -292,7 +314,7 @@ contains
       class(CAT3(ftlArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: self
       class(CAT3(ftlArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(in) :: other
 
-      GreaterEqualOther = associated(self%array,other%array) .and. (self%index >= other%index)
+      GreaterEqualOther = .not.(self < other)
 
    end function
 
