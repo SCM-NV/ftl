@@ -452,6 +452,7 @@ contains
 
    subroutine testStringFromNumeric
       type(ftlString) :: s
+      type(ftlString), allocatable :: w(:)
 
       s = ftlString(42)
       ASSERT(s == '42')
@@ -489,6 +490,21 @@ contains
       ASSERT(s == '  T')
       s = ftlString(.false.,'(L3)')
       ASSERT(s == '  F')
+
+      w = ftlString([1, 2, 3])
+      ASSERT(w(1) == '1')
+      ASSERT(w(2) == '2')
+      ASSERT(w(3) == '3')
+
+      w = ftlString([1.0_FTL_KREAL, 2.0_FTL_KREAL, 3.0_FTL_KREAL])
+      ASSERT(real(w(1)) == 1.0_FTL_KREAL)
+      ASSERT(real(w(2)) == 2.0_FTL_KREAL)
+      ASSERT(real(w(3)) == 3.0_FTL_KREAL)
+
+      w = ftlString([.true., .false., .false.])
+      ASSERT(w(1) == 'True')
+      ASSERT(w(2) == 'False')
+      ASSERT(w(3) == 'False')
 
    end subroutine
 

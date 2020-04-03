@@ -518,7 +518,7 @@ contains
 
    end subroutine
    !
-   subroutine NewFromInt(self, i, format)
+   pure subroutine NewFromInt(self, i, format)
       class(ftlString), intent(inout)        :: self
       integer         , intent(in)           :: i
       character(len=*), intent(in), optional :: format
@@ -537,7 +537,7 @@ contains
 
    end subroutine
    !
-   subroutine NewFromReal(self, r, format)
+   pure subroutine NewFromReal(self, r, format)
       class(ftlString), intent(inout)        :: self
       real(FTL_KREAL) , intent(in)           :: r
       character(len=*), intent(in), optional :: format
@@ -556,7 +556,7 @@ contains
 
    end subroutine
    !
-   subroutine NewFromComplex(self, c, format)
+   pure subroutine NewFromComplex(self, c, format)
       class(ftlString)  , intent(inout)        :: self
       complex(FTL_KREAL), intent(in)           :: c
       character(len=*)  , intent(in), optional :: format
@@ -575,8 +575,8 @@ contains
 
    end subroutine
    !
-   subroutine NewFromLogical(self, l, format)
-      class(ftlString), intent(out)          :: self
+   pure subroutine NewFromLogical(self, l, format)
+      class(ftlString), intent(inout)        :: self
       logical         , intent(in)           :: l
       character(len=*), intent(in), optional :: format
 
@@ -616,25 +616,25 @@ contains
       call str%NewFromRaw(raw)
    end function
    !
-   type(ftlString) function NewFromIntConstr(i, format) result(str)
+   type(ftlString) elemental function NewFromIntConstr(i, format) result(str)
       integer         , intent(in)           :: i
       character(len=*), intent(in), optional :: format
       call str%NewFromInt(i, format)
    end function
    !
-   type(ftlString) function NewFromRealConstr(r, format) result(str)
+   type(ftlString) elemental function NewFromRealConstr(r, format) result(str)
       real(FTL_KREAL) , intent(in)           :: r
       character(len=*), intent(in), optional :: format
       call str%NewFromReal(r, format)
    end function
    !
-   type(ftlString) function NewFromComplexConstr(c, format) result(str)
+   type(ftlString) elemental function NewFromComplexConstr(c, format) result(str)
       complex(FTL_KREAL), intent(in)           :: c
       character(len=*)  , intent(in), optional :: format
       call str%NewFromComplex(c, format)
    end function
    !
-   type(ftlString) function NewFromLogicalConstr(l, format) result(str)
+   type(ftlString) elemental function NewFromLogicalConstr(l, format) result(str)
       logical         , intent(in)           :: l
       character(len=*), intent(in), optional :: format
       call str%NewFromLogical(l, format)
