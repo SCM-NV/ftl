@@ -682,9 +682,12 @@ contains
 
 
    subroutine NewItDefault(self)
-      class(CAT3(ftlHashSet,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(out) :: self
+      class(CAT3(ftlHashSet,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(inout) :: self
 
-      ! Nothing to do here: intent(out) already resets everything
+      nullify(self%buckets)
+      self%bIdx = 0
+      nullify(self%entr)
+      nullify(self%value)
 
    end subroutine
    !

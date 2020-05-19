@@ -726,6 +726,9 @@ contains
 
       write (unit, '(A)', iostat=iostat, iomsg=iomsg) self%raw
 
+      associate(iotype => iotype); end associate
+      associate(v_list => v_list); end associate
+
    end subroutine
 
 
@@ -738,17 +741,23 @@ contains
 
       call self%ReadLine(unit, iostat)
 
+      associate(iomsg => iomsg); end associate
+
    end subroutine
    !
-   subroutine readFormatted(self, unit, iotype, vlist, iostat, iomsg)
+   subroutine readFormatted(self, unit, iotype, v_list, iostat, iomsg)
       class(ftlString), intent(inout) :: self
       integer         , intent(in)    :: unit
       character(len=*), intent(in)    :: iotype
-      integer         , intent(in)    :: vlist(:)
+      integer         , intent(in)    :: v_list(:)
       integer         , intent(out)   :: iostat
       character(len=*), intent(inout) :: iomsg
 
       call self%ReadLine(unit, iostat)
+
+      associate(iotype => iotype); end associate
+      associate(iomsg => iomsg); end associate
+      associate(v_list => v_list); end associate
 
    end subroutine
 
@@ -2160,9 +2169,11 @@ contains
 
 
    subroutine NewItDefault(self)
-      class(ftlStringIterator), intent(out) :: self
+      class(ftlStringIterator), intent(inout) :: self
 
-      ! Nothing to do here: intent(out) already resets everything
+      nullify(self%str)
+      self%index = 0
+      nullify(self%value)
 
    end subroutine
    !
