@@ -161,9 +161,7 @@ module ftlStringModule
       ! assignment.  This is normally what would happen in the intrinsic assignments of ftlStrings. Therefore we make a defined
       ! assignment for ftlString that does the cleanup of the lhs explicitly, to at least fix these memory leaks when using
       ! ftlStrings ...
-      generic  , public :: assignment(=) => NewFromRaw, NewCopyOther
-#else
-      generic  , public :: assignment(=) => NewFromRaw
+      generic, public :: assignment(=) => NewCopyOther
 #endif
 
       ! Overloaded operators:
@@ -231,6 +229,7 @@ module ftlStringModule
    public :: assignment(=)
    interface assignment(=)
       module procedure AssignToAllocatableRaw
+      module procedure AssignFromRaw
    end interface
 
    public :: Raw
@@ -664,7 +663,7 @@ contains
 
 
 
-   ! =============>  Assignment of ftlString to raw Fortran strings:
+   ! =============>  Assignment of ftlString to/from raw Fortran strings:
 
 
 
@@ -677,6 +676,19 @@ contains
       else
          if (allocated(lhs)) deallocate(lhs)
       endif
+
+   end subroutine
+   !
+   elemental subroutine AssignFromRaw(lhs, rhs)
+      type(ftlString) , intent(inout) :: lhs
+      character(len=*), intent(in)    :: rhs
+
+      character(len=:), allocatable :: tmp
+
+      ! Assigns a raw Fortran string to an ftlString
+
+      tmp = rhs ! rhs and lhs%raw might alias! Make sure lhs%raw is not deallocated before we read from raw ...
+      call move_alloc(tmp, lhs%raw)
 
    end subroutine
 
