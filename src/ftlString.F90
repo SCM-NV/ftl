@@ -156,14 +156,15 @@ module ftlStringModule
       procedure, public :: CountWords
 
       ! Assignment:
-#if defined(__INTEL_COMPILER) && __INTEL_COMPILER < 1900
-      ! ifort 18 (and possibly <18) seems to have problems with cleaning up the left hand side of a character(:), allocatable
+#if defined(__INTEL_COMPILER) && __INTEL_COMPILER < 1900 && __INTEL_COMPILER >= 1800
+      ! ifort 18 seems to have problems with cleaning up the left hand side of a character(:), allocatable
       ! assignment.  This is normally what would happen in the intrinsic assignments of ftlStrings. Therefore we make a defined
       ! assignment for ftlString that does the cleanup of the lhs explicitly, to at least fix these memory leaks when using
       ! ftlStrings ...
-      generic  , public :: assignment(=) => NewFromRaw, NewCopyOther
-#else
-      generic  , public :: assignment(=) => NewFromRaw
+      generic, public :: assignment(=) => NewCopyOther
+      ! Note: ifort 18 does NOT like to have a defined assignment for ftlString in a couple of scenarios, see the
+      ! testContainingTypeAssignment regression test for ftlString. Relying on the intrinsic assignment makes that test work, but
+      ! will bring back the leaking, which is probably worse ...
 #endif
 
       ! Overloaded operators:
@@ -231,35 +232,13 @@ module ftlStringModule
    public :: assignment(=)
    interface assignment(=)
       module procedure AssignToAllocatableRaw
+      module procedure AssignFromRaw
    end interface
 
    public :: Raw
    interface Raw
       module procedure StringToRaw
    end interface
-
-
-   !! Derived-type IO
-
-   !public :: write(formatted)
-   !interface write(formatted)
-   !   module procedure writeFormatted
-   !end interface
-
-   !public :: write(unformatted)
-   !interface write(unformatted)
-   !   module procedure writeUnformatted
-   !end interface
-
-   !public :: read(formatted)
-   !interface read(formatted)
-   !   module procedure readFormatted
-   !end interface
-
-   !public :: read(unformatted)
-   !interface read(unformatted)
-   !   module procedure readUnformatted
-   !end interface
 
 
    ! Free versions of some type-bound procedures:
@@ -664,7 +643,7 @@ contains
 
 
 
-   ! =============>  Assignment of ftlString to raw Fortran strings:
+   ! =============>  Assignment of ftlString to/from raw Fortran strings:
 
 
 
@@ -677,6 +656,19 @@ contains
       else
          if (allocated(lhs)) deallocate(lhs)
       endif
+
+   end subroutine
+   !
+   elemental subroutine AssignFromRaw(lhs, rhs)
+      type(ftlString) , intent(inout) :: lhs
+      character(len=*), intent(in)    :: rhs
+
+      character(len=:), allocatable :: tmp
+
+      ! Assigns a raw Fortran string to an ftlString
+
+      tmp = rhs ! rhs and lhs%raw might alias! Make sure lhs%raw is not deallocated before we read from raw ...
+      call move_alloc(tmp, lhs%raw)
 
    end subroutine
 
@@ -700,57 +692,6 @@ contains
 
    end function
 
-
-
-   !! =============> Derived-type IO:
-
-
-
-   !subroutine writeUnformatted(self, unit, iostat, iomsg)
-   !   class(ftlString), intent(in)    :: self
-   !   integer         , intent(in)    :: unit
-   !   integer         , intent(out)   :: iostat
-   !   character(len=*), intent(inout) :: iomsg
-
-   !   write (unit, iostat=iostat, iomsg=iomsg) self%raw
-
-   !end subroutine
-   !!
-   !subroutine writeFormatted(self, unit, iotype, v_list, iostat, iomsg)
-   !   class(ftlString), intent(in)    :: self
-   !   integer         , intent(in)    :: unit
-   !   character(len=*), intent(in)    :: iotype
-   !   integer         , intent(in)    :: v_list(:)
-   !   integer         , intent(out)   :: iostat
-   !   character(len=*), intent(inout) :: iomsg
-
-   !   write (unit, '(A)', iostat=iostat, iomsg=iomsg) self%raw
-
-   !end subroutine
-
-
-
-   !subroutine readUnformatted(self, unit, iostat, iomsg)
-   !   class(ftlString), intent(inout) :: self
-   !   integer         , intent(in)    :: unit
-   !   integer         , intent(out)   :: iostat
-   !   character(len=*), intent(inout) :: iomsg
-
-   !   call self%ReadLine(unit, iostat)
-
-   !end subroutine
-   !!
-   !subroutine readFormatted(self, unit, iotype, vlist, iostat, iomsg)
-   !   class(ftlString), intent(inout) :: self
-   !   integer         , intent(in)    :: unit
-   !   character(len=*), intent(in)    :: iotype
-   !   integer         , intent(in)    :: vlist(:)
-   !   integer         , intent(out)   :: iostat
-   !   character(len=*), intent(inout) :: iomsg
-
-   !   call self%ReadLine(unit, iostat)
-
-   !end subroutine
 
 
    ! =============> Character wise access:
@@ -2160,9 +2101,11 @@ contains
 
 
    subroutine NewItDefault(self)
-      class(ftlStringIterator), intent(out) :: self
+      class(ftlStringIterator), intent(inout) :: self
 
-      ! Nothing to do here: intent(out) already resets everything
+      nullify(self%str)
+      self%index = 0
+      nullify(self%value)
 
    end subroutine
    !

@@ -152,7 +152,7 @@ $(BUILDDIR)/ftlAlgorithmsTests.o: tests/ftlAlgorithmsTests.F90 $(BUILDDIR)/ftlAr
 $(BUILDDIR)/ftlSharedPtrTests.o: tests/ftlSharedPtrTests.F90 $(BUILDDIR)/ftlSharedPtrInt.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
-$(BUILDDIR)/ftlStringTests.o: tests/ftlStringTests.F90 $(BUILDDIR)/ftlString.o $(BUILDDIR)/ftlDynArrayString.o | $(BUILDDIR)
+$(BUILDDIR)/ftlStringTests.o: tests/ftlStringTests.F90 $(BUILDDIR)/ftlString.o $(BUILDDIR)/ftlDynArrayString.o $(BUILDDIR)/Animals.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
 $(BUILDDIR)/ftlRegexTests.o: tests/ftlRegexTests.F90 $(BUILDDIR)/ftlRegex.o | $(BUILDDIR)
@@ -245,4 +245,7 @@ src/configure_ftlRegex.inc: configure/configure_ftlRegex.c
 # Example derived types:
 
 $(BUILDDIR)/Point2D.o: instantiations/derived_types/Point2D.F90 | $(BUILDDIR)
+	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
+
+$(BUILDDIR)/Animals.o: instantiations/derived_types/Animals.F90 $(BUILDDIR)/ftlString.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@

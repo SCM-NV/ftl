@@ -106,6 +106,16 @@ contains
       call testSplitWordsIntoDynArray
       call testDynArrayStringSpecialization
 
+      ! Really exotic tests for specific issues:
+
+#if !defined(__INTEL_COMPILER) || __INTEL_COMPILER >= 1900 || __INTEL_COMPILER < 1800
+      ! This test fails with ifort 18. It's not a super major issue in practice, but it causes a segfault, so let's skip it here,
+      ! so that we can at least run all the tests ...
+      call testContainingTypeAssignment
+#else
+      write (*,'(A)') 'Skipping ftlStringtestContainingTypeAssignment for ftlString on ifort 18 ...'
+#endif
+
    end subroutine
 
 
@@ -1788,6 +1798,47 @@ contains
       ASSERT(v%data( 8) == 'end')
       ASSERT(v%data( 9) == 'end')
       ASSERT(v%data(10) == 'end')
+
+   end subroutine
+
+
+   subroutine testContainingTypeAssignment
+
+      use AnimalsModule
+
+      integer :: i
+      type(AnimalCageType), allocatable :: cages(:)
+      type(AnimalCageType), allocatable :: newcages(:)
+
+      allocate(cages(3),newcages(3))
+      allocate(BirdType :: cages(1)%animal)
+      allocate(BirdType :: cages(2)%animal)
+      allocate(CowType  :: cages(3)%animal)
+      do i = 1, 3
+         select type (animal => cages(i)%animal)
+         type is (BirdType)
+            call animal%NewBird
+         type is (CowType)
+            call animal%NewCow
+         end select
+      end do
+
+      ASSERT(allocated(cages(1)%animal%name%raw))
+      ASSERT(cages(1)%animal%name == 'bird')
+      ASSERT(allocated(cages(2)%animal%name%raw))
+      ASSERT(cages(2)%animal%name == 'bird')
+      ASSERT(allocated(cages(3)%animal%name%raw))
+      ASSERT(cages(3)%animal%name == 'cow')
+
+      newcages = cages
+      deallocate(cages)
+
+      ASSERT(allocated(newcages(1)%animal%name%raw))
+      ASSERT(newcages(1)%animal%name == 'bird')
+      ASSERT(allocated(newcages(2)%animal%name%raw))
+      ASSERT(newcages(2)%animal%name == 'bird')
+      ASSERT(allocated(newcages(3)%animal%name%raw))
+      ASSERT(newcages(3)%animal%name == 'cow')
 
    end subroutine
 

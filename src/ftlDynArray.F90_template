@@ -882,8 +882,9 @@ contains
    elemental subroutine TriggerFinalizer(instance)
       FTL_TEMPLATE_TYPE_WRAP, intent(out) :: instance
 
-      ! Nothing to do here: intent(out) will finalize the instance and that's all we want
-      associate(instance => instance); end associate ! <--- suppresses an unhelpful warning from gfortran
+      ! Nothing to do here: intent(out) will finalize the instance and that's all we want.
+      return
+      instance = instance ! <--- suppresses unhelpful compiler warnings about not assigning instance
 
    end subroutine
 
@@ -942,9 +943,11 @@ contains
 
 
    subroutine NewItDefault(self)
-      class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(out) :: self
+      class(CAT3(ftlDynArray,FTL_TEMPLATE_TYPE_NAME,Iterator)), intent(inout) :: self
 
-      ! Nothing to do here: intent(out) already resets everything
+      nullify(self%dynArray)
+      self%index = 0
+      nullify(self%value)
 
    end subroutine
    !
