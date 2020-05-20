@@ -162,6 +162,9 @@ module ftlStringModule
       ! assignment for ftlString that does the cleanup of the lhs explicitly, to at least fix these memory leaks when using
       ! ftlStrings ...
       generic, public :: assignment(=) => NewCopyOther
+      ! Note: ifort 18 does NOT like to have a defined assignment for ftlString in a couple of scenarios, see the
+      ! testContainingTypeAssignment regression test for ftlString. Relying on the intrinsic assignment makes that test work, but
+      ! will bring back the leaking ...
 #endif
 
       ! Overloaded operators:

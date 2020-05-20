@@ -152,7 +152,7 @@ $(BUILDDIR)/ftlAlgorithmsTests.o: tests/ftlAlgorithmsTests.F90 $(BUILDDIR)/ftlAr
 $(BUILDDIR)/ftlSharedPtrTests.o: tests/ftlSharedPtrTests.F90 $(BUILDDIR)/ftlSharedPtrInt.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
-$(BUILDDIR)/ftlStringTests.o: tests/ftlStringTests.F90 $(BUILDDIR)/ftlString.o $(BUILDDIR)/ftlDynArrayString.o | $(BUILDDIR)
+$(BUILDDIR)/ftlStringTests.o: tests/ftlStringTests.F90 $(BUILDDIR)/ftlString.o $(BUILDDIR)/ftlDynArrayString.o $(BUILDDIR)/Animals.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
 $(BUILDDIR)/ftlRegexTests.o: tests/ftlRegexTests.F90 $(BUILDDIR)/ftlRegex.o | $(BUILDDIR)
@@ -260,4 +260,7 @@ $(BUILDDIR)/Point2D.o: instantiations/derived_types/Point2D.F90 | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
 $(BUILDDIR)/Leaky.o: instantiations/derived_types/Leaky.F90 | $(BUILDDIR)
+	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
+
+$(BUILDDIR)/Animals.o: instantiations/derived_types/Animals.F90 $(BUILDDIR)/ftlString.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
