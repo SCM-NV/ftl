@@ -108,7 +108,7 @@ contains
 
       ! Really exotic tests for specific issues:
 
-#if !defined(__INTEL_COMPILER) || __INTEL_COMPILER >= 1900
+#if !defined(__INTEL_COMPILER) || __INTEL_COMPILER >= 1900 || __INTEL_COMPILER < 1800
       ! This test fails with ifort 18. It's not a super major issue in practice, but it causes a segfault, so let's skip it here,
       ! so that we can at least run all the tests ...
       call testContainingTypeAssignment

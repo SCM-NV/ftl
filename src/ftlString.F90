@@ -156,15 +156,15 @@ module ftlStringModule
       procedure, public :: CountWords
 
       ! Assignment:
-#if defined(__INTEL_COMPILER) && __INTEL_COMPILER < 1900
-      ! ifort 18 (and possibly <18) seems to have problems with cleaning up the left hand side of a character(:), allocatable
+#if defined(__INTEL_COMPILER) && __INTEL_COMPILER < 1900 && __INTEL_COMPILER >= 1800
+      ! ifort 18 seems to have problems with cleaning up the left hand side of a character(:), allocatable
       ! assignment.  This is normally what would happen in the intrinsic assignments of ftlStrings. Therefore we make a defined
       ! assignment for ftlString that does the cleanup of the lhs explicitly, to at least fix these memory leaks when using
       ! ftlStrings ...
       generic, public :: assignment(=) => NewCopyOther
       ! Note: ifort 18 does NOT like to have a defined assignment for ftlString in a couple of scenarios, see the
       ! testContainingTypeAssignment regression test for ftlString. Relying on the intrinsic assignment makes that test work, but
-      ! will bring back the leaking ...
+      ! will bring back the leaking, which is probably worse ...
 #endif
 
       ! Overloaded operators:
