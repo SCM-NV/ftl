@@ -87,6 +87,16 @@ module ftlStringModule
       procedure         :: EndString
       generic  , public :: End => EndString
 
+      ! Derived-type IO:
+      procedure       :: writeFormatted
+      generic, public :: write(formatted) => writeFormatted
+      procedure       :: writeUnformatted
+      generic, public :: write(unformatted) => writeUnformatted
+      procedure       :: readFormatted
+      generic, public :: read(formatted) => readFormatted
+      procedure       :: readUnformatted
+      generic, public :: read(unformatted) => readUnformatted
+
       ! Conversion to numeric types:
       procedure, public :: IsNumber
       procedure, public :: IsInt
@@ -238,29 +248,6 @@ module ftlStringModule
    public :: Raw
    interface Raw
       module procedure StringToRaw
-   end interface
-
-
-   ! Derived-type IO
-
-   public :: write(formatted)
-   interface write(formatted)
-      module procedure writeFormatted
-   end interface
-
-   public :: write(unformatted)
-   interface write(unformatted)
-      module procedure writeUnformatted
-   end interface
-
-   public :: read(formatted)
-   interface read(formatted)
-      module procedure readFormatted
-   end interface
-
-   public :: read(unformatted)
-   interface read(unformatted)
-      module procedure readUnformatted
    end interface
 
 
