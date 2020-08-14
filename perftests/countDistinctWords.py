@@ -24,7 +24,7 @@ import time
 
 def countDistictWords(filename):
 
-    start = time.clock()
+    start = time.perf_counter()
 
     # Step 1: Read the entire book into a string.
     try:
@@ -40,7 +40,7 @@ def countDistictWords(filename):
         contents = contents.replace(c, ' ')
     contents = contents.lower()
 
-    # Step 3: Split the ftlString up into an array of words.
+    # Step 3: Split the string into a list of words.
     words = contents.split()
     print('Number of words: %i'%(len(words)))
 
@@ -53,7 +53,7 @@ def countDistictWords(filename):
             wordOcc[word] = 1
     print('Number of distinct words: %i'%(len(wordOcc)))
 
-    finish = time.clock()
+    finish = time.perf_counter()
     print('Counted all distinct words in %s in %f s'%(filename, finish-start))
 
 
