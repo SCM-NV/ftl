@@ -119,7 +119,7 @@ cleanall:
 
 # Shared library of non-template components:
 
-$(BUILDDIR)/libftl.so: $(BUILDDIR)/ftlKinds.o $(BUILDDIR)/ftlString.o $(BUILDDIR)/ftlHash.o $(BUILDDIR)/ftlRegex.o
+$(BUILDDIR)/libftl.so: $(BUILDDIR)/ftlKinds.o $(BUILDDIR)/ftlString.o $(BUILDDIR)/ftlHash.o $(BUILDDIR)/ftlRegex.o $(BUILDDIR)/ftlRegex_c.o
 	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) $^ $(LDFLAGS) $(SOLDFLAGS) -o $@
 
 
@@ -155,7 +155,7 @@ $(BUILDDIR)/ftlSharedPtrTests.o: tests/ftlSharedPtrTests.F90 $(BUILDDIR)/ftlShar
 $(BUILDDIR)/ftlStringTests.o: tests/ftlStringTests.F90 $(BUILDDIR)/ftlString.o $(BUILDDIR)/ftlDynArrayString.o $(BUILDDIR)/Animals.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
-$(BUILDDIR)/ftlRegexTests.o: tests/ftlRegexTests.F90 $(BUILDDIR)/ftlRegex.o | $(BUILDDIR)
+$(BUILDDIR)/ftlRegexTests.o: tests/ftlRegexTests.F90 $(BUILDDIR)/ftlRegex.o $(BUILDDIR)/ftlRegex_c.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
 
@@ -247,6 +247,9 @@ $(BUILDDIR)/ftlString.o: src/ftlString.F90 $(BUILDDIR)/ftlHash.o $(BUILDDIR)/ftl
 
 $(BUILDDIR)/ftlRegex.o: src/ftlRegex.F90 src/configure_ftlRegex.inc $(BUILDDIR)/ftlString.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) $(SOFLAGS) -c $< -o $@
+
+$(BUILDDIR)/ftlRegex_c.o: src/ftlRegex_c.c | $(BUILDDIR)
+	$(CXXCOMPILER) $(DEFINES) -c $< -o $@
 
 src/configure_ftlRegex.inc: configure/configure_ftlRegex.c
 	$(CXXCOMPILER) $(DEFINES) configure/configure_ftlRegex.c -o configure/configure_ftlRegex
