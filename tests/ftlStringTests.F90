@@ -688,6 +688,9 @@ contains
       type(ftlString) :: s1, s2
       type(ftlString) :: a1(3), a2(3)
 
+      character(4) :: r4
+      character(6) :: r6
+
       s1 = 'test'
       s2 = 'foobar'
 
@@ -718,6 +721,16 @@ contains
       ASSERT(.not.(s1 > s2))
       ASSERT(s2 > s1)
       ASSERT(.not.(s2 < s1))
+
+      ! comparison with raw strings on left hand side
+
+      s1 = 'test'
+      r4 = 'test'
+      r6 = 'test'
+
+      ASSERT(r4 == s1)
+      ASSERT(r6 /= s1)
+      ASSERT(trim(r6) == s1)
 
       ! comparison of arrays
 
