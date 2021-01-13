@@ -979,7 +979,11 @@ contains
    pure integer function ftlLen(self)
       class(ftlString), intent(in) :: self
 
-      ftlLen = len(self%raw)
+      if (allocated(self%raw)) then
+         ftlLen = len(self%raw)
+      else
+         ftlLen = 0
+      endif
 
    end function
 
@@ -988,7 +992,11 @@ contains
    pure integer function ftlLenTrim(self)
       class(ftlString), intent(in) :: self
 
-      ftlLenTrim = len_trim(self%raw)
+      if (allocated(self%raw)) then
+         ftlLenTrim = len_trim(self%raw)
+      else
+         ftlLenTrim = 0
+      endif
 
    end function
 
