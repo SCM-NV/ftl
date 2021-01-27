@@ -34,6 +34,7 @@
 module ftlStringModule
 
    use ftlKindsModule
+   use iso_fortran_env, only: IOSTAT_INQUIRE_INTERNAL_UNIT, IOSTAT_END
 
    implicit none
    private
@@ -1270,17 +1271,23 @@ contains
 
 
 
-   subroutine ReadUntilEOF(self, unit)
-      class(ftlString), intent(inout) :: self
-      integer         , intent(in)    :: unit
+   subroutine ReadUntilEOF(self, unit, iostat)
+      class(ftlString), intent(inout)         :: self
+      integer         , intent(in)            :: unit
+      integer         , intent(out), optional :: iostat
 
       integer :: ios, nRead, newlen
       type(ftlString) :: line
       character(len=:), allocatable :: buffer
 
       self = ''
+      if (present(iostat)) iostat = IOSTAT_END
 
       call line%ReadLine(unit, ios)
+      if (ios > 0 .and. ios /= IOSTAT_INQUIRE_INTERNAL_UNIT) then
+         if (present(iostat)) iostat = ios
+         return
+      endif
       if (is_iostat_end(ios)) return
 
       buffer = line%raw
@@ -1288,6 +1295,10 @@ contains
 
       do while (.true.)
          call line%ReadLine(unit, ios)
+         if (ios > 0 .and. ios /= IOSTAT_INQUIRE_INTERNAL_UNIT) then
+            if (present(iostat)) iostat = ios
+            return
+         endif
          if (is_iostat_end(ios)) exit
          if (len(buffer) < nRead + 1 + len(line%raw)) then
             ! not enough space anymore, we need to enlarge the buffer

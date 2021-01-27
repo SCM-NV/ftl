@@ -25,6 +25,7 @@ module ftlStringTestsModule
    use ftlTestToolsModule
    use ftlStringModule
    use ftlDynArrayStringModule
+   use iso_fortran_env, only: IOSTAT_END
 
    implicit none
    private
@@ -877,16 +878,18 @@ contains
       open (unit=unit, file='tests/assets/singleline.txt', status='old', action='read', iostat=iostat)
       ASSERT(iostat == 0)
       if (iostat == 0) then
-         call contents%ReadUntilEOF(unit)
+         call contents%ReadUntilEOF(unit, iostat=iostat)
          ASSERT(contents == 'This is just one single line.')
+         ASSERT(iostat == IOSTAT_END)
       endif
       close(unit)
 
       open (unit=unit, file='tests/assets/emptyfile.txt', status='old', action='read', iostat=iostat)
       ASSERT(iostat == 0)
       if (iostat == 0) then
-         call contents%ReadUntilEOF(unit)
+         call contents%ReadUntilEOF(unit, iostat=iostat)
          ASSERT(contents == '')
+         ASSERT(iostat == IOSTAT_END)
       endif
       close(unit)
 
