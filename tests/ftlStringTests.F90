@@ -88,6 +88,8 @@ contains
       call testUpperLower
       call testIsSpace
       call testReplace
+      call testRemovePrefix
+      call testRemoveSuffix
 
       ! Other string methods:
       call testCountWords
@@ -1524,6 +1526,48 @@ contains
       ASSERT(s%Replace('A','B') == 'BBBBBB')
       ASSERT(s%Replace('AB','B') == 'BBB')
       ASSERT(s%Replace('BA','AB') == 'AABABB')
+
+   end subroutine
+
+
+   subroutine testRemovePrefix
+      type(ftlString) :: s,p
+
+      s = 'ams.results/ams.rkf -> ams.results'
+      p = 'ams.results/'
+
+      ASSERT(s%RemovePrefix('ams.results/') == 'ams.rkf -> ams.results')
+      ASSERT(s%RemovePrefix(p) == 'ams.rkf -> ams.results')
+
+      s = 'prefix is not in there'
+
+      ASSERT(s%RemovePrefix('in') == 'prefix is not in there')
+      ASSERT(s%RemovePrefix('') == 'prefix is not in there')
+
+      s = ''
+
+      ASSERT(s%RemovePrefix('bla') == '')
+
+   end subroutine
+
+
+   subroutine testRemoveSuffix
+      type(ftlString) :: s,p
+
+      s = 'ams.results/ams.rkf -> ams.results'
+      p = 'ams.results'
+
+      ASSERT(s%RemoveSuffix('ams.results') == 'ams.results/ams.rkf -> ')
+      ASSERT(s%RemoveSuffix(p) == 'ams.results/ams.rkf -> ')
+
+      s = 'suffix is not in there'
+
+      ASSERT(s%RemoveSuffix('in') == 'suffix is not in there')
+      ASSERT(s%RemoveSuffix('') == 'suffix is not in there')
+
+      s = ''
+
+      ASSERT(s%RemoveSuffix('bla') == '')
 
    end subroutine
 

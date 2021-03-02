@@ -162,6 +162,12 @@ module ftlStringModule
       procedure         :: ReplaceImplementationEqualLength
       procedure         :: ReplaceImplementationSingleChar
       procedure         :: ReplaceImplementationGeneral
+      generic  , public :: RemovePrefix => RemovePrefixRaw, RemovePrefixString
+      procedure         :: RemovePrefixRaw
+      procedure         :: RemovePrefixString
+      generic  , public :: RemoveSuffix => RemoveSuffixRaw, RemoveSuffixString
+      procedure         :: RemoveSuffixRaw
+      procedure         :: RemoveSuffixString
 
       ! Other string methods:
       procedure, public :: CountWords
@@ -2096,6 +2102,47 @@ contains
       str%raw(writeEnd:) = self%raw(readEnd:)
 
    end function
+
+
+
+   type(ftlString) function RemovePrefixRaw(self, prefix) result(str)
+      class(ftlString), intent(in) :: self
+      character(len=*), intent(in) :: prefix
+
+      if (self%StartsWithRaw(prefix)) then
+         str%raw = self%raw(len(prefix)+1:len(self%raw))
+      else
+         str%raw = self%raw
+      endif
+
+   end function
+   !
+   type(ftlString) function RemovePrefixString(self, prefix) result(str)
+      class(ftlString), intent(in) :: self
+      type(ftlString),  intent(in) :: prefix
+      str = self%RemovePrefixRaw(prefix%raw)
+   end function
+
+
+
+   type(ftlString) function RemoveSuffixRaw(self, prefix) result(str)
+      class(ftlString), intent(in) :: self
+      character(len=*), intent(in) :: prefix
+
+      if (self%EndsWithRaw(prefix)) then
+         str%raw = self%raw(1:len(self%raw)-len(prefix))
+      else
+         str%raw = self%raw
+      endif
+
+   end function
+   !
+   type(ftlString) function RemoveSuffixString(self, prefix) result(str)
+      class(ftlString), intent(in) :: self
+      type(ftlString),  intent(in) :: prefix
+      str = self%RemoveSuffixRaw(prefix%raw)
+   end function
+
 
 
 
