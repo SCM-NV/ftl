@@ -65,6 +65,7 @@ contains
       call testComparison
       call testConcat
       call testIn
+      call testIeq
 
       ! File reading:
       call testReadLine
@@ -93,6 +94,7 @@ contains
 
       ! Other string methods:
       call testCountWords
+      call testLevenshteinDistance
 
       ! Tests of ftlString iterators:
 
@@ -796,6 +798,38 @@ contains
       s3 = 'this is a ... not containing the particular word'
 
       ASSERT(.not.(s2 .in. s3))
+
+   end subroutine
+
+
+   subroutine testIeq
+      type(ftlString) :: s1
+
+      s1 = 'some string to test with'
+
+      ASSERT(s1 .ieq. 'some string to test with')
+      ASSERT('some string to test with' .ieq. s1)
+
+      ASSERT(s1 .ieq. '   some string to test with')
+      ASSERT(s1 .ieq. 'some string to test with   ')
+      ASSERT(s1 .ieq. ' some string to test with  ')
+      ASSERT(s1 .ieq. ' Some String To Test With  ')
+      ASSERT(s1 .ieq. 'sOME sTRING tO tEST wITH')
+
+      ASSERT(s1 .nieq. 'some test to string with')
+      ASSERT('some test to string with' .nieq. s1)
+
+      s1 = ''
+
+      ASSERT(s1 .ieq. '   ')
+      ASSERT(s1 .ieq. FTL_STRING_WHITESPACE)
+      ASSERT(s1 .ieq. '')
+
+      s1 = FTL_STRING_WHITESPACE
+
+      ASSERT(s1 .ieq. '   ')
+      ASSERT(s1 .ieq. FTL_STRING_WHITESPACE)
+      ASSERT(s1 .ieq. '')
 
    end subroutine
 
@@ -1595,6 +1629,21 @@ contains
 
       s = achar(9)//'test containing '//achar(9)//'tabs'//achar(9)
       ASSERT(s%CountWords() == 3)
+
+   end subroutine
+
+
+   subroutine testLevenshteinDistance
+      type(ftlString) :: s
+
+      s = 'test'
+      ASSERT(s%LevenshteinDistance('tent') == 1)
+
+      s = 'kitten'
+      ASSERT(s%LevenshteinDistance('sitting') == 3)
+
+      s = 'Belastingdienst'
+      ASSERT(s%LevenshteinDistance('Verrassingdienst') == 4)
 
    end subroutine
 

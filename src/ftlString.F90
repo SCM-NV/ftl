@@ -161,6 +161,10 @@ module ftlStringModule
 
       ! Other string methods:
       procedure, public :: CountWords
+      generic  , public :: LevenshteinDistance => LevenshteinDistanceRaw, LevenshteinDistanceString
+      procedure         :: LevenshteinDistanceRaw
+      procedure         :: LevenshteinDistanceString
+
 
       ! Assignment:
 #if defined(__INTEL_COMPILER) && __INTEL_COMPILER < 1900 && __INTEL_COMPILER >= 1800
@@ -217,6 +221,18 @@ module ftlStringModule
       procedure, pass(lhs) :: StringInChar
       procedure, pass(rhs) :: CharInString
       generic  , public    :: operator(.in.) => StringInString, StringInChar, CharInString
+
+      ! Fortran style .ieq. operator for comparisons ignoring leading/trailing whitspace as well as case
+      procedure, pass(lhs) :: StringIeqString
+      procedure, pass(lhs) :: StringIeqChar
+      procedure, pass(rhs) :: CharIeqString
+      generic  , public    :: operator(.ieq.) => StringIeqString, StringIeqChar, CharIeqString
+
+      ! Fortran style .nieq. operator for comparisons ignoring leading/trailing whitspace as well as case
+      procedure, pass(lhs) :: StringNieqString
+      procedure, pass(lhs) :: StringNieqChar
+      procedure, pass(rhs) :: CharNieqString
+      generic  , public    :: operator(.nieq.) => StringNieqString, StringNieqChar, CharNieqString
 
    end type
 
@@ -937,6 +953,92 @@ contains
       class(ftlString), intent(in) :: rhs
 
       in = (index(rhs%raw, lhs) /= 0)
+
+   endfunction
+
+
+
+   ! Fortran style .ieq. operator for comparisons ignoring leading/trailing whitspace as well as case.
+   !
+   elemental logical function StringIeqString(lhs, rhs) result(eqv)
+      class(ftlString), intent(in) :: lhs
+       type(ftlString), intent(in) :: rhs
+
+       eqv = lhs%StringIeqChar(rhs%raw)
+
+   endfunction
+   !
+   elemental logical function StringIeqChar(lhs, rhs) result(ieq)
+      class(ftlString), intent(in) :: lhs
+      character(len=*), intent(in) :: rhs
+
+      integer :: lhsFirst, lhsLast, rhsFirst, rhsLast
+      integer :: lhsLen, rhsLen
+      integer :: ic, lc, rc
+
+      ! Find start and end of lhs
+      lhsFirst = verify(lhs%raw, FTL_STRING_WHITESPACE)
+      lhsLast  = verify(lhs%raw, FTL_STRING_WHITESPACE, .true.)
+      lhsLen = lhsLast-lhsFirst
+
+      ! Find start and end of rhs
+      rhsFirst = verify(rhs, FTL_STRING_WHITESPACE)
+      rhsLast  = verify(rhs, FTL_STRING_WHITESPACE, .true.)
+      rhsLen = rhsLast-rhsFirst
+
+      if (lhsLen /= rhsLen) then
+         ieq = .false.
+      else if (lhsLen == 0) then
+         ieq = .true.
+      else
+         do ic = 0, lhsLen-1
+            lc = iachar(lhs%raw(lhsFirst+ic:lhsFirst+ic))
+            if (lc >= 97 .and. lc <= 122) lc = lc-32
+            rc = iachar(rhs(rhsFirst+ic:rhsFirst+ic))
+            if (rc >= 97 .and. rc <= 122) rc = rc-32
+            if (lc /= rc) then
+               ieq = .false.
+               return
+            endif
+         enddo
+         ieq = .true.
+      endif
+
+   endfunction
+   !
+   elemental logical function CharIeqString(lhs, rhs) result(ieq)
+      character(len=*), intent(in) :: lhs
+      class(ftlString), intent(in) :: rhs
+
+      ieq = rhs%StringIeqChar(lhs)
+
+   endfunction
+
+
+
+   ! Fortran style .nieq. operator for comparisons ignoring leading/trailing whitspace as well as case.
+   !
+   elemental logical function StringNieqString(lhs, rhs) result(nieq)
+      class(ftlString), intent(in) :: lhs
+       type(ftlString), intent(in) :: rhs
+
+       nieq = .not.lhs%StringIeqChar(rhs%raw)
+
+   endfunction
+   !
+   elemental logical function StringNieqChar(lhs, rhs) result(nieq)
+      class(ftlString), intent(in) :: lhs
+      character(len=*), intent(in) :: rhs
+
+      nieq = .not.lhs%StringIeqChar(rhs)
+
+   endfunction
+   !
+   elemental logical function CharNieqString(lhs, rhs) result(nieq)
+      character(len=*), intent(in) :: lhs
+      class(ftlString), intent(in) :: rhs
+
+      nieq = .not.rhs%StringIeqChar(lhs)
 
    endfunction
 
@@ -2034,7 +2136,8 @@ contains
    end function
 
 
-
+   ! If the string starts with the prefix string, return string[len(prefix):]. Otherwise, return a copy of the original string.
+   !
    type(ftlString) function RemovePrefixRaw(self, prefix) result(str)
       class(ftlString), intent(in) :: self
       character(len=*), intent(in) :: prefix
@@ -2054,7 +2157,9 @@ contains
    end function
 
 
-
+   ! If the string ends with the suffix string and that suffix is not empty, return string[:-len(suffix)]. Otherwise,
+   ! return a copy of the original string.
+   !
    type(ftlString) function RemoveSuffixRaw(self, prefix) result(str)
       class(ftlString), intent(in) :: self
       character(len=*), intent(in) :: prefix
@@ -2103,6 +2208,50 @@ contains
             CountWords = CountWords + 1
          endif
       enddo
+
+   end function
+
+
+
+   ! Computes the LevenshteinDistance (edit distance) between two strings.
+   ! See: https://en.wikipedia.org/wiki/Wagner%E2%80%93Fischer_algorithm
+   !
+   integer function LevenshteinDistanceString(s1, s2)
+      class(ftlString), intent(in) :: s1
+       type(ftlString), intent(in) :: s2
+
+      LevenshteinDistanceString = s1%LevenshteinDistanceRaw(s2%raw)
+
+   end function
+   !
+   integer function LevenshteinDistanceRaw(s1, s2)
+      class(ftlString), intent(in) :: s1
+      character(*),     intent(in) :: s2
+
+      integer :: i,j
+      integer, allocatable :: d(:,:)
+
+      allocate(d(0:len(s1%raw),0:len(s2))); d = 0
+
+      do i = 0, len(s1%raw)
+         d(i,0) = i
+      enddo
+
+      do j = 0, len(s2)
+         d(0,j) = j
+      enddo
+
+      do j = 1, len(s2)
+         do i = 1, len(s1%raw)
+            if (s1%raw(i:i) == s2(j:j)) then
+               d(i,j) = d(i-1,j-1)
+            else
+               d(i,j) = min( d(i-1,j)+1 , d(i,j-1)+1 , d(i-1,j-1)+1 )
+            endif
+         enddo
+      enddo
+
+      LevenshteinDistanceRaw = d(len(s1%raw),len(s2))
 
    end function
 
