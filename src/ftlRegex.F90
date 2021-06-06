@@ -110,7 +110,7 @@ module ftlRegexModule
 
    interface
 
-      function C_regcomp(preg, pattern, flags) result(status) bind(C,name='regcomp')
+      function C_regcomp(preg, pattern, flags) result(status) bind(C)
          import
          type(C_ptr)           , intent(in), value :: preg
          character(kind=C_char), intent(in)        :: pattern(*)
@@ -118,12 +118,12 @@ module ftlRegexModule
          integer(C_int)                            :: status
       end function
 
-      subroutine C_regfree(preg) bind(C,name='regfree')
+      subroutine C_regfree(preg) bind(C)
          import
          type(C_ptr), intent(in), value :: preg
       end subroutine
 
-      function C_regerror(errcode, preg, errbuf, errbuf_size) result(errlen) bind(C,name='regerror')
+      function C_regerror(errcode, preg, errbuf, errbuf_size) result(errlen) bind(C)
          import
          integer(C_int)        , intent(in) , value :: errcode
          type(C_ptr)           , intent(in) , value :: preg
@@ -132,7 +132,7 @@ module ftlRegexModule
          integer(C_size_t)                          :: errlen
       end function
 
-      function C_regexec(preg, string, nmatch, pmatch, eflags) result(status) bind(C,name='regexec')
+      function C_regexec(preg, string, nmatch, pmatch, eflags) result(status) bind(C)
          import
          type(C_ptr)           , intent(in) , value :: preg
          character(kind=C_char), intent(in)         :: string(*)
