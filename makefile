@@ -32,27 +32,30 @@ DEFINES =
 
 ifeq ($(PLATFORM), gnu)
 	FC = gfortran
-	FCFLAGS = -std=f2008 -fall-intrinsics -ffree-line-length-none -Wall -Wextra -Wpedantic -Wno-target-lifetime -Wno-compare-reals -J$(BUILDDIR)
+	FCFLAGS += -std=f2008 -fall-intrinsics -ffree-line-length-none -Wall -Wextra -Wpedantic -Wno-target-lifetime -Wno-compare-reals -J$(BUILDDIR)
 	SOFLAGS = -fPIC
 	SOLDFLAGS = -shared
 	CXX = g++
-	CXXFLAGS = -std=c++11 -Ofast -march=native
+	CXXFLAGS ?= -Ofast -march=native
+	CXXFLAGS += -std=c++11
 	SUPPRESSIONS = --suppressions=gfortran.supp
 else ifeq ($(PLATFORM), intel)
 	FC = ifort
 	SOFLAGS = -fPIC
 	SOLDFLAGS = -shared
-	FCFLAGS = -stand f08 -warn -diag-disable=5268 -module $(BUILDDIR)
+	FCFLAGS += -stand f08 -warn -diag-disable=5268 -module $(BUILDDIR)
 	CXX = g++
-	CXXFLAGS = -std=c++11 -fast -xHost
+	CXXFLAGS ?= -fast -xHost
+	CXXFLAGS += -std=c++11
 	SUPPRESSIONS =
 else ifeq ($(PLATFORM), nag)
-	FC = nagfor
-	FCFLAGS = -fpp -colour -I$(BUILDDIR) -mdir $(BUILDDIR)
+	FC ?= nagfor
+	FCFLAGS += -fpp -colour -I$(BUILDDIR) -mdir $(BUILDDIR)
 	SOFLAGS = -PIC
 	SOLDFLAGS = -Wl,-shared
 	CXX = g++
-	CXXFLAGS = -std=c++11 -fast -xHost
+	CXXFLAGS ?= -fast -xHost
+	CXXFLAGS += -std=c++11
 	SUPPRESSIONS =
 else
   $(error unrecognized PLATFORM)
