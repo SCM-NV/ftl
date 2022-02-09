@@ -25,6 +25,7 @@ PLATFORM ?= gnu
 BUILD ?= debug
 BUILDDIR = build.$(PLATFORM).$(BUILD)
 PREFIX ?= /usr/local
+LIBDIR ?= lib
 
 INCLUDES = -Isrc -Itests
 DEFINES =
@@ -85,8 +86,8 @@ endif
 libftl: $(BUILDDIR)/libftl.so
 
 install: libftl
-	mkdir -p $(DESTDIR)$(PREFIX)/lib
-	cp $(BUILDDIR)/libftl.so $(DESTDIR)$(PREFIX)/lib/
+	mkdir -p $(DESTDIR)$(PREFIX)/$(LIBDIR)
+	cp $(BUILDDIR)/libftl.so $(DESTDIR)$(PREFIX)/$(LIBDIR)/
 	mkdir -p $(DESTDIR)$(PREFIX)/include/ftl
 	cp $(BUILDDIR)/ftlkindsmodule.mod $(DESTDIR)$(PREFIX)/include/ftl
 	cp $(BUILDDIR)/ftlhashmodule.mod $(DESTDIR)$(PREFIX)/include/ftl
