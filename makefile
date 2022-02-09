@@ -34,7 +34,7 @@ ifeq ($(PLATFORM), gnu)
 	FC = gfortran
 	FCFLAGS += -std=f2008 -fall-intrinsics -ffree-line-length-none -Wall -Wextra -Wpedantic -Wno-target-lifetime -Wno-compare-reals -J$(BUILDDIR)
 	SOFLAGS = -fPIC
-	SOLDFLAGS = -shared
+	SOLDFLAGS = -shared -Wl,-soname=libftl.so.1
 	CXX = g++
 	CXXFLAGS ?= -Ofast -march=native
 	CXXFLAGS += -std=c++11
@@ -42,7 +42,7 @@ ifeq ($(PLATFORM), gnu)
 else ifeq ($(PLATFORM), intel)
 	FC = ifort
 	SOFLAGS = -fPIC
-	SOLDFLAGS = -shared
+	SOLDFLAGS = -shared -Wl,-soname,libftl.so.1
 	FCFLAGS += -stand f08 -warn -diag-disable=5268 -module $(BUILDDIR)
 	CXX = g++
 	CXXFLAGS ?= -fast -xHost
@@ -52,7 +52,7 @@ else ifeq ($(PLATFORM), nag)
 	FC ?= nagfor
 	FCFLAGS += -fpp -colour -I$(BUILDDIR) -mdir $(BUILDDIR)
 	SOFLAGS = -PIC
-	SOLDFLAGS = -Wl,-shared
+	SOLDFLAGS = -Wl,-shared -Wl,-soname=libftl.so.1
 	CXX = g++
 	CXXFLAGS ?= -fast -xHost
 	CXXFLAGS += -std=c++11
@@ -86,11 +86,12 @@ endif
 
 # Make commands:
 
-libftl: $(BUILDDIR)/libftl.so
+libftl: $(BUILDDIR)/libftl.so.1
 
 install: libftl
 	mkdir -p $(DESTDIR)$(PREFIX)/$(LIBDIR)
-	cp $(BUILDDIR)/libftl.so $(DESTDIR)$(PREFIX)/$(LIBDIR)/
+	cp $(BUILDDIR)/libftl.so.1 $(DESTDIR)$(PREFIX)/$(LIBDIR)/
+	ln -s libftl.so.1 $(DESTDIR)$(PREFIX)/$(LIBDIR)/libftl.so
 	mkdir -p $(DESTDIR)$(PREFIX)/include/ftl
 	cp $(BUILDDIR)/ftlkindsmodule.mod $(DESTDIR)$(PREFIX)/include/ftl
 	cp $(BUILDDIR)/ftlhashmodule.mod $(DESTDIR)$(PREFIX)/include/ftl
@@ -123,7 +124,7 @@ cleanall:
 
 # Shared library of non-template components:
 
-$(BUILDDIR)/libftl.so: $(BUILDDIR)/ftlKinds.o $(BUILDDIR)/ftlString.o $(BUILDDIR)/ftlHash.o $(BUILDDIR)/ftlRegex.o
+$(BUILDDIR)/libftl.so.1: $(BUILDDIR)/ftlKinds.o $(BUILDDIR)/ftlString.o $(BUILDDIR)/ftlHash.o $(BUILDDIR)/ftlRegex.o
 	$(FC) $(FCFLAGS) $(INCLUDES) $(DEFINES) $^ $(LDFLAGS) $(SOLDFLAGS) -o $@
 
 
