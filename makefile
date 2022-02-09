@@ -35,7 +35,7 @@ ifeq ($(PLATFORM), gnu)
 	FLAGS = -std=f2008 -fall-intrinsics -ffree-line-length-none -Wall -Wextra -Wpedantic -Wno-target-lifetime -Wno-compare-reals -J$(BUILDDIR)
 	SOFLAGS = -fPIC
 	SOLDFLAGS = -shared
-	CXXCOMPILER = g++
+	CXX = g++
 	CXXFLAGS = -std=c++11 -Ofast -march=native
 	SUPPRESSIONS = --suppressions=gfortran.supp
 else ifeq ($(PLATFORM), intel)
@@ -43,7 +43,7 @@ else ifeq ($(PLATFORM), intel)
 	SOFLAGS = -fPIC
 	SOLDFLAGS = -shared
 	FLAGS = -stand f08 -warn -diag-disable=5268 -module $(BUILDDIR)
-	CXXCOMPILER = g++
+	CXX = g++
 	CXXFLAGS = -std=c++11 -fast -xHost
 	SUPPRESSIONS =
 else ifeq ($(PLATFORM), nag)
@@ -51,7 +51,7 @@ else ifeq ($(PLATFORM), nag)
 	FLAGS = -fpp -colour -I$(BUILDDIR) -mdir $(BUILDDIR)
 	SOFLAGS = -PIC
 	SOLDFLAGS = -Wl,-shared
-	CXXCOMPILER = g++
+	CXX = g++
 	CXXFLAGS = -std=c++11 -fast -xHost
 	SUPPRESSIONS =
 else
@@ -166,7 +166,7 @@ $(BUILDDIR)/perftest_sortDynArrayInt: perftests/sortDynArrayInt.F90 $(BUILDDIR)/
 	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) $< $(BUILDDIR)/*.o $(LDFLAGS) -o $@
 
 $(BUILDDIR)/perftest_sortDynArrayInt_ref: perftests/sortDynArrayInt.cpp | $(BUILDDIR)
-	$(CXXCOMPILER) $(CXXFLAGS) $(DEFINES) $< -o $@
+	$(CXX) $(CXXFLAGS) $(DEFINES) $< -o $@
 
 $(BUILDDIR)/perftest_countDistinctWords: perftests/countDistinctWords.F90 $(BUILDDIR)/ftlString.o $(BUILDDIR)/ftlHashMapStringInt.o | $(BUILDDIR)
 	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) $< $(BUILDDIR)/*.o $(LDFLAGS) -o $@
@@ -250,7 +250,7 @@ $(BUILDDIR)/ftlRegex.o: src/ftlRegex.F90 src/configure_ftlRegex.inc $(BUILDDIR)/
 	$(COMPILER) $(FLAGS) $(INCLUDES) $(DEFINES) $(SOFLAGS) -c $< -o $@
 
 src/configure_ftlRegex.inc: configure/configure_ftlRegex.c
-	$(CXXCOMPILER) $(DEFINES) configure/configure_ftlRegex.c -o configure/configure_ftlRegex
+	$(CXX) $(CXXFLAGS) $(DEFINES) configure/configure_ftlRegex.c -o configure/configure_ftlRegex
 	./configure/configure_ftlRegex | tee src/configure_ftlRegex.inc
 	rm configure/configure_ftlRegex
 
