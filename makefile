@@ -79,8 +79,8 @@ else ifeq ($(PLATFORM)$(BUILD), intelrelease)
 	FCFLAGS += -O3 -ipo -xHost
 else ifeq ($(PLATFORM)$(BUILD), nagrelease)
 	FCFLAGS += -O
-else
-  $(error unrecognized BUILD)
+else ifneq ($(BUILD), custom)
+	$(error unrecognized BUILD (valid values: debug, release, custom))
 endif
 
 
