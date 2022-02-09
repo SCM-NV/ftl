@@ -85,15 +85,15 @@ endif
 libftl: $(BUILDDIR)/libftl.so
 
 install: libftl
-	mkdir -p $(PREFIX)/lib
-	cp $(BUILDDIR)/libftl.so $(PREFIX)/lib/
-	mkdir -p $(PREFIX)/include/ftl
-	cp $(BUILDDIR)/ftlkindsmodule.mod $(PREFIX)/include/ftl
-	cp $(BUILDDIR)/ftlhashmodule.mod $(PREFIX)/include/ftl
-	cp $(BUILDDIR)/ftlregexmodule.mod $(PREFIX)/include/ftl
-	cp $(BUILDDIR)/ftlstringmodule.mod $(PREFIX)/include/ftl
-	cp src/*.F90_template $(PREFIX)/include/ftl
-	cp src/ftlMacros.inc $(PREFIX)/include/ftl
+	mkdir -p $(DESTDIR)$(PREFIX)/lib
+	cp $(BUILDDIR)/libftl.so $(DESTDIR)$(PREFIX)/lib/
+	mkdir -p $(DESTDIR)$(PREFIX)/include/ftl
+	cp $(BUILDDIR)/ftlkindsmodule.mod $(DESTDIR)$(PREFIX)/include/ftl
+	cp $(BUILDDIR)/ftlhashmodule.mod $(DESTDIR)$(PREFIX)/include/ftl
+	cp $(BUILDDIR)/ftlregexmodule.mod $(DESTDIR)$(PREFIX)/include/ftl
+	cp $(BUILDDIR)/ftlstringmodule.mod $(DESTDIR)$(PREFIX)/include/ftl
+	cp src/*.F90_template $(DESTDIR)$(PREFIX)/include/ftl
+	cp src/ftlMacros.inc $(DESTDIR)$(PREFIX)/include/ftl
 
 test: $(BUILDDIR)/tests
 	./$(BUILDDIR)/tests
