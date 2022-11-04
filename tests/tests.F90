@@ -22,6 +22,7 @@ program tests
 
    use ftlTestToolsModule
    use ftlStringTestsModule
+   use ftlExceptionTestsModule
    use ftlRegexTestsModule
    use ftlArrayTestsModule
    use ftlDynArrayTestsModule
@@ -33,14 +34,15 @@ program tests
 
 #if !defined(NAGFOR)
    ! dummy assertion to test that assertions themselves work ...
-   ASSERT(.false.)
+   ASSERT(.not..true.)
 #endif
 
    call ftlRegexTests
    call ftlStringTests
+   call ftlExceptionTests
    call ftlArrayTests
    call ftlDynArrayTests
-   !call ftlListTests
+   call ftlListTests
    call ftlHashMapTests
    call ftlHashSetTests
    call ftlSharedPtrTests

@@ -1,5 +1,5 @@
 # Copyright (c) 2016, 2017  Robert Rüger
-# Copyright (c) 2018  Software for Chemistry & Materials BV
+# Copyright (c) 2018, 2022  Software for Chemistry & Materials BV
 #
 # This file is part of of the Fortran Template Library.
 #
@@ -97,6 +97,7 @@ install: libftl
 	cp $(BUILDDIR)/ftlhashmodule.mod $(DESTDIR)$(PREFIX)/include/ftl
 	cp $(BUILDDIR)/ftlregexmodule.mod $(DESTDIR)$(PREFIX)/include/ftl
 	cp $(BUILDDIR)/ftlstringmodule.mod $(DESTDIR)$(PREFIX)/include/ftl
+	cp $(BUILDDIR)/ftlexceptionmodule.mod $(PREFIX)/include/ftl
 	cp src/*.F90_template $(DESTDIR)$(PREFIX)/include/ftl
 	cp src/ftlMacros.inc $(DESTDIR)$(PREFIX)/include/ftl
 
@@ -124,13 +125,13 @@ cleanall:
 
 # Shared library of non-template components:
 
-$(BUILDDIR)/libftl.so.1: $(BUILDDIR)/ftlKinds.o $(BUILDDIR)/ftlString.o $(BUILDDIR)/ftlHash.o $(BUILDDIR)/ftlRegex.o
+$(BUILDDIR)/libftl.so.1: $(BUILDDIR)/ftlKinds.o $(BUILDDIR)/ftlString.o $(BUILDDIR)/ftlException.o $(BUILDDIR)/ftlHash.o $(BUILDDIR)/ftlRegex.o
 	$(FC) $(FCFLAGS) $(INCLUDES) $(DEFINES) $^ $(LDFLAGS) $(SOLDFLAGS) -o $@
 
 
 # Unit tests:
 
-$(BUILDDIR)/tests: tests/tests.F90 $(BUILDDIR)/ftlTestTools.o $(BUILDDIR)/ftlArrayTests.o $(BUILDDIR)/ftlDynArrayTests.o $(BUILDDIR)/ftlListTests.o $(BUILDDIR)/ftlHashMapTests.o $(BUILDDIR)/ftlHashSetTests.o $(BUILDDIR)/ftlAlgorithmsTests.o $(BUILDDIR)/ftlSharedPtrTests.o $(BUILDDIR)/ftlStringTests.o $(BUILDDIR)/ftlRegexTests.o | $(BUILDDIR)
+$(BUILDDIR)/tests: tests/tests.F90 $(BUILDDIR)/ftlTestTools.o $(BUILDDIR)/ftlArrayTests.o $(BUILDDIR)/ftlDynArrayTests.o $(BUILDDIR)/ftlListTests.o $(BUILDDIR)/ftlHashMapTests.o $(BUILDDIR)/ftlHashSetTests.o $(BUILDDIR)/ftlAlgorithmsTests.o $(BUILDDIR)/ftlSharedPtrTests.o $(BUILDDIR)/ftlStringTests.o $(BUILDDIR)/ftlExceptionTests.o $(BUILDDIR)/ftlRegexTests.o | $(BUILDDIR)
 	$(FC) $(FCFLAGS) $(INCLUDES) $(DEFINES) $< $(BUILDDIR)/*.o $(LDFLAGS) -o $@
 
 $(BUILDDIR)/ftlTestTools.o: tests/ftlTestTools.F90 tests/ftlTestTools.inc | $(BUILDDIR)
@@ -158,6 +159,9 @@ $(BUILDDIR)/ftlSharedPtrTests.o: tests/ftlSharedPtrTests.F90 $(BUILDDIR)/ftlShar
 	$(FC) $(FCFLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
 $(BUILDDIR)/ftlStringTests.o: tests/ftlStringTests.F90 $(BUILDDIR)/ftlString.o $(BUILDDIR)/ftlDynArrayString.o $(BUILDDIR)/Animals.o | $(BUILDDIR)
+	$(FC) $(FCFLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
+
+$(BUILDDIR)/ftlExceptionTests.o: tests/ftlExceptionTests.F90 $(BUILDDIR)/ftlException.o | $(BUILDDIR)
 	$(FC) $(FCFLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
 $(BUILDDIR)/ftlRegexTests.o: tests/ftlRegexTests.F90 $(BUILDDIR)/ftlRegex.o | $(BUILDDIR)
@@ -248,6 +252,9 @@ $(BUILDDIR)/ftlHash.o: src/ftlHash.F90 $(BUILDDIR)/ftlKinds.o | $(BUILDDIR)
 	$(FC) $(FCFLAGS) $(INCLUDES) $(DEFINES) $(SOFLAGS) -c $< -o $@
 
 $(BUILDDIR)/ftlString.o: src/ftlString.F90 $(BUILDDIR)/ftlHash.o $(BUILDDIR)/ftlKinds.o | $(BUILDDIR)
+	$(FC) $(FCFLAGS) $(INCLUDES) $(DEFINES) $(SOFLAGS) -c $< -o $@
+
+$(BUILDDIR)/ftlException.o: src/ftlException.F90 src/ftlException.inc $(BUILDDIR)/ftlString.o | $(BUILDDIR)
 	$(FC) $(FCFLAGS) $(INCLUDES) $(DEFINES) $(SOFLAGS) -c $< -o $@
 
 $(BUILDDIR)/ftlRegex.o: src/ftlRegex.F90 src/configure_ftlRegex.inc $(BUILDDIR)/ftlString.o | $(BUILDDIR)

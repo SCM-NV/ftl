@@ -48,7 +48,7 @@ contains
          num_failed = num_failed + 1
 
 #if !defined(NAGFOR)
-         if (str == '.false.') then
+         if (str == '.not..true.') then
             write (*,'(A)') '(This was a dummy assertion to test if assertions themselves work ...)'
             num_asserts = num_asserts - 1
             num_failed = num_failed - 1
