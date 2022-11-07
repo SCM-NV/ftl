@@ -49,9 +49,47 @@ module ftlExceptionModule
 
    ! FIXME: single logical will break in case of nested try blocks.
    !        replace with stack of logicals?
-   logical, public, save :: FTL_inTryBlock = .false.
+   integer, public, save :: FTL_nestedTryBlocks = 0
+
+   ! internally used class whose finalizer is used to trigger the clean-up when leaving a try block
+   type, public :: ftlTryBlockGuard
+      private
+      logical :: guarding = .false.
+   contains
+      procedure, public :: Acquire
+      final             :: Release
+   end type
 
 contains
+
+
+   subroutine Acquire(self)
+      class(ftlTryBlockGuard), intent(out) :: self
+      FTL_nestedTryBlocks = FTL_nestedTryBlocks + 1
+      self%guarding = .true.
+   end subroutine
+
+   subroutine Release(self)
+      type(ftlTryBlockGuard), intent(inout) :: self
+      if (self%guarding) then
+         FTL_nestedTryBlocks = FTL_nestedTryBlocks - 1
+         self%guarding = .false.
+         if (FTL_nestedTryBlocks == 0 .and. allocated(FTL_tmpexc_global)) then
+            ! We have exited the last try block, but still have an exception pending in the global buffer?
+            ! It's unhandled ... let's go into the handler now.
+            block
+               class(ftlException), allocatable :: exc
+#if defined(__INTEL_COMPILER)
+               exc = FTL_tmpexc_global
+               deallocate(FTL_tmpexc_global)
+#else
+               call move_alloc(FTL_tmpexc_global, exc)
+#endif
+               call ftlUncaughtExceptionHandler(exc)
+            end block
+         endif
+      endif
+   end subroutine
 
 
    subroutine ftlUncaughtExceptionDefaultHandler(exc)

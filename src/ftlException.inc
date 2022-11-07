@@ -20,35 +20,52 @@
 #define FTL_EXCEPTION_INCLUDED
 
 #define FTL_THROW(e)\
-   if (FTL_inTryBlock) then;\
-      FTL_tmpexc_global = e;\
+   if (FTL_nestedTryBlocks > 0) then;\
+      if (.not.allocated(FTL_tmpexc_global)) FTL_tmpexc_global = e;\
    else;\
       call ftlUncaughtExceptionHandler(e);\
    endif;\
-   return;\
+   return
 
 #define FTL_TRY\
    block;\
       class(ftlException), allocatable :: FTL_exc_local;\
-      if (allocated(FTL_tmpexc_global)) deallocate(FTL_tmpexc_global);\
-      FTL_inTryBlock = .true.;\
-      do;\
+      if (allocated(FTL_tmpexc_global)) then;\
+         call ftlUncaughtExceptionHandler(FTL_tmpexc_global);\
+         deallocate(FTL_tmpexc_global);\
+      endif;\
+      FTL_TRY_BLOCK: block;\
+         type(ftlTryBlockGuard) :: FTL_tbguard;\
+         call FTL_tbguard%Acquire
 
+#if defined(__INTEL_COMPILER)
 #define FTL_MAYTHROW\
-         ; call move_alloc(FTL_tmpexc_global, FTL_exc_local);\
-         if (allocated(FTL_exc_local)) exit
+            ; if (allocated(FTL_tmpexc_global)) then;\
+               FTL_exc_local = FTL_tmpexc_global;\
+               deallocate(FTL_tmpexc_global);\
+               exit FTL_TRY_BLOCK;\
+            endif
+#else
+#define FTL_MAYTHROW\
+            ; if (allocated(FTL_tmpexc_global)) then;\
+               call move_alloc(FTL_tmpexc_global, FTL_exc_local);\
+               exit FTL_TRY_BLOCK;\
+            endif
+#endif
+
+#define FTL_THROWUP\
+   ; if (allocated(FTL_tmpexc_global)) return
 
 #define FTL_EXCEPT(exc)\
-         exit;\
-      end do;\
-      FTL_inTryBlock = .false.;\
+         continue FTL_MAYTHROW;\
+      end block FTL_TRY_BLOCK;\
       associate(exc => FTL_exc_local);\
       if (allocated(FTL_exc_local)) then;\
          select type (FTL_exc_local)
 
 #define FTL_END_EXCEPT\
          class default;\
-            call ftlUncaughtExceptionHandler(FTL_exc_local);\
+            FTL_THROW(FTL_exc_local);\
          end select;\
       end if;\
       end associate;\

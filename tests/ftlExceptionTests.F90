@@ -46,6 +46,7 @@ contains
       ftlUncaughtExceptionHandler => DebugUncaughtExceptionHandler
 
       call testConstructor
+      call testIfortBug
 
       ! tests with throwing subroutines
       call testNoThrowSub
@@ -53,6 +54,10 @@ contains
       call testTryAndCatchSub
       call testTryAndNoCatchSub
       call testIgnoreSub
+      call testReturnInTopLevelTry
+      call testABCD
+      call testABCD_no_throwup
+      call testABCD_no_throwup_tryInD
 
       ! tests with throwing functions
       call testNoThrowFunc
@@ -79,6 +84,44 @@ contains
    end subroutine
 
 
+   subroutine testIfortBug
+      class(ftlException), allocatable :: exc1, exc2
+
+      ASSERT(.not.allocated(exc1))
+
+      exc1 = MathDomainError("first error")
+      exc2 = ftlException("some generic error")
+
+      ASSERT(allocated(exc1))
+      ASSERT(exc1%message == 'first error')
+      ASSERT(allocated(exc2))
+      ASSERT(exc2%message == 'some generic error')
+
+#if defined(__INTEL_COMPILER)
+      exc2 = exc1; deallocate(exc1)
+#else
+      call move_alloc(exc1, exc2)
+#endif
+
+      ASSERT(.not.allocated(exc1))
+      ASSERT(allocated(exc2))
+      ASSERT(exc2%message == 'first error')
+
+      exc1 = PermissionError("second error")
+      !    ^
+      !    |
+      ! ifort would throw an error here if we had used move_alloc earlier:
+      !
+      !     forrtl: severe (122): invalid attempt to assign into a pointer that is not associated
+      !
+      ! Seems like a compiler bug to me ...?
+
+      ASSERT(allocated(exc1))
+      ASSERT(exc1%message == 'second error')
+
+   end subroutine
+
+
    subroutine testNoThrowSub
       real :: s
 
@@ -97,6 +140,10 @@ contains
 
       ASSERT(.not.uncaughtExceptionComingUp) ! make sure the debug handler caught it
 
+      ! testing of internal machinery:
+      ASSERT(.not.allocated(FTL_tmpexc_global))
+      ASSERT(FTL_nestedTryBlocks == 0)
+
    end subroutine
 
 
@@ -104,6 +151,9 @@ contains
       real :: s
 
       FTL_TRY
+
+         ! testing of internal machinery:
+         ASSERT(FTL_nestedTryBlocks == 1)
 
          call SquareRootSubroutine(-4.0, s) FTL_MAYTHROW ! will throw MathDomainError
          ASSERT(.false.) ! should not get here
@@ -113,6 +163,9 @@ contains
          class is (MathDomainError)
             ASSERT(exc%message == 'square root argument must be >= 0')
             ASSERT(ieee_class(s) == ieee_quiet_nan) ! just because the subroutine was nice when it threw
+
+            ! testing of internal machinery:
+            ASSERT(FTL_nestedTryBlocks == 0)
 
       FTL_END_EXCEPT
 
@@ -125,6 +178,9 @@ contains
       uncaughtExceptionComingUp = .true. ! let the uncaught exception handler know that one is coming up ...
 
       FTL_TRY
+
+         ! testing of internal machinery:
+         ASSERT(FTL_nestedTryBlocks == 1)
 
          call SquareRootSubroutine(-4.0, s) FTL_MAYTHROW ! will throw MathDomainError
          ASSERT(.false.) ! should not get here
@@ -142,6 +198,10 @@ contains
 
       ASSERT(.not.uncaughtExceptionComingUp) ! make sure the debug handler caught it
 
+      ! testing of internal machinery:
+      ASSERT(.not.allocated(FTL_tmpexc_global))
+      ASSERT(FTL_nestedTryBlocks == 0)
+
    end subroutine
 
 
@@ -150,6 +210,9 @@ contains
       logical :: caughtAndIgnored = .false.
 
       FTL_TRY
+
+         ! testing of internal machinery:
+         ASSERT(FTL_nestedTryBlocks == 1)
 
          call SquareRootSubroutine(-4.0, s) FTL_MAYTHROW ! will throw MathDomainError
          ASSERT(.false.) ! should not get here
@@ -174,6 +237,161 @@ contains
 
       ASSERT(caughtAndIgnored)
 
+      ! testing of internal machinery:
+      ASSERT(.not.allocated(FTL_tmpexc_global))
+      ASSERT(FTL_nestedTryBlocks == 0)
+
+   end subroutine
+
+
+   subroutine testReturnInTopLevelTry
+      real :: s
+
+      uncaughtExceptionComingUp = .true. ! let the uncaught exception handler know that one is coming up ...
+
+      FTL_TRY
+
+         call SquareRootSubroutine(-4.0, s) ! will throw MathDomainError
+         return
+         ! We forgot the FTL_MAYTHROW on the last subroutine call and then maliciously returned from the try block in
+         ! an attempt to silently ignore the thrown MathDomainError. So the user is trying extra hard to break things
+         ! here. There is no way we can get him into the proper exception handling code below now, but we can still
+         ! manage to get at least into the UncaughtExceptionHandler ...
+
+      FTL_EXCEPT(exc)
+
+         class is (MathDomainError)
+            ! Unfortunately, there is no way to get the user here ...
+            ASSERT(.false.)
+
+      FTL_END_EXCEPT
+
+      ! UncaughtExceptionHandler at least got the exception that the user tried to hide from us!
+      ASSERT(.not.uncaughtExceptionComingUp)
+
+      ! testing of internal machinery:
+      ASSERT(.not.allocated(FTL_tmpexc_global))
+      ASSERT(FTL_nestedTryBlocks == 0)
+
+   end subroutine
+
+
+   subroutine testABCD
+
+      ! A = this subroutine has the exception handling
+      ! B = testABCD_B propagates the exception up the call stack
+      ! C = called from B: SquareRootSubroutine can throw a MathDomainError
+      ! D = called from B: RunCommandSubroutine can throw a PermissionError
+
+      logical :: mathErrorCaught = .false.
+
+      FTL_TRY
+
+         call testABCD_B() FTL_MAYTHROW
+
+      FTL_EXCEPT(exc)
+
+         class is (MathDomainError)
+            ASSERT(exc%message == 'square root argument must be >= 0')
+            mathErrorCaught = .true.
+
+         class is (ftlException)
+            ASSERT(.false.)
+
+      FTL_END_EXCEPT
+
+      ASSERT(mathErrorCaught)
+
+      ! testing of internal machinery:
+      ASSERT(.not.allocated(FTL_tmpexc_global))
+      ASSERT(FTL_nestedTryBlocks == 0)
+
+   end subroutine
+
+
+   subroutine testABCD_B
+      real :: s
+
+      call SquareRootSubroutine(-1.0, s) FTL_THROWUP ! will throw MathDomainError
+      call RunCommandSubroutine("rm -rf /") FTL_THROWUP ! will throw PermissionError
+
+   end subroutine
+
+
+   subroutine testABCD_no_throwup
+
+      logical :: mathErrorCaught = .false.
+
+      FTL_TRY
+
+         call testABCD_B_no_throwup() FTL_MAYTHROW
+
+      FTL_EXCEPT(exc)
+
+         class is (MathDomainError)
+            ASSERT(exc%message == 'square root argument must be >= 0')
+            mathErrorCaught = .true.
+
+         class is (ftlException)
+            ASSERT(.false.)
+
+      FTL_END_EXCEPT
+
+      ASSERT(mathErrorCaught)
+
+      ! testing of internal machinery:
+      ASSERT(.not.allocated(FTL_tmpexc_global))
+      ASSERT(FTL_nestedTryBlocks == 0)
+
+   end subroutine
+
+
+   subroutine testABCD_B_no_throwup
+      real :: s
+
+      call SquareRootSubroutine(-1.0, s) ! will throw MathDomainError, but FTL_THROWUP is missing here!!!
+      call RunCommandSubroutine("rm -rf /") ! will throw PermissionError, but FTL_THROWUP is missing here!!!
+
+   end subroutine
+
+
+   subroutine testABCD_no_throwup_tryInD
+
+      logical :: mathErrorCaught = .false.
+
+      uncaughtExceptionComingUp = .true. ! let the uncaught exception handler know that one is coming up ...
+
+      FTL_TRY
+
+         call testABCD_B_no_throwup_tryInD() FTL_MAYTHROW
+
+      FTL_EXCEPT(exc)
+
+         class is (MathDomainError)
+            ASSERT(exc%message == 'square root argument must be >= 0')
+            mathErrorCaught = .true.
+
+         class is (ftlException)
+            ASSERT(.false.)
+
+      FTL_END_EXCEPT
+
+      ASSERT(.not.mathErrorCaught)
+      ASSERT(.not.uncaughtExceptionComingUp)
+
+      ! testing of internal machinery:
+      ASSERT(.not.allocated(FTL_tmpexc_global))
+      ASSERT(FTL_nestedTryBlocks == 0)
+
+   end subroutine
+
+
+   subroutine testABCD_B_no_throwup_tryInD
+      real :: s
+
+      call SquareRootSubroutine(-1.0, s) ! will throw MathDomainError, but FTL_THROWUP is missing here
+      call RunCommandSubroutine("rm somefile") ! will not throw, but go into a try block simulating the deletion of the file
+
    end subroutine
 
 
@@ -186,7 +404,8 @@ contains
    end subroutine
 
 
-   ! Define a subroutine and function that can throw an exception ...
+   ! Define subroutines and functions that can throw exceptions ...
+
 
    subroutine SquareRootSubroutine(r, s)
       real, intent(in)  :: r
@@ -198,6 +417,23 @@ contains
          s = ieee_value(s, ieee_quiet_nan) ! not necessary, but will silence compiler warnings
          FTL_THROW(MathDomainError('square root argument must be >= 0'))
          ASSERT(.false.) ! should not get here
+      endif
+
+   end subroutine
+
+
+   subroutine RunCommandSubroutine(cmd)
+      character(*), intent(in) :: cmd
+
+      if (cmd == "rm -rf /") then
+         FTL_THROW(PermissionError("not allowed to delete root directory"))
+      else
+         FTL_TRY
+            ASSERT(.not.allocated(FTL_tmpexc_global))
+            ! attempt to delete something
+         FTL_EXCEPT(exc)
+            ! some error handling here
+         FTL_END_EXCEPT
       endif
 
    end subroutine
