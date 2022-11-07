@@ -1,4 +1,4 @@
-! Copyright (c) 2016, 2017  Robert Rüger
+! Copyright (c) 2022  Software for Chemistry & Materials BV
 !
 ! This file is part of of the Fortran Template Library.
 !

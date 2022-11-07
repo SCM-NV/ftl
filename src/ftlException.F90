@@ -1,4 +1,4 @@
-! Copyright (c) 2016, 2017  Robert Rüger
+! Copyright (c) 2022  Software for Chemistry & Materials BV
 !
 ! This file is part of of the Fortran Template Library.
 !
@@ -42,14 +42,13 @@ module ftlExceptionModule
    end interface
 
    ! the currently active exception handler
-   procedure(ftlUncaughtExceptionHandlerInterface), pointer, public :: ftlUncaughtExceptionHandler => ftlUncaughtExceptionDefaultHandler
+   procedure(ftlUncaughtExceptionHandlerInterface), pointer, public, save :: ftlUncaughtExceptionHandler => ftlUncaughtExceptionDefaultHandler
 
    ! global temporary that we will use to transfer the exception from the (throwing) callee to the caller
    class(ftlException), allocatable, public, save :: FTL_tmpexc_global
 
-   ! FIXME: single logical will break in case of nested try blocks.
-   !        replace with stack of logicals?
-   integer, public, save :: FTL_nestedTryBlocks = 0
+   ! counter for how many try blocks have been nested across the call stack
+   integer, public, protected, save :: FTL_nestedTryBlocks = 0
 
    ! internally used class whose finalizer is used to trigger the clean-up when leaving a try block
    type, public :: ftlTryBlockGuard
