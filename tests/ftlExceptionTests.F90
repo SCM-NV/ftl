@@ -38,6 +38,74 @@ module ftlExceptionTestsModule
 contains
 
 
+   ! Define subroutines and functions that can throw exceptions ...
+
+
+   subroutine SquareRootSubroutine(r, s)
+      real, intent(in)  :: r
+      real, intent(out) :: s
+
+      if (r >= 0) then
+         s = sqrt(r)
+      else
+         s = ieee_value(s, ieee_quiet_nan) ! not necessary, but will silence compiler warnings
+         FTL_THROW(MathDomainError, 'square root argument must be >= 0')
+         ASSERT(.false.) ! should not get here
+      endif
+
+   end subroutine
+
+
+   subroutine RunCommandSubroutine(cmd)
+      character(*), intent(in) :: cmd
+
+      if (cmd == "rm -rf /") then
+         FTL_THROW(PermissionError, "not allowed to delete root directory")
+      else
+         FTL_TRY
+            ASSERT(.not.allocated(FTL_tmpexc_global))
+            ! attempt to delete something
+         FTL_EXCEPT(exc)
+            ! some error handling here
+         FTL_END_EXCEPT
+      endif
+
+   end subroutine
+
+
+   real function SquareRootFunction(r) result(s)
+      real, intent(in) :: r
+
+      if (r >= 0) then
+         s = sqrt(r)
+      else
+         s = ieee_value(s, ieee_quiet_nan) ! not necessary, but will silence compiler warnings
+         FTL_THROW(MathDomainError, 'square root argument must be >= 0')
+         ASSERT(.false.) ! should not get here
+      endif
+
+   end function
+
+
+   ! Debug handler for uncaught exceptions:
+   ! It just checks that we were expecting an uncaught exception!
+   ! After it has run, we are no longer expecting an uncaught exception
+
+   subroutine DebugUncaughtExceptionHandler(exc)
+      class(ftlException), intent(in) :: exc
+
+      ASSERT(uncaughtExceptionComingUp)
+      if (.not.uncaughtExceptionComingUp) then
+         write (*, "(A,A)") "Uncaught exception when not expecting one: ", exc%message
+      endif
+      uncaughtExceptionComingUp = .false.
+
+   end subroutine
+
+
+   ! Actual tests below ...
+
+
    subroutine ftlExceptionTests
 
       write (*,'(A)') 'Running ftlException tests ...'
@@ -72,13 +140,13 @@ contains
       type(MathDomainError) :: my_exc
       class(ftlException), allocatable :: exc
 
-      base_exc = ftlException('some basic error')
+      base_exc = ftlException('some basic error', __FILE__, __LINE__)
       ASSERT(base_exc%message == 'some basic error')
 
-      my_exc = MathDomainError('my custom error')
+      my_exc = MathDomainError('my custom error', __FILE__, __LINE__)
       ASSERT(my_exc%message == 'my custom error')
 
-      exc = MathDomainError('some derived error')
+      exc = MathDomainError('some derived error', __FILE__, __LINE__)
       ASSERT(exc%message == 'some derived error')
 
    end subroutine
@@ -89,8 +157,8 @@ contains
 
       ASSERT(.not.allocated(exc1))
 
-      exc1 = MathDomainError("first error")
-      exc2 = ftlException("some generic error")
+      exc1 = MathDomainError("first error", __FILE__, __LINE__)
+      exc2 = ftlException("some generic error", __FILE__, __LINE__)
 
       ASSERT(allocated(exc1))
       ASSERT(exc1%message == 'first error')
@@ -107,7 +175,7 @@ contains
       ASSERT(allocated(exc2))
       ASSERT(exc2%message == 'first error')
 
-      exc1 = PermissionError("second error")
+      exc1 = PermissionError("second error", __FILE__, __LINE__)
       !    ^
       !    |
       ! ifort would throw an error here if we had used move_alloc earlier:
@@ -162,6 +230,8 @@ contains
 
          class is (MathDomainError)
             ASSERT(exc%message == 'square root argument must be >= 0')
+            ASSERT(exc%line == 52)
+            ASSERT(scan(exc%file, 'ftlExceptionTests.F90') /= 0)
             ASSERT(ieee_class(s) == ieee_quiet_nan) ! just because the subroutine was nice when it threw
 
             ! testing of internal machinery:
@@ -400,71 +470,6 @@ contains
 
       s = SquareRootFunction(4.0)
       ASSERT(s == 2.0)
-
-   end subroutine
-
-
-   ! Define subroutines and functions that can throw exceptions ...
-
-
-   subroutine SquareRootSubroutine(r, s)
-      real, intent(in)  :: r
-      real, intent(out) :: s
-
-      if (r >= 0) then
-         s = sqrt(r)
-      else
-         s = ieee_value(s, ieee_quiet_nan) ! not necessary, but will silence compiler warnings
-         FTL_THROW(MathDomainError('square root argument must be >= 0'))
-         ASSERT(.false.) ! should not get here
-      endif
-
-   end subroutine
-
-
-   subroutine RunCommandSubroutine(cmd)
-      character(*), intent(in) :: cmd
-
-      if (cmd == "rm -rf /") then
-         FTL_THROW(PermissionError("not allowed to delete root directory"))
-      else
-         FTL_TRY
-            ASSERT(.not.allocated(FTL_tmpexc_global))
-            ! attempt to delete something
-         FTL_EXCEPT(exc)
-            ! some error handling here
-         FTL_END_EXCEPT
-      endif
-
-   end subroutine
-
-
-   real function SquareRootFunction(r) result(s)
-      real, intent(in) :: r
-
-      if (r >= 0) then
-         s = sqrt(r)
-      else
-         s = ieee_value(s, ieee_quiet_nan) ! not necessary, but will silence compiler warnings
-         FTL_THROW(MathDomainError('square root argument must be >= 0'))
-         ASSERT(.false.) ! should not get here
-      endif
-
-   end function
-
-
-   ! Debug handler for uncaught exceptions:
-   ! It just checks that we were expecting an uncaught exception!
-   ! After it has run, we are no longer expecting an uncaught exception
-
-   subroutine DebugUncaughtExceptionHandler(exc)
-      class(ftlException), intent(in) :: exc
-
-      ASSERT(uncaughtExceptionComingUp)
-      if (.not.uncaughtExceptionComingUp) then
-         write (*, "(A,A)") "Uncaught exception when not expecting one: ", exc%message
-      endif
-      uncaughtExceptionComingUp = .false.
 
    end subroutine
 

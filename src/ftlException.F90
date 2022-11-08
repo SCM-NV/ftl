@@ -16,6 +16,7 @@
 ! with the Fortran Template Library.  If not, see <http://www.gnu.org/licenses/>.
 
 
+#include "ftlException.inc"
 
 module ftlExceptionModule
 
@@ -27,6 +28,8 @@ module ftlExceptionModule
    ! exception base class from which all other exceptions must inherit
    type, public :: ftlException
       character(len=:), allocatable :: message
+      character(len=:), allocatable :: file
+      integer                       :: line
    end type
 
    ! the default handler for uncaught exceptions
@@ -78,12 +81,7 @@ contains
             ! It's unhandled ... let's go into the handler now.
             block
                class(ftlException), allocatable :: exc
-#if defined(__INTEL_COMPILER)
-               exc = FTL_tmpexc_global
-               deallocate(FTL_tmpexc_global)
-#else
-               call move_alloc(FTL_tmpexc_global, exc)
-#endif
+               FTL_MOVE_EXCEPTION(FTL_tmpexc_global, exc)
                call ftlUncaughtExceptionHandler(exc)
             end block
          endif
@@ -112,6 +110,8 @@ contains
       write (error_unit, "(A)") "Exception origin:"
       call backtrace
       ERROR STOP "after uncaught ftlException!"
+#else
+      ERROR STOP "ERROR STOP after uncaught ftlException!"
 #endif
 
    end subroutine

@@ -19,7 +19,25 @@
 #ifndef FTL_EXCEPTION_INCLUDED
 #define FTL_EXCEPTION_INCLUDED
 
-#define FTL_THROW(e)\
+! Workaround for what seems like an ifort bug.
+! See subroutine testIfortBug in ftlExceptionsTest.F90 ...
+#if defined(__INTEL_COMPILER)
+#define FTL_MOVE_EXCEPTION(from, to)\
+   to = from; deallocate(from)
+#else
+#define FTL_MOVE_EXCEPTION(from, to)\
+   call move_alloc(from, to)
+#endif
+
+#define FTL_THROW(cls, msg)\
+   if (FTL_nestedTryBlocks > 0) then;\
+      if (.not.allocated(FTL_tmpexc_global)) FTL_tmpexc_global = cls(msg, __FILE__, __LINE__);\
+   else;\
+      call ftlUncaughtExceptionHandler(cls(msg, __FILE__, __LINE__));\
+   endif;\
+   return
+
+#define FTL_RETHROW(e)\
    if (FTL_nestedTryBlocks > 0) then;\
       if (.not.allocated(FTL_tmpexc_global)) FTL_tmpexc_global = e;\
    else;\
@@ -38,20 +56,11 @@
          type(ftlTryBlockGuard) :: FTL_tbguard;\
          call FTL_tbguard%Acquire
 
-#if defined(__INTEL_COMPILER)
 #define FTL_MAYTHROW\
             ; if (allocated(FTL_tmpexc_global)) then;\
-               FTL_exc_local = FTL_tmpexc_global;\
-               deallocate(FTL_tmpexc_global);\
+               FTL_MOVE_EXCEPTION(FTL_tmpexc_global, FTL_exc_local);\
                exit FTL_TRY_BLOCK;\
             endif
-#else
-#define FTL_MAYTHROW\
-            ; if (allocated(FTL_tmpexc_global)) then;\
-               call move_alloc(FTL_tmpexc_global, FTL_exc_local);\
-               exit FTL_TRY_BLOCK;\
-            endif
-#endif
 
 #define FTL_THROWUP\
    ; if (allocated(FTL_tmpexc_global)) return
@@ -65,7 +74,7 @@
 
 #define FTL_END_EXCEPT\
          class default;\
-            FTL_THROW(FTL_exc_local);\
+            FTL_RETHROW(FTL_exc_local);\
          end select;\
       end if;\
       end associate;\
