@@ -810,11 +810,12 @@ contains
       ASSERT(s1 .ieq. 'some string to test with')
       ASSERT('some string to test with' .ieq. s1)
 
-      ASSERT(s1 .ieq. '   some string to test with')
-      ASSERT(s1 .ieq. 'some string to test with   ')
-      ASSERT(s1 .ieq. ' some string to test with  ')
-      ASSERT(s1 .ieq. ' Some String To Test With  ')
-      ASSERT(s1 .ieq. 'sOME sTRING tO tEST wITH')
+      ASSERT(s1 .ieq.  '   some string to test with')
+      ASSERT(s1 .nieq. '   some string to test wit!')
+      ASSERT(s1 .ieq.  'some string to test with   ')
+      ASSERT(s1 .ieq.  ' some string to test with  ')
+      ASSERT(s1 .ieq.  ' Some String To Test With  ')
+      ASSERT(s1 .ieq.  'sOME sTRING tO tEST wITH'   )
 
       ASSERT(s1 .nieq. 'some test to string with')
       ASSERT('some test to string with' .nieq. s1)
@@ -830,6 +831,16 @@ contains
       ASSERT(s1 .ieq. '   ')
       ASSERT(s1 .ieq. FTL_STRING_WHITESPACE)
       ASSERT(s1 .ieq. '')
+
+      s1 = ' '
+
+      ASSERT(s1 .ieq.  '')
+      ASSERT(s1 .nieq. 'H')
+
+      s1 = 'H'
+
+      ASSERT(s1 .ieq.  'h')
+      ASSERT(s1 .nieq. 'b')
 
    end subroutine
 
