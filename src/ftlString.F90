@@ -979,18 +979,27 @@ contains
       ! Find start and end of lhs
       lhsFirst = verify(lhs%raw, FTL_STRING_WHITESPACE)
       lhsLast  = verify(lhs%raw, FTL_STRING_WHITESPACE, .true.)
-      lhsLen = lhsLast-lhsFirst
+      lhsLen = lhsLast-lhsFirst+1
 
       ! Find start and end of rhs
       rhsFirst = verify(rhs, FTL_STRING_WHITESPACE)
       rhsLast  = verify(rhs, FTL_STRING_WHITESPACE, .true.)
-      rhsLen = rhsLast-rhsFirst
+      rhsLen = rhsLast-rhsFirst+1
 
-      if (lhsLen /= rhsLen) then
-         ieq = .false.
-      else if (lhsLen == 0) then
+      if (lhsFirst == 0 .and. rhsFirst == 0) then
+         ! both are pure whitespace
          ieq = .true.
+      else if (lhsFirst == 0) then
+         ! lhs is pure whitespace, but rhs is not
+         ieq = .false.
+      else if (rhsFirst == 0) then
+         ! lhs is not pure whitespace, but rhs is
+         ieq = .false.
+      else if (lhsLen /= rhsLen) then
+         ! both lhs and rhs are not pure whitespace but their stripped length is different
+         ieq = .false.
       else
+         ! both lhs and rhs are not pure whitespace and their stripped length is the same
          do ic = 0, lhsLen-1
             lc = iachar(lhs%raw(lhsFirst+ic:lhsFirst+ic))
             if (lc >= 97 .and. lc <= 122) lc = lc-32
