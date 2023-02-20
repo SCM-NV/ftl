@@ -44,7 +44,7 @@ else ifeq ($(PLATFORM), intel)
 	SOFLAGS = -fPIC
 	SOLDFLAGS = -shared -Wl,-soname,libftl.so.1
 	FCFLAGS += -stand f08 -warn -diag-disable=5268 -module $(BUILDDIR)
-	CXX = g++
+	CXX = icc
 	CXXFLAGS ?= -fast -xHost
 	CXXFLAGS += -std=c++11
 	SUPPRESSIONS =
@@ -54,7 +54,7 @@ else ifeq ($(PLATFORM), nag)
 	SOFLAGS = -PIC
 	SOLDFLAGS = -Wl,-shared -Wl,-soname=libftl.so.1
 	CXX = g++
-	CXXFLAGS ?= -fast -xHost
+	CXXFLAGS ?= -Ofast -march=native
 	CXXFLAGS += -std=c++11
 	SUPPRESSIONS =
 else

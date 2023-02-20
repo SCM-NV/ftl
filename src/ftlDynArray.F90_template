@@ -879,7 +879,7 @@ contains
 
 
 
-   elemental subroutine TriggerFinalizer(instance)
+   impure elemental subroutine TriggerFinalizer(instance)
       FTL_TEMPLATE_TYPE_WRAP, intent(out) :: instance
 
       ! Nothing to do here: intent(out) will finalize the instance and that's all we want.
