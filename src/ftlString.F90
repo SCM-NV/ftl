@@ -1465,7 +1465,7 @@ contains
 
       integer :: ios, nRead, newlen
       type(ftlString) :: line
-      character(len=:), allocatable :: buffer
+      character(len=:), allocatable :: buffer, newbuffer
 
       self = ''
       if (present(iostat)) iostat = IOSTAT_END
@@ -1490,7 +1490,8 @@ contains
          if (len(buffer) < nRead + 1 + len(line%raw)) then
             ! not enough space anymore, we need to enlarge the buffer
             newlen = max(2*len(buffer), nRead + 1 + len(line%raw))
-            buffer = buffer // repeat('_',newlen-len(buffer))
+            newbuffer = buffer // repeat('_',newlen-len(buffer))
+            call move_alloc(newbuffer, buffer)
          endif
          buffer(nRead+1:nRead+1) = FTL_STRING_NEWLINE
          nRead = nRead + 1
