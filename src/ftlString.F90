@@ -34,7 +34,7 @@
 module ftlStringModule
 
    use ftlKindsModule
-   use iso_fortran_env, only: IOSTAT_INQUIRE_INTERNAL_UNIT, IOSTAT_END
+   use iso_fortran_env, only: IOSTAT_INQUIRE_INTERNAL_UNIT, IOSTAT_END, INT32, INT64, REAL32, REAL64
 
    implicit none
    private
@@ -67,11 +67,13 @@ module ftlStringModule
       procedure         :: NewDefault
       procedure         :: NewCopyOther
       procedure         :: NewFromRaw
-      procedure         :: NewFromInt
-      procedure         :: NewFromReal
-      procedure         :: NewFromComplex
+      procedure         :: NewFromInt32, NewFromInt64
+      procedure         :: NewFromReal32, NewFromReal64
+      procedure         :: NewFromComplex32, NewFromComplex64
       procedure         :: NewFromLogical
-      generic  , public :: New => NewDefault, NewCopyOther, NewFromRaw, NewFromInt, NewFromReal, NewFromComplex, NewFromLogical
+      generic  , public :: New => NewDefault, NewCopyOther, NewFromRaw, &
+                                  NewFromInt32, NewFromInt64, NewFromReal32, NewFromReal64, &
+                                  NewFromComplex32, NewFromComplex64, NewFromLogical
       procedure, public :: NewFromCString ! not in New interface, because signature clashes with elemental NewFromRaw
 
       procedure         :: AllocatedString
@@ -253,9 +255,12 @@ module ftlStringModule
       module procedure NewDefaultConstr
       module procedure NewCopyOtherConstr
       module procedure NewFromRawConstr
-      module procedure NewFromIntConstr
-      module procedure NewFromRealConstr
-      module procedure NewFromComplexConstr
+      module procedure NewFromInt32Constr
+      module procedure NewFromInt64Constr
+      module procedure NewFromReal32Constr
+      module procedure NewFromReal64Constr
+      module procedure NewFromComplex32Constr
+      module procedure NewFromComplex64Constr
       module procedure NewFromLogicalConstr
    end interface
 
@@ -530,9 +535,9 @@ contains
 
    end subroutine
    !
-   pure subroutine NewFromInt(self, i, format)
+   pure subroutine NewFromInt32(self, i, format)
       class(ftlString), intent(inout)        :: self
-      integer         , intent(in)           :: i
+      integer(INT32)  , intent(in)           :: i
       character(len=*), intent(in), optional :: format
 
       character(len=64) :: tmp
@@ -549,9 +554,28 @@ contains
 
    end subroutine
    !
-   pure subroutine NewFromReal(self, r, format)
+   pure subroutine NewFromInt64(self, i, format)
       class(ftlString), intent(inout)        :: self
-      real(FTL_KREAL) , intent(in)           :: r
+      integer(INT64)  , intent(in)           :: i
+      character(len=*), intent(in), optional :: format
+
+      character(len=64) :: tmp
+
+      ! Constructs an ftlString from an integer
+
+      if (present(format)) then
+         write (tmp,format) i
+         self%raw = trim(tmp)
+      else
+         write (tmp,*) i
+         self%raw = trim(adjustl(tmp))
+      endif
+
+   end subroutine
+   !
+   pure subroutine NewFromReal32(self, r, format)
+      class(ftlString), intent(inout)        :: self
+      real(REAL32)    , intent(in)           :: r
       character(len=*), intent(in), optional :: format
 
       character(len=64) :: tmp
@@ -568,10 +592,48 @@ contains
 
    end subroutine
    !
-   pure subroutine NewFromComplex(self, c, format)
-      class(ftlString)  , intent(inout)        :: self
-      complex(FTL_KREAL), intent(in)           :: c
-      character(len=*)  , intent(in), optional :: format
+   pure subroutine NewFromReal64(self, r, format)
+      class(ftlString), intent(inout)        :: self
+      real(REAL64)    , intent(in)           :: r
+      character(len=*), intent(in), optional :: format
+
+      character(len=64) :: tmp
+
+      ! Constructs an ftlString from a real
+
+      if (present(format)) then
+         write (tmp,format) r
+         self%raw = trim(tmp)
+      else
+         write (tmp,*) r
+         self%raw = trim(adjustl(tmp))
+      endif
+
+   end subroutine
+   !
+   pure subroutine NewFromComplex32(self, c, format)
+      class(ftlString), intent(inout)        :: self
+      complex(REAL32) , intent(in)           :: c
+      character(len=*), intent(in), optional :: format
+
+      character(len=128) :: tmp
+
+      ! Constructs an ftlString from a complex
+
+      if (present(format)) then
+         write (tmp,format) c
+         self%raw = trim(tmp)
+      else
+         write (tmp,*) c
+         self%raw = trim(adjustl(tmp))
+      endif
+
+   end subroutine
+   !
+   pure subroutine NewFromComplex64(self, c, format)
+      class(ftlString), intent(inout)        :: self
+      complex(REAL64) , intent(in)           :: c
+      character(len=*), intent(in), optional :: format
 
       character(len=128) :: tmp
 
@@ -628,22 +690,40 @@ contains
       call str%NewFromRaw(raw)
    end function
    !
-   type(ftlString) elemental function NewFromIntConstr(i, format) result(str)
-      integer         , intent(in)           :: i
+   type(ftlString) elemental function NewFromInt32Constr(i, format) result(str)
+      integer(INT32)  , intent(in)           :: i
       character(len=*), intent(in), optional :: format
-      call str%NewFromInt(i, format)
+      call str%NewFromInt32(i, format)
    end function
    !
-   type(ftlString) elemental function NewFromRealConstr(r, format) result(str)
-      real(FTL_KREAL) , intent(in)           :: r
+   type(ftlString) elemental function NewFromInt64Constr(i, format) result(str)
+      integer(INT64)  , intent(in)           :: i
       character(len=*), intent(in), optional :: format
-      call str%NewFromReal(r, format)
+      call str%NewFromInt64(i, format)
    end function
    !
-   type(ftlString) elemental function NewFromComplexConstr(c, format) result(str)
-      complex(FTL_KREAL), intent(in)           :: c
-      character(len=*)  , intent(in), optional :: format
-      call str%NewFromComplex(c, format)
+   type(ftlString) elemental function NewFromReal32Constr(r, format) result(str)
+      real(REAL32)    , intent(in)           :: r
+      character(len=*), intent(in), optional :: format
+      call str%NewFromReal32(r, format)
+   end function
+   !
+   type(ftlString) elemental function NewFromReal64Constr(r, format) result(str)
+      real(REAL64)    , intent(in)           :: r
+      character(len=*), intent(in), optional :: format
+      call str%NewFromReal64(r, format)
+   end function
+   !
+   type(ftlString) elemental function NewFromComplex32Constr(c, format) result(str)
+      complex(REAL32) , intent(in)           :: c
+      character(len=*), intent(in), optional :: format
+      call str%NewFromComplex32(c, format)
+   end function
+   !
+   type(ftlString) elemental function NewFromComplex64Constr(c, format) result(str)
+      complex(REAL64) , intent(in)           :: c
+      character(len=*), intent(in), optional :: format
+      call str%NewFromComplex64(c, format)
    end function
    !
    type(ftlString) elemental function NewFromLogicalConstr(l, format) result(str)
@@ -1383,7 +1463,7 @@ contains
 
    end function
    !
-   elemental complex function ToComplex(self)
+   elemental complex(FTL_KREAL) function ToComplex(self)
       class(ftlString), intent(in) :: self
 
       integer :: stat
