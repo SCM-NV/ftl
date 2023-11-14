@@ -494,7 +494,7 @@ contains
       ! not sure what the default output will look like, but it shouldn't contain trailing or leading whitespace ...
       ASSERT(trim(adjustl(s)) == s)
       ASSERT(s%IsComplex())
-      ASSERT(complex(s) == (1.0,2.3))
+      ASSERT(complex(s) == (1.0,2.3_FTL_KREAL))
 
       s = ftlString(.true.)
       ASSERT(s == 'True')
