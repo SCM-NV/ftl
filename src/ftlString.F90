@@ -1702,31 +1702,77 @@ contains
       integer         , intent(in), optional :: maxsplit
       type(ftlString) , allocatable          :: words(:)
 
-      integer :: idx, wordbegin, wordidx
+      integer :: ms, i, j, k, slen, numwords
+      type(ftlString), allocatable :: tmp_words(:)
 
       if (present(maxsplit)) then
-         allocate(words( min(self%CountWords(), maxsplit+1) ))
+         allocate(words(maxsplit+1))
+         ms = maxsplit
       else
-         allocate(words(self%CountWords()))
+         allocate(words(128))
+         ms = HUGE(maxsplit)
       endif
 
-      idx = 1
-      do wordidx = 1, size(words)
-         do while (CharIsWhitespace(self%At(idx)))
-            idx = idx + 1
+      i = 1
+      j = 1
+      slen = len(self%raw)
+      numwords = 0
+      do while (i <= len(self%raw))
+         do while (i <= slen)
+            if (CharIsWhitespace(self%raw(i:i))) then
+               i = i + 1
+            else
+               exit
+            endif
          enddo
-         wordbegin = idx
-         if (present(maxsplit) .and. wordidx == size(words)) then
-            words(wordidx) = self%raw(wordbegin:len(self%raw))
-            if (wordidx /= maxsplit+1) words(wordidx)%raw = trim(words(wordidx)%raw) ! TODO: remove this ugly fix
-         else
-            do while (idx <= len(self))
-               if (CharIsWhitespace(self%At(idx))) exit
-               idx = idx + 1
+         j = i
+         do while (i <= slen)
+            if (.not.CharIsWhitespace(self%raw(i:i))) then
+               i = i + 1
+            else
+               exit
+            endif
+         enddo
+         if (j < i) then
+            if (ms <= 0) exit
+            ms = ms - 1
+            call PushBack(self%raw(j:i-1))
+            do while (i <= slen)
+               if (CharIsWhitespace(self%raw(i:i))) then
+                  i = i + 1
+               else
+                  exit
+               endif
             enddo
-            words(wordidx) = self%raw(wordbegin:idx-1)
+            j = i
          endif
+      end do
+      if (j <= slen) then
+         call PushBack(self%raw(j:slen))
+      endif
+
+      allocate(tmp_words(numwords))
+      do k = 1, numwords
+         call move_alloc(words(k)%raw, tmp_words(k)%raw)
       enddo
+      call move_alloc(tmp_words, words)
+
+      contains
+
+         subroutine PushBack(str)
+            character(*), intent(in) :: str
+
+            numwords = numwords + 1
+            if (numwords > size(words)) then
+               allocate(tmp_words(2*size(words)))
+               do k = 1, numwords-1
+                  call move_alloc(words(k)%raw, tmp_words(k)%raw)
+               enddo
+               call move_alloc(tmp_words, words)
+            endif
+            words(numwords) = str
+
+         end subroutine
 
    end function
    !
@@ -2280,26 +2326,27 @@ contains
    elemental integer function CountWords(self)
       class(ftlString), intent(in) :: self
 
-      integer :: idx
+      integer :: i
+      logical :: inWord, ciw
 
-      if (len(self%raw) == 0) then
-         CountWords = 0
-         return
-      endif
+      CountWords = 0
+      if (len(self%raw) == 0) return
 
-      if (CharIsWhitespace(self%raw(1:1))) then
-         CountWords = 0
-      else
-         CountWords = 1
-      endif
-      idx = 1
-      do idx = 2, len(self%raw)
-         if (CharIsWhitespace(self%raw(idx-1:idx-1)) .and. .not.CharIsWhitespace(self%raw(idx:idx))) then
+      inWord = .not.CharIsWhitespace(self%raw(1:1))
+      if (inWord) CountWords = 1
+
+      do i = 2, len(self%raw)
+         ciw = CharIsWhitespace(self%raw(i:i))
+         if (inWord .and. ciw) then
+            inWord = .false.
+         else if (.not.inWord .and. .not.ciw) then
+            inWord = .true.
             CountWords = CountWords + 1
          endif
       enddo
 
    end function
+
 
 
 
@@ -2561,7 +2608,17 @@ contains
 
    pure logical function CharIsWhitespace(c)
       character, intent(in) :: c
-      CharIsWhitespace = (scan(c,FTL_STRING_WHITESPACE) /= 0)
+
+      integer :: i
+
+      do i = 1, len(FTL_STRING_WHITESPACE)
+         if (c == FTL_STRING_WHITESPACE(i:i)) then
+            CharIsWhitespace = .true.
+            return
+         endif
+      enddo
+      CharIsWhitespace = .false.
+
    end function
 
 
