@@ -1717,7 +1717,7 @@ contains
       j = 1
       slen = len(self%raw)
       numwords = 0
-      do while (i <= len(self%raw))
+      do while (i <= slen)
          do while (i <= slen)
             if (CharIsWhitespace(self%raw(i:i))) then
                i = i + 1
@@ -1828,29 +1828,75 @@ contains
       class(ftlString), intent(in)  :: self
       type(ftlString) , allocatable :: lines(:)
 
-      type(ftlString) :: tmp
+      integer :: i, j, k, slen, numlines
+      type(ftlString), allocatable :: tmp_lines(:)
 
-      ! TODO: more efficient implementation that doesn't make a copy
+      character, parameter :: LF = achar(10)
+      character, parameter :: CR = achar(13)
 
       ! special case: empty string
-      if (len(self) == 0) then
+      slen = len(self%raw)
+      if (slen == 0) then
          allocate(lines(0))
          return
+      else
+         allocate(lines(max(32, ceiling(real(slen)/128.0))))
       endif
 
-      ! convert DOS to UNIX line endings
-      tmp = self%Replace(achar(13)//achar(10), achar(10))
-
-      ! convert old Mac to UNIX endings
-      if (achar(13) .in. tmp) tmp = tmp%Replace(achar(13), achar(10))
-
-      ! remove potential linebreak at the end of the string
-      if (tmp%raw(len(tmp%raw):len(tmp%raw)) == achar(10)) then
-         tmp%raw = tmp%raw(1:len(tmp%raw)-1)
+      i = 1
+      j = 1
+      numlines = 0
+      do while (i <= slen)
+         do while (i <= slen)
+            if (self%raw(i:i) == LF) then
+               ! LF is a Unix style linebreak
+               call PushBack(self%raw(j:i-1))
+               i = i + 1
+               j = i
+            else if (self%raw(i:i) == CR) then
+               ! CR     is an old Mac style linebreak
+               ! CR//LF is a Windows style linebreak
+               call PushBack(self%raw(j:i-1))
+               i = i + 1
+               j = i
+               ! ... both end a line, but in case of CR//LF we need to continue reading in char further
+               if (i <= slen) then
+                  if (self%raw(i:i) == LF) then
+                     i = i + 1
+                     j = i
+                  endif
+               endif
+            else
+               i = i + 1
+            endif
+         enddo
+      enddo
+      if (j <= slen) then
+         call PushBack(self%raw(j:slen))
       endif
 
-      ! use normal split method to do the actual work
-      lines = tmp%Split(achar(10))
+      allocate(tmp_lines(numlines))
+      do k = 1, numlines
+         call move_alloc(lines(k)%raw, tmp_lines(k)%raw)
+      enddo
+      call move_alloc(tmp_lines, lines)
+
+      contains
+
+         subroutine PushBack(str)
+            character(*), intent(in) :: str
+
+            numlines = numlines + 1
+            if (numlines > size(lines)) then
+               allocate(tmp_lines(2*size(lines)))
+               do k = 1, numlines-1
+                  call move_alloc(lines(k)%raw, tmp_lines(k)%raw)
+               enddo
+               call move_alloc(tmp_lines, lines)
+            endif
+            lines(numlines) = str
+
+         end subroutine
 
    end function
 
