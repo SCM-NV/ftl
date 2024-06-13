@@ -523,12 +523,11 @@ contains
 
       ! Constructs an ftlString from a C_NULL_CHAR terminated C string.
 
-      i = 1
-      do while (cstr(i) /= C_NULL_CHAR)
-         i = i + 1
+      strlen = 0
+      do while (cstr(strlen+1) /= C_NULL_CHAR)
+         strlen = strlen + 1
       enddo
-      strlen = i - 1 ! exclude terminating C_NULL_CHAR
-      self%raw = repeat(C_NULL_CHAR, strlen)
+      allocate(character(len=strlen)::self%raw)
       do i = 1, strlen
          self%raw(i:i) = cstr(i)
       enddo
