@@ -290,7 +290,7 @@ contains
 
 
 
-   elemental subroutine Delete(self)
+   impure elemental subroutine Delete(self)
       class(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
 
       self%psize = 0
@@ -301,7 +301,7 @@ contains
 
    end subroutine
    !
-   elemental subroutine Finalizer(self)
+   impure elemental subroutine Finalizer(self)
       type(CAT(ftlDynArray,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
 
       call self%Delete()
