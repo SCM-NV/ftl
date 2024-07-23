@@ -269,7 +269,7 @@ contains
 
 
 
-   elemental subroutine Delete(self)
+   impure elemental subroutine Delete(self)
       class(CAT3(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME)), intent(inout), target :: self
 
       call self%Clear()
@@ -279,7 +279,7 @@ contains
 
    end subroutine
    !
-   elemental subroutine Finalizer(self)
+   impure elemental subroutine Finalizer(self)
       type(CAT3(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME)), intent(inout) :: self
       call self%Delete()
    end subroutine
@@ -510,7 +510,7 @@ contains
 
 
 
-   elemental subroutine Clear(self)
+   impure elemental subroutine Clear(self)
       class(CAT3(ftlHashMap,FTL_TEMPLATE_KEYTYPE_NAME,FTL_TEMPLATE_TYPE_NAME)), intent(inout), target :: self
 
       integer :: b

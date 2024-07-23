@@ -118,6 +118,7 @@ module ftlStringModule
       procedure         :: SplitSepOther
       generic  , public :: Split => SplitWords, SplitSepRaw, SplitSepOther
       procedure, public :: SplitLines
+      procedure, public :: SplitLinesInplace
       procedure         :: JoinBound
       generic  , public :: Join => JoinBound
       procedure         :: StartsWithRaw
@@ -1827,6 +1828,14 @@ contains
       class(ftlString), intent(in)  :: self
       type(ftlString) , allocatable :: lines(:)
 
+      call self%SplitLinesInplace(lines)
+
+   end function
+   !
+   subroutine SplitLinesInplace(self, lines)
+      class(ftlString),              intent(in)    :: self
+      type(ftlString) , allocatable, intent(inout) :: lines(:)
+
       integer :: i, j, k, slen, numlines
       type(ftlString), allocatable :: tmp_lines(:)
 
@@ -1836,9 +1845,10 @@ contains
       ! special case: empty string
       slen = len(self%raw)
       if (slen == 0) then
+         if (allocated(lines)) deallocate(lines)
          allocate(lines(0))
          return
-      else
+      else if (.not.allocated(lines)) then
          allocate(lines(max(32, ceiling(real(slen)/128.0))))
       endif
 
@@ -1887,7 +1897,7 @@ contains
 
             numlines = numlines + 1
             if (numlines > size(lines)) then
-               allocate(tmp_lines(2*size(lines)))
+               allocate(tmp_lines(max(32, 2*size(lines))))
                do k = 1, numlines-1
                   call move_alloc(lines(k)%raw, tmp_lines(k)%raw)
                enddo
@@ -1897,7 +1907,7 @@ contains
 
          end subroutine
 
-   end function
+   end subroutine
 
 
 
