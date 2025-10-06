@@ -787,8 +787,9 @@ contains
       character(len=:), allocatable :: raw
 
       if (present(length)) then
-         raw = repeat(' ', length)
+         allocate(character(len=length) :: raw)
          raw(1:min(len(str%raw), length)) = str%raw(1:min(len(str%raw), length))
+         raw(min(len(str%raw), length)+1:) = ' '
       else
          raw = str%raw
       endif
@@ -1500,7 +1501,8 @@ contains
          if (len(buffer) < nRead + 1 + len(line%raw)) then
             ! not enough space anymore, we need to enlarge the buffer
             newlen = max(2*len(buffer), nRead + 1 + len(line%raw))
-            newbuffer = buffer // repeat('_',newlen-len(buffer))
+            allocate(character(len=newlen) :: newbuffer)
+            newbuffer(1:len(buffer)) = buffer
             call move_alloc(newbuffer, buffer)
          endif
          buffer(nRead+1:nRead+1) = FTL_STRING_NEWLINE
@@ -1670,7 +1672,7 @@ contains
          enddo
 
          ! allocate output string with the correct length
-         joined = repeat('_', joinedLen)
+         allocate(character(len=joinedLen) :: joined%raw)
 
          ! write word by word
          joined%raw(1:len(words(1))) = words(1)%raw
@@ -2304,7 +2306,7 @@ contains
       if (present(count)) numOcc = min(numOcc, count)
 
       ! allocate output string with the correct size
-      str%raw = repeat('_', len(self%raw)+numOcc*(len(new)-len(old)))
+      allocate(character(len=len(self%raw)+numOcc*(len(new)-len(old))) :: str%raw)
 
       ! do the replacements
       readEnd = 1
