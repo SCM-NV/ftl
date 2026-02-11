@@ -1609,6 +1609,9 @@ contains
    ! separator itself, and the part after the separator. If the separator is not found, return a 3-tuple containing the
    ! string itself, followed by two empty strings.
    !
+   ! If sep is empty, it is interpreted as the first character boundary in the string. In that case the result is
+   ! ['', '', self] (for example, 'abc'%Partition('') returns ['', '', 'abc']).
+   !
    function PartitionRaw(self, sep) result(partition)
       class(ftlString), intent(in) :: self
       character(len=*), intent(in) :: sep
@@ -1708,11 +1711,16 @@ contains
       type(ftlString), allocatable :: tmp_words(:)
 
       if (present(maxsplit)) then
-         allocate(words(maxsplit+1))
-         ms = maxsplit
+         if (maxsplit >= 0) then
+            allocate(words(maxsplit+1))
+            ms = maxsplit
+         else
+            allocate(words(128))
+            ms = HUGE(ms)
+         endif
       else
          allocate(words(128))
-         ms = HUGE(maxsplit)
+         ms = HUGE(ms)
       endif
 
       i = 1
@@ -1781,7 +1789,10 @@ contains
    ! If sep is present, consecutive delimiters are not grouped together and are deemed to delimit empty strings
    ! (for example, '1,,2'%split(',') returns ['1', '', '2']). The sep argument may consist of multiple characters
    ! (for example, '1<>2<>3'%split('<>') returns ['1', '2', '3']). Splitting an empty string with a specified
-   ! separator returns [''].
+   ! non-empty separator returns [''].
+   !
+   ! If sep is empty, we split at character boundaries and include leading/trailing empty strings (for example,
+   ! 'ab'%split('') returns ['', 'a', 'b', '']).
    !
    pure function SplitSepRaw(self, sep, maxsplit) result(words)
       class(ftlString), intent(in)           :: self
@@ -1789,11 +1800,51 @@ contains
       integer         , intent(in), optional :: maxsplit
       type(ftlString) , allocatable          :: words(:)
 
-      integer :: wordbegin, wordidx, nextsepidx
+      integer :: wordbegin, wordidx, nextsepidx, slen, numSplits
 
+      slen = len(self%raw)
+
+      if (len(sep) == 0) then
+         if (present(maxsplit)) then
+            if (maxsplit == 0) then
+               allocate(words(1))
+               words(1) = self
+               return
+            endif
+         endif
+
+         if (present(maxsplit)) then
+            if (maxsplit < 0) then
+               numSplits = slen + 1
+            else
+               numSplits = min(maxsplit, slen+1)
+            endif
+         else
+            numSplits = slen + 1
+         endif
+
+         allocate(words(numSplits+1))
+         words(1) = ''
+
+         do wordidx = 2, numSplits
+            words(wordidx) = self%raw(wordidx-1:wordidx-1)
+         enddo
+
+         if (numSplits <= slen) then
+            words(numSplits+1) = self%raw(numSplits:)
+         else
+            words(numSplits+1) = ''
+         endif
+         return
+
+      endif
 
       if (present(maxsplit)) then
-         allocate(words( min(self%Count(sep)+1, maxsplit+1) ))
+         if (maxsplit < 0) then
+            allocate(words(self%Count(sep)+1))
+         else
+            allocate(words( min(self%Count(sep)+1, maxsplit+1) ))
+         endif
       else
          allocate(words(self%Count(sep)+1))
       endif
@@ -2194,13 +2245,41 @@ contains
    ! Return a copy of the string with all occurrences of substring old replaced by new. If the optional argument count is given,
    ! only the first count occurrences are replaced.
    !
+   ! If old is empty, replacement happens at character boundaries, including at the start and end of the string
+   ! (for example, 'ab'%replace('', 'c') returns 'cacbc').
+   !
    type(ftlString) function ReplaceRawWithRaw(self, old, new, count) result(str)
       class(ftlString), intent(in)           :: self
       character(len=*), intent(in)           :: old
       character(len=*), intent(in)           :: new
       integer         , intent(in), optional :: count
 
-      if (len(old) == len(new)) then
+      integer :: numInsertions, readPos, writePos
+
+      if (len(old) == 0) then
+         numInsertions = len(self%raw) + 1
+         if (present(count)) then
+            if (count >= 0) numInsertions = min(count, len(self%raw)+1)
+         endif
+
+         allocate(character(len=len(self%raw)+numInsertions*len(new)) :: str%raw)
+
+         readPos = 1
+         writePos = 1
+         do while (numInsertions > 0)
+            if (len(new) > 0) then
+               str%raw(writePos:writePos+len(new)-1) = new
+               writePos = writePos + len(new)
+            endif
+            if (readPos <= len(self%raw)) then
+               str%raw(writePos:writePos) = self%raw(readPos:readPos)
+               writePos = writePos + 1
+               readPos = readPos + 1
+            endif
+            numInsertions = numInsertions - 1
+         enddo
+         if (readPos <= len(self%raw)) str%raw(writePos:) = self%raw(readPos:)
+      else if (len(old) == len(new)) then
          if (len(old) == 1) then
             str = self%ReplaceImplementationSingleChar(old, new, count)
          else
@@ -2255,12 +2334,12 @@ contains
       str%raw = self%raw
       replacements = 0
       do i = 1, len(str%raw)
+         if (present(count)) then
+            if (count >= 0 .and. replacements >= count) return
+         endif
          if (str%raw(i:i) == old) then
             str%raw(i:i) = new
-            if (present(count)) then
-               replacements = replacements + 1
-               if (replacements == count) return
-            endif
+            replacements = replacements + 1
          endif
       enddo
 
@@ -2278,14 +2357,14 @@ contains
       doneEnd = 1
       replacements = 0
       do while (.true.)
+         if (present(count)) then
+            if (count >= 0 .and. replacements >= count) return
+         endif
          nextIdx = str%Find(old, begin=doneEnd)
          if (nextIdx >= doneEnd) then ! found one more to replace
             str%raw(nextIdx:nextIdx+len(old)-1) = new
             doneEnd = nextIdx + len(old)
-            if (present(count)) then
-               replacements = replacements + 1
-               if (replacements == count) return
-            endif
+            replacements = replacements + 1
          else
             return
          endif
@@ -2303,7 +2382,9 @@ contains
 
       ! count how many occurrences we need to replace
       numOcc = self%Count(old)
-      if (present(count)) numOcc = min(numOcc, count)
+      if (present(count)) then
+         if (count >= 0) numOcc = min(numOcc, count)
+      endif
 
       ! allocate output string with the correct size
       allocate(character(len=len(self%raw)+numOcc*(len(new)-len(old))) :: str%raw)
