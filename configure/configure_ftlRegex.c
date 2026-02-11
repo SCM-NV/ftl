@@ -9,7 +9,7 @@
 int main() {
 
    // size of the regex_t in C
-   printf("integer(C_int), parameter :: sizeof_C_regex_t = %d_C_int\n", sizeof(regex_t));
+   printf("integer(C_int), parameter :: sizeof_C_regex_t = %zu_C_int\n", sizeof(regex_t));
 
    // flags for regcomp()
    printf("integer(C_int), parameter :: REG_EXTENDED = %d_C_int\n", REG_EXTENDED);
