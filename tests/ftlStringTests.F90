@@ -1073,6 +1073,19 @@ contains
       ASSERT(part(2) == '=')
       ASSERT(part(3) == 'value')
 
+      part = s%Partition('')
+
+      ASSERT(part(1) == '')
+      ASSERT(part(2) == '')
+      ASSERT(part(3) == 'option=value')
+
+      s = ''
+      part = s%Partition('')
+
+      ASSERT(part(1) == '')
+      ASSERT(part(2) == '')
+      ASSERT(part(3) == '')
+
    end subroutine
 
 
@@ -1164,6 +1177,24 @@ contains
       ASSERT(words(5) == '')
       ASSERT(words(6) == '')
 
+      ! Splitting with an empty separator splits at character boundaries:
+
+      s = 'ab'
+      words = s%Split('')
+
+      ASSERT(size(words) == 4)
+      ASSERT(words(1) == '')
+      ASSERT(words(2) == 'a')
+      ASSERT(words(3) == 'b')
+      ASSERT(words(4) == '')
+
+      s = ''
+      words = s%Split('')
+
+      ASSERT(size(words) == 2)
+      ASSERT(words(1) == '')
+      ASSERT(words(2) == '')
+
       ! Tests with maxsplit:
 
       s = 'This is a test.'
@@ -1225,6 +1256,64 @@ contains
       ASSERT(words(4) == '')
       ASSERT(words(5) == '')
       ASSERT(words(6) == '')
+
+      s = 'ab'
+      words = s%Split('',maxsplit=0)
+
+      ASSERT(size(words) == 1)
+      ASSERT(words(1) == 'ab')
+
+      s = 'ab'
+      words = s%Split('',maxsplit=1)
+
+      ASSERT(size(words) == 2)
+      ASSERT(words(1) == '')
+      ASSERT(words(2) == 'ab')
+
+      s = 'ab'
+      words = s%Split('',maxsplit=2)
+
+      ASSERT(size(words) == 3)
+      ASSERT(words(1) == '')
+      ASSERT(words(2) == 'a')
+      ASSERT(words(3) == 'b')
+
+      s = 'ab'
+      words = s%Split('',maxsplit=20)
+
+      ASSERT(size(words) == 4)
+      ASSERT(words(1) == '')
+      ASSERT(words(2) == 'a')
+      ASSERT(words(3) == 'b')
+      ASSERT(words(4) == '')
+
+      ! Corner case: by documentation, maxsplit=-1 should behave the same as omitting maxsplit.
+
+      s = 'bla,blub,test'
+      words = s%Split(',',maxsplit=-1)
+
+      ASSERT(size(words) == 3)
+      ASSERT(words(1) == 'bla')
+      ASSERT(words(2) == 'blub')
+      ASSERT(words(3) == 'test')
+
+      s = 'ab'
+      words = s%Split('',maxsplit=-1)
+
+      ASSERT(size(words) == 4)
+      ASSERT(words(1) == '')
+      ASSERT(words(2) == 'a')
+      ASSERT(words(3) == 'b')
+      ASSERT(words(4) == '')
+
+      s = '  this   is   a test  '
+      words = s%Split(maxsplit=-1)
+
+      ASSERT(size(words) == 4)
+      ASSERT(words(1) == 'this')
+      ASSERT(words(2) == 'is')
+      ASSERT(words(3) == 'a')
+      ASSERT(words(4) == 'test')
 
       ! Test that splitting empty strings behaves like in Python:
 
@@ -1625,6 +1714,30 @@ contains
       ASSERT(s%Replace('A','B') == 'BBBBBB')
       ASSERT(s%Replace('AB','B') == 'BBB')
       ASSERT(s%Replace('BA','AB') == 'AABABB')
+
+      ! Replacing empty old-string inserts at character boundaries:
+      s = 'ab'
+      ASSERT(s%Replace('','') == 'ab')
+      ASSERT(s%Replace('','c') == 'cacbc')
+      ASSERT(s%Replace('','c',0) == 'ab')
+      ASSERT(s%Replace('','c',1) == 'cab')
+      ASSERT(s%Replace('','c',2) == 'cacb')
+      ASSERT(s%Replace('','c',3) == 'cacbc')
+      ASSERT(s%Replace('','c',20) == 'cacbc')
+      ASSERT(s%Replace('','c') == Join('c',s%Split('')))
+
+      s = ''
+      ASSERT(s%Replace('','') == '')
+      ASSERT(s%Replace('','c') == 'c')
+      ASSERT(s%Replace('','c') == Join('c',s%Split('')))
+
+      ! Corner case: by Python convention, count<0 should behave like replacing all occurrences.
+      s = 'aaaa'
+      ASSERT(s%Replace('aa','b',-1) == 'bb')
+      ASSERT(s%Replace('a','bb',-1) == 'bbbbbbbb')
+
+      s = 'ab'
+      ASSERT(s%Replace('','c',-1) == 'cacbc')
 
    end subroutine
 
