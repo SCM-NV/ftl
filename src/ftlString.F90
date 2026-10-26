@@ -267,6 +267,9 @@ module ftlStringModule
    public :: Raw
    interface Raw
       module procedure StringToRaw
+#ifdef __GFORTRAN__
+      module procedure StringToRawWithLength
+#endif
    end interface
 
 
@@ -295,6 +298,8 @@ module ftlStringModule
    interface Join
       module procedure JoinFree
    end interface
+
+   public :: ftlStringArrayAssign
 
 
    ! Conversion to numeric types:
@@ -781,6 +786,44 @@ contains
    ! If length is specified that the raw string will have precisely this length, either padding with spaces of truncating.
    ! If length is not specified the raw string will have exactly the size of the ftlString.
    !
+#ifdef __GFORTRAN__
+   ! With gfortran the results have explicit lengths: see StringCatString. A specification expression can't use an
+   ! optional argument, so these are two specific functions, and with gfortran the length argument of Raw must not be
+   ! an absent optional argument of the caller.
+   !
+   function StringToRaw(str) result(raw)
+      type(ftlString), intent(in)   :: str
+      character(len=RawLength(str)) :: raw
+
+      if (allocated(str%raw)) raw = str%raw
+
+   end function
+   !
+   function StringToRawWithLength(str, length) result(raw)
+      type(ftlString), intent(in) :: str
+      integer        , intent(in) :: length
+      character(len=length)       :: raw
+
+      raw(1:min(len(str%raw), length)) = str%raw(1:min(len(str%raw), length))
+      raw(min(len(str%raw), length)+1:) = ' '
+
+   end function
+   !
+   ! The length of an ftlString for the result lengths of the gfortran versions of Raw and //: a 64 bit integer, like
+   ! gfortran's own string lengths, so that results of more than 2^31-1 characters keep their length. (Declaring str
+   ! as class(ftlString) makes gfortran 15.2 crash with an internal compiler error.)
+   !
+   pure integer(INT64) function RawLength(str)
+      type(ftlString), intent(in) :: str
+
+      if (allocated(str%raw)) then
+         RawLength = len(str%raw, kind=INT64)
+      else
+         RawLength = 0
+      endif
+
+   end function
+#else
    function StringToRaw(str, length) result(raw)
       type(ftlString)  , intent(in) :: str
       integer, optional, intent(in) :: length
@@ -795,6 +838,7 @@ contains
       endif
 
    end function
+#endif
 
 
 
@@ -943,10 +987,21 @@ contains
 
    ! // operator with raw Fortran string output
    !
+   ! With gfortran, the results of the concatenations below and of StringToRaw have explicit lengths: for a
+   ! deferred-length result (character(len=:), allocatable), gfortran (at least up to 15.2) returns the length through
+   ! a static variable of the caller, which all threads share. Other compilers keep the deferred-length results: ifort
+   ! doesn't have this problem, and the explicit lengths, specification expressions calling RawLength, end up in the
+   ! interfaces of every module that uses ftlString, where ifort 2021.13 then fails to resolve an unrelated generic
+   ! call in a submodule (error #6633).
+   !
    pure function StringCatString(lhs, rhs) result(concat)
       class(ftlString), intent(in)  :: lhs
        type(ftlString), intent(in)  :: rhs
+#ifdef __GFORTRAN__
+      character(len=RawLength(lhs)+RawLength(rhs)) :: concat
+#else
       character(len=:), allocatable :: concat
+#endif
 
       concat = lhs%raw//rhs%raw
 
@@ -955,7 +1010,11 @@ contains
    pure function StringCatChar(lhs, rhs) result(concat)
       class(ftlString), intent(in)  :: lhs
       character(len=*), intent(in)  :: rhs
+#ifdef __GFORTRAN__
+      character(len=RawLength(lhs)+len(rhs, kind=INT64)) :: concat
+#else
       character(len=:), allocatable :: concat
+#endif
 
       concat = lhs%raw//rhs
 
@@ -964,7 +1023,11 @@ contains
    pure function CharCatString(lhs, rhs) result(concat)
       character(len=*), intent(in)  :: lhs
       class(ftlString), intent(in)  :: rhs
+#ifdef __GFORTRAN__
+      character(len=len(lhs, kind=INT64)+RawLength(rhs)) :: concat
+#else
       character(len=:), allocatable :: concat
+#endif
 
       concat = lhs//rhs%raw
 
@@ -1376,7 +1439,7 @@ contains
 
       ! We need to check a couple of things manually, since the read below is to
       ! liberal in accepting things as a complex number ...
-      splitOnComma = self%Split(',')
+      call ftlStringArrayAssign(splitOnComma, self%Split(','))
       if (size(splitOnComma) /= 2) return
       re = splitOnComma(1)%Strip()
       if (.not.re%StartsWith('(')) return
@@ -1869,9 +1932,37 @@ contains
       integer         , intent(in), optional :: maxsplit
       type(ftlString) , allocatable          :: words(:)
 
-      words = SplitSepRaw(self, sep%raw, maxsplit)
+      call ftlStringArrayAssign(words, SplitSepRaw(self, sep%raw, maxsplit))
 
    end function
+
+
+   ! Assigns an array of ftlStrings, typically the result of an array-valued function, to an allocatable array:
+   !
+   !    call ftlStringArrayAssign(words, line%Split())    instead of    words = line%Split()
+   !
+   ! Use it in code that must be thread-safe when compiled with Intel Fortran (ifort 2021.13 and ifx 2024.2, with any
+   ! of -threads, -recursive, -auto, -qopenmp, -O0, -heap-arrays): for an intrinsic assignment to a whole allocatable
+   ! array of a type with allocatable components from an array temporary (an array-valued function result, an array
+   ! constructor like [ftlString('a'), ftlString('b')], or a section of the array itself), they pass descriptors in
+   ! static memory, holding the per-call array size, to the runtime (for_alloc_assign_v2). Two threads doing such an
+   ! assignment at the same time use each other's sizes and corrupt the heap. As an actual argument the function result
+   ! has its descriptor on the stack, and the element-wise copy below needs no array temporary ("lhs = rhs" here would
+   ! bring the static descriptors back). rhs must not overlap lhs: assign a section of an array to a second array and
+   ! move_alloc it back.
+   !
+   pure subroutine ftlStringArrayAssign(lhs, rhs)
+      type(ftlString), allocatable, intent(out) :: lhs(:)
+      type(ftlString),              intent(in)  :: rhs(:)
+
+      integer :: i
+
+      allocate(lhs(size(rhs)))
+      do i = 1, size(rhs)
+         if (allocated(rhs(i)%raw)) lhs(i)%raw = rhs(i)%raw
+      enddo
+
+   end subroutine
 
 
 
