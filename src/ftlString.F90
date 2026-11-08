@@ -104,6 +104,7 @@ module ftlStringModule
       ! File reading:
       procedure, public :: ReadLine
       procedure, public :: ReadUntilEOF
+      procedure, public :: ReadFile
 
       ! Python string methods:
       procedure, public :: Center
@@ -1575,6 +1576,102 @@ contains
       enddo
 
       self = buffer(1:nRead)
+
+   end subroutine
+
+
+
+   recursive subroutine ReadFile(self, path, iostat)
+      use iso_fortran_env, only: ERROR_UNIT
+      use, intrinsic :: iso_c_binding, only: C_PTR, C_CHAR, C_INT, C_INT64_T, C_SIZE_T
+      class(ftlString), intent(inout)         :: self
+      character(len=*), intent(in)            :: path
+      integer         , intent(out), optional :: iostat
+
+      ! File access through the C library, see ftlStringFile.c. (These are local to ReadFile on purpose: with gfortran,
+      ! importing iso_c_binding into the module itself made C_PTR ambiguous in code that uses ftlStringModule (directly
+      ! or indirectly) together with iso_c_binding and another module that re-exports iso_c_binding.)
+      interface
+         type(C_PTR) function ftl_file_open(path, npath, size, error) bind(C, name='ftl_file_open')
+            import :: C_PTR, C_CHAR, C_SIZE_T, C_INT64_T, C_INT
+            character(kind=C_CHAR), intent(in)        :: path(*)
+            integer(C_SIZE_T)     , intent(in), value :: npath
+            integer(C_INT64_T)    , intent(out)       :: size
+            integer(C_INT)        , intent(out)       :: error
+         end function
+         integer(C_SIZE_T) function ftl_file_read(file, buffer, n) bind(C, name='ftl_file_read')
+            import :: C_PTR, C_CHAR, C_SIZE_T
+            type(C_PTR)           , intent(in), value :: file
+            character(kind=C_CHAR), intent(out)       :: buffer(*)
+            integer(C_SIZE_T)     , intent(in), value :: n
+         end function
+         integer(C_INT) function ftl_file_close(file) bind(C, name='ftl_file_close')
+            import :: C_PTR, C_INT
+            type(C_PTR)           , intent(in), value :: file
+         end function
+      end interface
+
+      type(C_PTR)         :: file
+      integer(C_INT)      :: error
+      integer(C_INT64_T)  :: fileSize
+      integer(INT64)      :: capacity, nRead, nMore
+      character(len=4096) :: chunk
+      character(len=:), allocatable :: tmp
+
+      ! Reads the whole file at path into the string, with all bytes as they are in the file (line breaks are not
+      ! converted). Trailing blanks in path are ignored, as in the FILE= specifier of an OPEN statement.
+      !
+      ! iostat is set to 0 on success. If the file can not be opened or read, iostat is set to a positive value (the
+      ! errno value of the C library) and the string is empty. Without iostat, such an error stops the program.
+      !
+      ! Unlike ReadUntilEOF, this does not use Fortran I/O but the C library, so several threads may read the same file
+      ! at the same time. (ReadFile is recursive, so that its local variables are not static, even with compilers that
+      ! make them static by default.) The string is allocated with the size of the file, and the file is read directly
+      ! into it. The contents are only copied if the size of the file is not known in advance, e.g. for a pipe, or
+      ! changes while it is read.
+
+      if (present(iostat)) iostat = 0
+      nRead = 0
+      capacity = 0
+
+      file = ftl_file_open(path, int(len_trim(path), C_SIZE_T), fileSize, error)
+      if (error == 0) then
+         capacity = max(0_INT64, int(fileSize, INT64))
+         if (allocated(self%raw)) deallocate(self%raw)
+         allocate(character(len=capacity) :: self%raw)
+         nRead = ftl_file_read(file, self%raw, int(capacity, C_SIZE_T))
+         if (nRead == capacity) then
+            ! The file may be longer than its size said: it is not a regular file, or it is growing. Check that with a
+            ! read into a separate buffer, so that the string does not need to be enlarged in the usual case.
+            nMore = ftl_file_read(file, chunk, int(len(chunk), C_SIZE_T))
+            do while (nMore > 0)
+               if (nRead + nMore > capacity) then
+                  capacity = max(2*capacity, nRead + nMore)
+                  allocate(character(len=capacity) :: tmp)
+                  tmp(1:nRead) = self%raw(1:nRead)
+                  call move_alloc(tmp, self%raw)
+               endif
+               self%raw(nRead+1:nRead+nMore) = chunk(1:nMore)
+               nRead = nRead + nMore
+               nMore = ftl_file_read(file, chunk, int(len(chunk), C_SIZE_T))
+            enddo
+         endif
+         error = ftl_file_close(file)
+      endif
+
+      if (error /= 0) then
+         self%raw = ''
+         if (present(iostat)) then
+            iostat = int(error)
+         else
+            write (ERROR_UNIT,'(A)') 'ftlString%ReadFile: can not read file: '//trim(path)
+            error stop
+         endif
+      else if (nRead < capacity) then
+         ! The file got shorter while it was read, or the string was enlarged beyond its end.
+         tmp = self%raw(1:nRead)
+         call move_alloc(tmp, self%raw)
+      endif
 
    end subroutine
 
