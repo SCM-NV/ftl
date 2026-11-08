@@ -70,6 +70,7 @@ contains
       ! File reading:
       call testReadLine
       call testReadUntilEOF
+      call testReadFile
 
       call testFortranStandardMethods
 
@@ -940,6 +941,94 @@ contains
          ASSERT(iostat == IOSTAT_END)
       endif
       close(unit)
+
+   end subroutine
+
+
+   subroutine testReadFile
+      type(ftlString) :: contents, expected
+      character(len=258) :: bytes
+      integer :: unit, iostat, i
+      logical :: exists
+
+      ! The same as ReadUntilEOF, plus the final line break:
+      call contents%ReadFile('tests/assets/singleline.txt', iostat)
+      ASSERT(iostat == 0)
+      ASSERT(contents%raw == 'This is just one single line.'//FTL_STRING_NEWLINE)
+      ASSERT(len(contents) == 30)
+
+      open (newunit=unit, file='tests/assets/mobydick.txt', status='old', action='read', iostat=iostat)
+      ASSERT(iostat == 0)
+      if (iostat == 0) then
+         call expected%ReadUntilEOF(unit)
+         close(unit)
+      endif
+      call contents%ReadFile('tests/assets/mobydick.txt', iostat)
+      ASSERT(iostat == 0)
+      ASSERT(len(contents) == 1191308)
+      ASSERT(contents == expected//FTL_STRING_NEWLINE)
+
+      ! Trailing blanks of the path are ignored, as in an OPEN statement:
+      call contents%ReadFile('tests/assets/singleline.txt   ', iostat)
+      ASSERT(iostat == 0)
+      ASSERT(contents%raw == 'This is just one single line.'//FTL_STRING_NEWLINE)
+
+      call contents%ReadFile('tests/assets/emptyfile.txt', iostat)
+      ASSERT(iostat == 0)
+      ASSERT(contents%Allocated())
+      ASSERT(len(contents) == 0)
+
+      ! All bytes are read as they are, including CR LF line breaks:
+      do i = 0, 255
+         bytes(i+1:i+1) = achar(i)
+      enddo
+      bytes(257:258) = achar(13)//achar(10)
+      open (newunit=unit, file='ftlStringTests_ReadFile.tmp', access='stream', form='unformatted', &
+            status='replace', action='write', iostat=iostat)
+      ASSERT(iostat == 0)
+      if (iostat == 0) then
+         write (unit) bytes
+         close(unit)
+      endif
+      call contents%ReadFile('ftlStringTests_ReadFile.tmp', iostat)
+      ASSERT(iostat == 0)
+      ASSERT(len(contents) == 258)
+      ASSERT(contents%raw == bytes)
+      open (newunit=unit, file='ftlStringTests_ReadFile.tmp', status='old', iostat=iostat)
+      if (iostat == 0) close(unit, status='delete')
+
+      ! Files whose size is not known in advance are read completely (on Linux, files in /proc have size 0). The string
+      ! is then enlarged as needed and shrunk to the size of the contents at the end: /proc/self/smaps is usually
+      ! larger than several of the internal 4096-byte chunks.
+      inquire (file='/proc/self/status', exist=exists)
+      if (exists) then
+         call contents%ReadFile('/proc/self/status', iostat)
+         ASSERT(iostat == 0)
+         ASSERT(contents%StartsWith('Name:'))
+         ASSERT(contents%EndsWith(FTL_STRING_NEWLINE))
+      endif
+      inquire (file='/proc/self/smaps', exist=exists)
+      if (exists) then
+         call contents%ReadFile('/proc/self/smaps', iostat)
+         ASSERT(iostat == 0)
+         ASSERT(len(contents) > 3*4096)
+         ASSERT('Rss:' .in. contents)
+         ASSERT(contents%EndsWith(FTL_STRING_NEWLINE))
+         ASSERT(.not.(achar(0) .in. contents))
+      endif
+
+      ! Errors leave an empty string:
+      call contents%ReadFile('tests/assets/doesnotexist.txt', iostat)
+      ASSERT(iostat > 0)
+      ASSERT(len(contents) == 0)
+      contents = 'something'
+      call contents%ReadFile('tests/assets', iostat) ! a directory
+      ASSERT(iostat > 0)
+      ASSERT(len(contents) == 0)
+      contents = 'something'
+      call contents%ReadFile('', iostat)
+      ASSERT(iostat > 0)
+      ASSERT(len(contents) == 0)
 
    end subroutine
 
