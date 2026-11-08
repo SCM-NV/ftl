@@ -114,6 +114,7 @@ module ftlStringModule
       ! File reading:
       procedure, public :: ReadLine
       procedure, public :: ReadUntilEOF
+      procedure, public :: ReadFile
 
       ! Python string methods:
       procedure, public :: Center
@@ -1575,6 +1576,7 @@ contains
 
 
    subroutine ReadLine(self, unit, iostat)
+      use iso_fortran_env, only: ERROR_UNIT
       class(ftlString), intent(inout)         :: self
       integer         , intent(in)            :: unit
       integer         , intent(out), optional :: iostat
@@ -1582,13 +1584,28 @@ contains
       integer :: ios, nRead
       character(len=256) :: buff
 
+      ! Reads one line from unit. iostat is set to 0 on success, and to IOSTAT_END if the end of the file has been
+      ! reached (the string is then empty). Reaching the end of the file is not an error. If reading fails, iostat is
+      ! set to the (positive) iostat of the failed read and the string is empty. Without iostat, such an error stops the
+      ! program, as in ReadUntilEOF.
+
       self%raw = ''
       nRead = 0
       do
          read (unit, '(A)', advance='no', err=10, end=10, eor=10, size=nRead, iostat=ios) buff
          self%raw = self%raw//buff(:nRead)
       enddo
-   10 self%raw = self%raw//buff(:nRead)
+   10 if (ios > 0 .and. ios /= IOSTAT_INQUIRE_INTERNAL_UNIT) then
+         self%raw = ''
+         if (present(iostat)) then
+            iostat = ios
+         else
+            write (ERROR_UNIT,'(A,I0,A,I0)') 'ftlString%ReadLine: can not read from unit ', unit, ', iostat = ', ios
+            error stop
+         endif
+         return
+      endif
+      self%raw = self%raw//buff(:nRead)
       if (present(iostat)) then
          if (is_iostat_eor(ios)) then
             ! EOR is not an error for us but just an implementation detail
@@ -1603,6 +1620,7 @@ contains
 
 
    subroutine ReadUntilEOF(self, unit, iostat)
+      use iso_fortran_env, only: ERROR_UNIT
       class(ftlString), intent(inout)         :: self
       integer         , intent(in)            :: unit
       integer         , intent(out), optional :: iostat
@@ -1611,12 +1629,18 @@ contains
       type(ftlString) :: line
       character(len=:), allocatable :: buffer, newbuffer
 
+      ! Reads from unit until the end of the file. The lines are separated by newline characters, with no newline after
+      ! the last line.
+      !
+      ! iostat is set to IOSTAT_END on success. If reading fails, iostat is set to the (positive) iostat of the failed
+      ! read and the string is empty. Without iostat, such an error stops the program.
+
       self = ''
       if (present(iostat)) iostat = IOSTAT_END
 
       call line%ReadLine(unit, ios)
       if (ios > 0 .and. ios /= IOSTAT_INQUIRE_INTERNAL_UNIT) then
-         if (present(iostat)) iostat = ios
+         call ReadError()
          return
       endif
       if (is_iostat_end(ios)) return
@@ -1627,7 +1651,7 @@ contains
       do while (.true.)
          call line%ReadLine(unit, ios)
          if (ios > 0 .and. ios /= IOSTAT_INQUIRE_INTERNAL_UNIT) then
-            if (present(iostat)) iostat = ios
+            call ReadError()
             return
          endif
          if (is_iostat_end(ios)) exit
@@ -1645,6 +1669,126 @@ contains
       enddo
 
       self = buffer(:nRead)
+
+   contains
+
+      subroutine ReadError()
+         if (present(iostat)) then
+            iostat = ios
+         else
+            write (ERROR_UNIT,'(A,I0,A,I0)') 'ftlString%ReadUntilEOF: can not read from unit ', unit, ', iostat = ', ios
+            error stop
+         endif
+      end subroutine
+
+   end subroutine
+
+
+
+   recursive subroutine ReadFile(self, path, iostat)
+      use iso_fortran_env, only: ERROR_UNIT
+      use, intrinsic :: iso_c_binding, only: C_PTR, C_CHAR, C_INT, C_INT64_T, C_SIZE_T
+      class(ftlString), intent(inout)         :: self
+      character(len=*), intent(in)            :: path
+      integer         , intent(out), optional :: iostat
+
+      ! File access through the C library, see ftlStringFile.c. (These are local to ReadFile on purpose: with gfortran,
+      ! importing iso_c_binding into the module itself made C_PTR ambiguous in code that uses ftlStringModule (directly
+      ! or indirectly) together with iso_c_binding and another module that re-exports iso_c_binding.)
+      interface
+         type(C_PTR) function ftl_file_open(path, npath, size, error) bind(C, name='ftl_file_open')
+            import :: C_PTR, C_CHAR, C_SIZE_T, C_INT64_T, C_INT
+            character(kind=C_CHAR), intent(in)        :: path(*)
+            integer(C_SIZE_T)     , intent(in), value :: npath
+            integer(C_INT64_T)    , intent(out)       :: size
+            integer(C_INT)        , intent(out)       :: error
+         end function
+         integer(C_SIZE_T) function ftl_file_read(file, buffer, n, error) bind(C, name='ftl_file_read')
+            import :: C_PTR, C_CHAR, C_SIZE_T, C_INT
+            type(C_PTR)           , intent(in), value :: file
+            character(kind=C_CHAR), intent(out)       :: buffer(*)
+            integer(C_SIZE_T)     , intent(in), value :: n
+            integer(C_INT)        , intent(out)       :: error
+         end function
+         subroutine ftl_file_close(file) bind(C, name='ftl_file_close')
+            import :: C_PTR
+            type(C_PTR)           , intent(in), value :: file
+         end subroutine
+         integer(C_INT) function ftl_file_enomem() bind(C, name='ftl_file_enomem')
+            import :: C_INT
+         end function
+      end interface
+
+      type(C_PTR)         :: file
+      integer(C_INT)      :: error
+      integer(C_INT64_T)  :: fileSize
+      integer(INT64)      :: capacity, nRead, nMore
+      integer             :: stat
+      character(len=4096) :: chunk
+      character(len=:), allocatable :: tmp
+
+      ! Reads the whole file at path into the string, with all bytes as they are in the file (line breaks are not
+      ! converted). Trailing blanks in path are ignored, as in the FILE= specifier of an OPEN statement.
+      !
+      ! iostat is set to IOSTAT_END on success, as by ReadUntilEOF. If the file can not be opened or read, or the memory
+      ! for the string can not be allocated, iostat is set to a positive value (the errno value of the C library, e.g.
+      ! ENOMEM if the allocation failed) and the string is empty. Without iostat, such an error stops the program.
+      !
+      ! Unlike ReadUntilEOF, this does not use Fortran I/O but the C library, so several threads may read the same file
+      ! at the same time. (ReadFile is recursive, so that its local variables are not static, even with compilers that
+      ! make them static by default.) The string is allocated with the size of the file, and the file is read directly
+      ! into it. The contents are only copied if the size of the file is not known in advance, e.g. for a pipe, or
+      ! changes while it is read.
+
+      if (present(iostat)) iostat = IOSTAT_END
+      nRead = 0
+      capacity = 0
+      stat = 0
+
+      file = ftl_file_open(path, int(len_trim(path), C_SIZE_T), fileSize, error)
+      if (error == 0) then
+         capacity = max(0_INT64, int(fileSize, INT64))
+         if (allocated(self%raw)) deallocate(self%raw)
+         allocate(character(len=capacity) :: self%raw, stat=stat)
+         if (stat == 0) nRead = ftl_file_read(file, self%raw, int(capacity, C_SIZE_T), error)
+         if (stat == 0 .and. error == 0 .and. nRead == capacity) then
+            ! The file may be longer than its size said: it is not a regular file, or it is growing. Check that with a
+            ! read into a separate buffer, so that the string does not need to be enlarged in the usual case.
+            nMore = ftl_file_read(file, chunk, int(len(chunk), C_SIZE_T), error)
+            do while (error == 0 .and. nMore > 0)
+               if (nRead + nMore > capacity) then
+                  capacity = max(2*capacity, nRead + nMore)
+                  allocate(character(len=capacity) :: tmp, stat=stat)
+                  if (stat /= 0) exit
+                  tmp(1:nRead) = self%raw(1:nRead)
+                  call move_alloc(tmp, self%raw)
+               endif
+               self%raw(nRead+1:nRead+nMore) = chunk(1:nMore)
+               nRead = nRead + nMore
+               nMore = ftl_file_read(file, chunk, int(len(chunk), C_SIZE_T), error)
+            enddo
+         endif
+         call ftl_file_close(file)
+         if (stat == 0 .and. error == 0 .and. nRead < capacity) then
+            ! The file got shorter while it was read, or the string was enlarged beyond its end.
+            allocate(character(len=nRead) :: tmp, stat=stat)
+            if (stat == 0) then
+               tmp(1:nRead) = self%raw(1:nRead)
+               call move_alloc(tmp, self%raw)
+            endif
+         endif
+         if (stat /= 0) error = ftl_file_enomem()
+      endif
+
+      if (error /= 0) then
+         self%raw = ''
+         if (present(iostat)) then
+            iostat = int(error)
+         else
+            write (ERROR_UNIT,'(A)') 'ftlString%ReadFile: can not read file: '//trim(path)
+            error stop
+         endif
+      endif
 
    end subroutine
 

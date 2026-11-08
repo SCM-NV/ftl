@@ -61,6 +61,14 @@ else
   $(error unrecognized PLATFORM)
 endif
 
+# C compiler for src/ftlStringFile.c, the same for all platforms. A CC set in the environment or on the command line
+# takes precedence. (CC ?= gcc would not work, as make has a built-in default for CC.)
+ifeq ($(origin CC), default)
+	CC = gcc
+endif
+CFLAGS += -std=c99 -Wall -Wextra -Wpedantic
+CSOFLAGS = -fPIC
+
 USE_PCRE ?= true
 ifeq ($(USE_PCRE), true)
 	DEFINES += -DUSE_PCRE
@@ -81,6 +89,12 @@ else ifeq ($(PLATFORM)$(BUILD), nagrelease)
 	FCFLAGS += -O
 else ifneq ($(BUILD), custom)
 	$(error unrecognized BUILD (valid values: debug, release, custom))
+endif
+
+ifeq ($(BUILD), debug)
+	CFLAGS += -g
+else ifeq ($(BUILD), release)
+	CFLAGS += -O2
 endif
 
 
@@ -124,7 +138,7 @@ cleanall:
 
 # Shared library of non-template components:
 
-$(BUILDDIR)/libftl.so.1: $(BUILDDIR)/ftlKinds.o $(BUILDDIR)/ftlString.o $(BUILDDIR)/ftlHash.o $(BUILDDIR)/ftlRegex.o
+$(BUILDDIR)/libftl.so.1: $(BUILDDIR)/ftlKinds.o $(BUILDDIR)/ftlString.o $(BUILDDIR)/ftlStringFile.o $(BUILDDIR)/ftlHash.o $(BUILDDIR)/ftlRegex.o
 	$(FC) $(FCFLAGS) $(INCLUDES) $(DEFINES) $^ $(LDFLAGS) $(SOLDFLAGS) -o $@
 
 
@@ -160,7 +174,7 @@ $(BUILDDIR)/ftlAlgorithmsTests.o: tests/ftlAlgorithmsTests.F90 $(BUILDDIR)/ftlAr
 $(BUILDDIR)/ftlSharedPtrTests.o: tests/ftlSharedPtrTests.F90 $(BUILDDIR)/ftlSharedPtrInt.o | $(BUILDDIR)
 	$(FC) $(FCFLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
-$(BUILDDIR)/ftlStringTests.o: tests/ftlStringTests.F90 $(BUILDDIR)/ftlString.o $(BUILDDIR)/ftlDynArrayString.o $(BUILDDIR)/Animals.o | $(BUILDDIR)
+$(BUILDDIR)/ftlStringTests.o: tests/ftlStringTests.F90 $(BUILDDIR)/ftlString.o $(BUILDDIR)/ftlStringFile.o $(BUILDDIR)/ftlDynArrayString.o $(BUILDDIR)/Animals.o | $(BUILDDIR)
 	$(FC) $(FCFLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
 $(BUILDDIR)/ftlRegexTests.o: tests/ftlRegexTests.F90 $(BUILDDIR)/ftlRegex.o | $(BUILDDIR)
@@ -175,7 +189,7 @@ $(BUILDDIR)/perftest_sortDynArrayInt: perftests/sortDynArrayInt.F90 $(BUILDDIR)/
 $(BUILDDIR)/perftest_sortDynArrayInt_ref: perftests/sortDynArrayInt.cpp | $(BUILDDIR)
 	$(CXX) $(CXXFLAGS) $(DEFINES) $< -o $@
 
-$(BUILDDIR)/perftest_countDistinctWords: perftests/countDistinctWords.F90 $(BUILDDIR)/ftlString.o $(BUILDDIR)/ftlHashMapStringInt.o | $(BUILDDIR)
+$(BUILDDIR)/perftest_countDistinctWords: perftests/countDistinctWords.F90 $(BUILDDIR)/ftlString.o $(BUILDDIR)/ftlStringFile.o $(BUILDDIR)/ftlHashMapStringInt.o | $(BUILDDIR)
 	$(FC) $(FCFLAGS) $(INCLUDES) $(DEFINES) $< $(BUILDDIR)/*.o $(LDFLAGS) -o $@
 
 
@@ -258,6 +272,9 @@ $(BUILDDIR)/ftlHash.o: src/ftlHash.F90 $(BUILDDIR)/ftlKinds.o | $(BUILDDIR)
 
 $(BUILDDIR)/ftlString.o: src/ftlString.F90 $(BUILDDIR)/ftlHash.o $(BUILDDIR)/ftlKinds.o | $(BUILDDIR)
 	$(FC) $(FCFLAGS) $(INCLUDES) $(DEFINES) $(SOFLAGS) -c $< -o $@
+
+$(BUILDDIR)/ftlStringFile.o: src/ftlStringFile.c | $(BUILDDIR)
+	$(CC) $(CFLAGS) $(CSOFLAGS) -c $< -o $@
 
 $(BUILDDIR)/ftlRegex.o: src/ftlRegex.F90 src/configure_ftlRegex.inc $(BUILDDIR)/ftlString.o | $(BUILDDIR)
 	$(FC) $(FCFLAGS) $(INCLUDES) $(DEFINES) $(SOFLAGS) -c $< -o $@
