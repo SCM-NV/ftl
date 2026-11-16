@@ -40,7 +40,7 @@ program tests
    call ftlStringTests
    call ftlArrayTests
    call ftlDynArrayTests
-   !call ftlListTests
+   call ftlListTests
    call ftlHashMapTests
    call ftlHashSetTests
    call ftlSharedPtrTests
