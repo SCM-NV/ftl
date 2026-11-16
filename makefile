@@ -130,7 +130,7 @@ $(BUILDDIR)/libftl.so.1: $(BUILDDIR)/ftlKinds.o $(BUILDDIR)/ftlString.o $(BUILDD
 
 # Unit tests:
 
-$(BUILDDIR)/tests: tests/tests.F90 $(BUILDDIR)/ftlTestTools.o $(BUILDDIR)/ftlArrayTests.o $(BUILDDIR)/ftlDynArrayTests.o $(BUILDDIR)/ftlListTests.o $(BUILDDIR)/ftlHashMapTests.o $(BUILDDIR)/ftlHashSetTests.o $(BUILDDIR)/ftlAlgorithmsTests.o $(BUILDDIR)/ftlSharedPtrTests.o $(BUILDDIR)/ftlStringTests.o $(BUILDDIR)/ftlRegexTests.o | $(BUILDDIR)
+$(BUILDDIR)/tests: tests/tests.F90 $(BUILDDIR)/ftlTestTools.o $(BUILDDIR)/ftlArrayTests.o $(BUILDDIR)/ftlDynArrayTests.o $(BUILDDIR)/ftlListTests.o $(BUILDDIR)/ftlHashMapTests.o $(BUILDDIR)/ftlHashSetTests.o $(BUILDDIR)/ftlAlgorithmsTests.o $(BUILDDIR)/ftlSharedPtrTests.o $(BUILDDIR)/ftlStringTests.o $(BUILDDIR)/ftlRegexTests.o $(BUILDDIR)/ftlLRUCacheTests.o | $(BUILDDIR)
 	$(FC) $(FCFLAGS) $(INCLUDES) $(DEFINES) $< $(BUILDDIR)/*.o $(LDFLAGS) -o $@
 
 $(BUILDDIR)/ftlTestTools.o: tests/ftlTestTools.F90 tests/ftlTestTools.inc | $(BUILDDIR)
@@ -149,6 +149,9 @@ $(BUILDDIR)/ftlHashMapTests.o: tests/ftlHashMapTests.F90 $(BUILDDIR)/ftlHashMapS
 	$(FC) $(FCFLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
 $(BUILDDIR)/ftlHashSetTests.o: tests/ftlHashSetTests.F90 $(BUILDDIR)/ftlHashSetInt.o $(BUILDDIR)/ftlHashSetString.o | $(BUILDDIR)
+	$(FC) $(FCFLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
+
+$(BUILDDIR)/ftlLRUCacheTests.o: tests/ftlLRUCacheTests.F90 tests/ftlTestTools.inc $(BUILDDIR)/ftlTestTools.o $(BUILDDIR)/ftlLRUCacheInt.o $(BUILDDIR)/ftlLRUCacheString.o | $(BUILDDIR)
 	$(FC) $(FCFLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
 $(BUILDDIR)/ftlAlgorithmsTests.o: tests/ftlAlgorithmsTests.F90 $(BUILDDIR)/ftlArrayIntAlgorithms.o $(BUILDDIR)/ftlDynArrayIntAlgorithms.o $(BUILDDIR)/ftlDynArrayPoint2DAlgorithms.o $(BUILDDIR)/ftlListIntAlgorithms.o $(BUILDDIR)/ftlStringAlgorithms.o | $(BUILDDIR)
@@ -212,6 +215,12 @@ $(BUILDDIR)/ftlHashSetInt.o: instantiations/ftlHashSetInt.F90 src/ftlHashSet.F90
 	$(FC) $(FCFLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
 $(BUILDDIR)/ftlHashSetString.o: instantiations/ftlHashSetString.F90 src/ftlHashSet.F90_template $(BUILDDIR)/ftlKinds.o $(BUILDDIR)/ftlHash.o $(BUILDDIR)/ftlString.o | $(BUILDDIR)
+	$(FC) $(FCFLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
+
+$(BUILDDIR)/ftlLRUCacheInt.o: instantiations/ftlLRUCacheInt.F90 src/ftlLRUCache.F90_template src/ftlMacros.inc $(BUILDDIR)/ftlHash.o | $(BUILDDIR)
+	$(FC) $(FCFLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
+
+$(BUILDDIR)/ftlLRUCacheString.o: instantiations/ftlLRUCacheString.F90 src/ftlLRUCache.F90_template src/ftlMacros.inc $(BUILDDIR)/ftlHash.o $(BUILDDIR)/ftlString.o | $(BUILDDIR)
 	$(FC) $(FCFLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
 
 

@@ -28,6 +28,7 @@ program tests
    use ftlListTestsModule
    use ftlHashMapTestsModule
    use ftlHashSetTestsModule
+   use ftlLRUCacheTestsModule
    use ftlSharedPtrTestsModule
    use ftlAlgorithmsTestsModule
 
@@ -43,6 +44,7 @@ program tests
    call ftlListTests
    call ftlHashMapTests
    call ftlHashSetTests
+   call ftlLRUCacheTests
    call ftlSharedPtrTests
    call ftlAlgorithmsTests
 
