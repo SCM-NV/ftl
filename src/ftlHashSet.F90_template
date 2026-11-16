@@ -472,6 +472,7 @@ contains
                deleter => walker
             enddo
             deallocate(deleter)
+            nullify(self%buckets(b)%first)
          enddo
       endif
       self%psize = 0
