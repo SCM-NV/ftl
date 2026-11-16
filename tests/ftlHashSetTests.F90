@@ -47,6 +47,7 @@ contains
       call testFind
       call testEraseValue
       call testEraseIterators
+      call testClear
 
       call testStringSpecialization
 
@@ -460,6 +461,57 @@ contains
       call set%Erase(it, set%End())
 
       ASSERT(size(set) == 2)
+
+   end subroutine
+
+
+   subroutine testClear
+      type(ftlHashSetInt) :: set
+      type(ftlHashSetIntIterator) :: it
+      integer :: b, n
+
+      call set%New(10)
+      call set%Insert(42)
+      call set%Insert( 1)
+      call set%Insert( 2)
+      call set%Insert( 3)
+      call set%Insert( 4)
+      call set%Insert( 5)
+      call set%Insert( 6)
+      call set%Insert( 7)
+      call set%Insert( 8)
+      call set%Insert( 9)
+      call set%Insert(10)
+      call set%Insert(11)
+      call set%Insert(12)
+      call set%Insert(13)
+
+      call set%Clear()
+
+      ASSERT(set%Empty())
+      ASSERT(set%Size() == 0)
+      do b = 1, set%BucketCount()
+         ASSERT(set%BucketSize(b) == 0)
+      enddo
+      ASSERT(.not.set%Has(42))
+      ASSERT(set%Begin() == set%End())
+
+      ! The set must still be usable after clearing it:
+      call set%Insert(42)
+      call set%Insert(12)
+
+      ASSERT(set%Size() == 2)
+      ASSERT(set%Has(42))
+      ASSERT(set%Has(12))
+      ASSERT(.not.set%Has(1))
+
+      n = 0
+      it = set%Begin()
+      do while (it /= set%End())
+         n = n + 1
+         call it%Inc()
+      enddo
+      ASSERT(n == 2)
 
    end subroutine
 

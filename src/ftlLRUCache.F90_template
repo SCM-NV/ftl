@@ -1,0 +1,266 @@
+! Copyright (c) 2026 Software for Chemistry & Materials BV
+!
+! This file is part of the Fortran Template Library.
+!
+! The Fortran Template Library is free software: you can redistribute it and/or
+! modify it under the terms of the GNU Lesser General Public License as
+! published by the Free Software Foundation, either version 3 of the License, or
+! (at your option) any later version.
+!
+! The Fortran Template Library is distributed in the hope that it will be
+! useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+! General Public License for more details.
+!
+! You should have received a copy of the GNU Lesser General Public License along
+! with the Fortran Template Library. If not, see <http://www.gnu.org/licenses/>.
+
+#ifdef FTL_INSTANTIATE_TEMPLATE
+
+#ifdef FTL_TEMPLATE_KEYTYPE_IS_FTLSTRING
+#define FTL_TEMPLATE_KEYTYPE ftlString
+#define FTL_TEMPLATE_KEYTYPE_IS_DERIVED
+#define FTL_TEMPLATE_KEYTYPE_MODULE ftlStringModule
+#endif
+
+#ifndef FTL_TEMPLATE_KEYTYPE
+#error FTL_TEMPLATE_KEYTYPE must be defined when instantiating ftlLRUCache
+#endif
+#ifndef FTL_TEMPLATE_KEYTYPE_NAME
+#error FTL_TEMPLATE_KEYTYPE_NAME must be defined when instantiating ftlLRUCache
+#endif
+
+#include "ftlMacros.inc"
+
+#ifdef FTL_TEMPLATE_KEYTYPE_IS_DERIVED
+#define FTL_LRU_KEY type(FTL_TEMPLATE_KEYTYPE)
+#else
+#define FTL_LRU_KEY FTL_TEMPLATE_KEYTYPE
+#endif
+
+module CAT3(ftlLRUCache,FTL_TEMPLATE_KEYTYPE_NAME,Module)
+#ifdef FTL_TEMPLATE_KEYTYPE_MODULE
+   use FTL_TEMPLATE_KEYTYPE_MODULE
+#endif
+   use ftlHashModule
+   use iso_fortran_env, only: int64
+   implicit none
+   private
+
+   type :: SlotLinks
+      integer :: hashNext = 0
+      integer :: older = 0, newer = 0
+      integer :: pins = 0
+   end type
+
+   ! Fixed-capacity LRU cache. The caller owns the payload arena; returned slots
+   ! select its entries. Keys need operator(==) and ftlHash, as in ftlHashMap.
+   ! Cache storage does not grow after New. Key assignment and character-key
+   ! overloads may allocate key-owned storage or temporary strings.
+   !
+   ! Acquire pins a slot until a matching Release. Pinned slots cannot be evicted;
+   ! zero means no slot is available. Release makes the slot most recently used.
+   ! On a miss, initialize the corresponding payload before releasing the slot.
+   ! No payload moves, so views remain valid throughout an acquisition. Clear,
+   ! Delete, assignment and reinitialization require all acquisitions released.
+   type, public :: CAT(ftlLRUCache,FTL_TEMPLATE_KEYTYPE_NAME)
+      private
+      FTL_LRU_KEY, allocatable :: keys(:)
+      type(SlotLinks), allocatable :: links(:)
+      integer, allocatable :: buckets(:)
+      integer :: maxSize = 0, used = 0
+      integer :: oldest = 0, newest = 0
+   contains
+      private
+      procedure, public :: New
+      procedure, public :: Delete
+      procedure, public :: Clear
+      procedure :: AcquireStandard
+      generic, public :: Acquire => AcquireStandard
+      procedure, public :: Release
+      procedure :: HasStandard
+      generic, public :: Has => HasStandard
+      procedure, public :: Size => SizeCache
+      procedure, public :: Capacity
+      procedure, nopass, public :: EstimateBytes
+      procedure :: Unlink
+      procedure :: Find
+
+#ifdef FTL_TEMPLATE_KEYTYPE_IS_FTLSTRING
+      procedure :: Acquire_SPECIALIZATION_ftlString
+      generic, public :: Acquire => Acquire_SPECIALIZATION_ftlString
+      procedure :: Has_SPECIALIZATION_ftlString
+      generic, public :: Has => Has_SPECIALIZATION_ftlString
+#endif
+   end type
+
+contains
+
+   subroutine New(self, maxEntries)
+      class(CAT(ftlLRUCache,FTL_TEMPLATE_KEYTYPE_NAME)), intent(out) :: self
+      integer, intent(in) :: maxEntries
+
+      if (maxEntries < 0 .or. maxEntries > (huge(0)-1)/2) error stop 'Invalid LRU cache capacity'
+      self%maxSize = maxEntries
+      if (maxEntries == 0) return
+      allocate(self%keys(maxEntries), self%links(maxEntries), self%buckets(2*maxEntries+1))
+      self%buckets = 0
+   end subroutine
+
+   subroutine Delete(self)
+      class(CAT(ftlLRUCache,FTL_TEMPLATE_KEYTYPE_NAME)), intent(out) :: self
+      ! Allocatable storage is released automatically.
+   end subroutine
+
+   subroutine Clear(self)
+      class(CAT(ftlLRUCache,FTL_TEMPLATE_KEYTYPE_NAME)), intent(inout) :: self
+      if (self%maxSize == 0) return
+      if (any(self%links%pins /= 0)) error stop 'Clearing an acquired LRU cache'
+      self%buckets = 0
+      self%links = SlotLinks()
+      self%used = 0
+      self%oldest = 0
+      self%newest = 0
+   end subroutine
+
+   integer function Find(self, key) result(slot)
+      class(CAT(ftlLRUCache,FTL_TEMPLATE_KEYTYPE_NAME)), intent(in) :: self
+      FTL_LRU_KEY, intent(in) :: key
+      slot = 0
+      if (self%maxSize == 0) return
+      slot = self%buckets(modulo(ftlHash(key), size(self%buckets))+1)
+      do while (slot /= 0)
+         if (self%keys(slot) == key) return
+         slot = self%links(slot)%hashNext
+      enddo
+   end function
+
+   logical function HasStandard(self, key) result(Has)
+      class(CAT(ftlLRUCache,FTL_TEMPLATE_KEYTYPE_NAME)), intent(in) :: self
+      FTL_LRU_KEY, intent(in) :: key
+      Has = self%Find(key) /= 0
+   end function
+
+   subroutine AcquireStandard(self, key, slot, found)
+      class(CAT(ftlLRUCache,FTL_TEMPLATE_KEYTYPE_NAME)), intent(inout) :: self
+      FTL_LRU_KEY, intent(in) :: key
+      integer, intent(out) :: slot
+      logical, intent(out) :: found
+      integer :: bucket, oldBucket, walker
+
+      slot = self%Find(key)
+      found = slot /= 0
+      if (found) then
+         if (self%links(slot)%pins == 0) call self%Unlink(slot)
+         self%links(slot)%pins = self%links(slot)%pins + 1
+         return
+      endif
+      if (self%maxSize == 0) return
+
+      if (self%used < self%maxSize) then
+         self%used = self%used + 1
+         slot = self%used
+      else
+         slot = self%oldest
+         if (slot == 0) return ! All slots are acquired.
+         call self%Unlink(slot)
+         oldBucket = modulo(ftlHash(self%keys(slot)), size(self%buckets))+1
+         walker = self%buckets(oldBucket)
+         if (walker == slot) then
+            self%buckets(oldBucket) = self%links(slot)%hashNext
+         else
+            do while (self%links(walker)%hashNext /= slot)
+               walker = self%links(walker)%hashNext
+            enddo
+            self%links(walker)%hashNext = self%links(slot)%hashNext
+         endif
+      endif
+
+      bucket = modulo(ftlHash(key), size(self%buckets))+1
+      self%keys(slot) = key
+      self%links(slot)%hashNext = self%buckets(bucket)
+      self%buckets(bucket) = slot
+      self%links(slot)%pins = 1
+   end subroutine
+
+   subroutine Release(self, slot)
+      class(CAT(ftlLRUCache,FTL_TEMPLATE_KEYTYPE_NAME)), intent(inout) :: self
+      integer, intent(in) :: slot
+      if (slot < 1 .or. slot > self%used) error stop 'Invalid LRU cache slot'
+      if (self%links(slot)%pins == 0) error stop 'LRU cache slot already released'
+      self%links(slot)%pins = self%links(slot)%pins - 1
+      if (self%links(slot)%pins /= 0) return
+      self%links(slot)%older = self%newest
+      if (self%newest /= 0) self%links(self%newest)%newer = slot
+      self%newest = slot
+      if (self%oldest == 0) self%oldest = slot
+   end subroutine
+
+   subroutine Unlink(self, slot)
+      class(CAT(ftlLRUCache,FTL_TEMPLATE_KEYTYPE_NAME)), intent(inout) :: self
+      integer, intent(in) :: slot
+      integer :: older, newer
+      older = self%links(slot)%older
+      newer = self%links(slot)%newer
+      if (older /= 0) then
+         self%links(older)%newer = newer
+      else
+         self%oldest = newer
+      endif
+      if (newer /= 0) then
+         self%links(newer)%older = older
+      else
+         self%newest = older
+      endif
+      self%links(slot)%older = 0
+      self%links(slot)%newer = 0
+   end subroutine
+
+   integer function SizeCache(self)
+      class(CAT(ftlLRUCache,FTL_TEMPLATE_KEYTYPE_NAME)), intent(in) :: self
+      SizeCache = self%used
+   end function
+
+   integer function Capacity(self)
+      class(CAT(ftlLRUCache,FTL_TEMPLATE_KEYTYPE_NAME)), intent(in) :: self
+      Capacity = self%maxSize
+   end function
+
+   integer(int64) function EstimateBytes(maxEntries) result(bytes)
+      integer, intent(in) :: maxEntries
+      FTL_LRU_KEY :: key
+      type(SlotLinks) :: link
+      bytes = 0
+      if (maxEntries == 0) return
+      ! Excludes the container's array descriptors, allocation overhead and any
+      ! dynamic storage owned by the key type. Payload storage is caller-owned.
+      bytes = int(maxEntries,int64) * (storage_size(key)/8 + storage_size(link)/8) &
+            + (2_int64*maxEntries+1) * (storage_size(0)/8)
+   end function
+
+#ifdef FTL_TEMPLATE_KEYTYPE_IS_FTLSTRING
+
+   ! As in ftlHashSet, provide character overloads for methods accepting keys.
+   subroutine Acquire_SPECIALIZATION_ftlString(self, key, slot, found)
+      class(CAT(ftlLRUCache,FTL_TEMPLATE_KEYTYPE_NAME)), intent(inout) :: self
+      character(len=*), intent(in) :: key
+      integer, intent(out) :: slot
+      logical, intent(out) :: found
+
+      call self%Acquire(ftlString(key), slot, found)
+
+   end subroutine
+
+   logical function Has_SPECIALIZATION_ftlString(self, key) result(Has)
+      class(CAT(ftlLRUCache,FTL_TEMPLATE_KEYTYPE_NAME)), intent(in) :: self
+      character(len=*), intent(in) :: key
+
+      Has = self%Has(ftlString(key))
+
+   end function
+
+#endif
+
+end module
+#undef FTL_LRU_KEY
+#endif

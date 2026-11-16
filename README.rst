@@ -115,6 +115,13 @@ ftlHashSet
    A container representing a set of unique elements. It's pretty much like an
    ftlHashMap where the key is at the same time also the value.
 
+ftlLRUCache
+   A fixed-capacity least-recently-used cache mapping keys to stable slots in a
+   caller-owned payload array. Acquisition protects a slot against eviction, so
+   callers can borrow cached data without copying it. Three pooled allocations
+   provide expected constant-time lookup and eviction without allocating more
+   memory during use.
+
 ftlHash
    A small utility library that provides hash functions for the Fortran
    intrinsic types. This allows them to be used as key types in ftlHashMap and
